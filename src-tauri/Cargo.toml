@@ -1,0 +1,77 @@
+[package]
+name = "kiyya-desktop"
+version = "1.0.0"
+description = "Kiyya Desktop Streaming Application"
+authors = ["Kiyya Team"]
+license = "MIT"
+repository = ""
+default-run = "kiyya-desktop"
+edition = "2021"
+rust-version = "1.60"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+tauri-build = { version = "1.5.0", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+tauri = { version = "1.5.4", features = [ "window-close", "fs-read-file", "fs-copy-file", "window-maximize", "fs-read-dir", "window-show", "window-minimize", "http-request", "fs-write-file", "fs-remove-file", "fs-remove-dir", "fs-create-dir", "window-unminimize", "window-unmaximize", "window-start-dragging", "window-hide", "fs-rename-file", "fs-exists", "notification-all", "shell-open"] }
+tokio = { version = "1.35", features = ["full"] }
+tokio-stream = { version = "0.1", features = ["net"] }
+reqwest = { version = "0.11", features = ["json", "stream"] }
+rusqlite = { version = "0.30", features = ["bundled", "chrono"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.6", features = ["v4", "serde"] }
+anyhow = "1.0"
+thiserror = "1.0"
+log = "0.4"
+env_logger = "0.10"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-appender = "0.2"
+dirs = "5.0"
+warp = "0.3"
+futures-util = "0.3"
+aes-gcm = "0.10"
+rand = "0.8"
+base64 = "0.21"
+keyring = "2.0"
+sysinfo = "0.29"
+regex = "1.10"
+url = "2.4"
+mime_guess = "2.0"
+sha2 = "0.10"
+once_cell = "1.19"
+zip = "0.6"
+
+[dev-dependencies]
+proptest = "1.4"
+tempfile = "3.8"
+filetime = "0.2"
+reqwest = { version = "0.11", features = ["json"] }
+futures = "0.3"
+
+[features]
+# by default Tauri runs in production mode
+# when `tauri dev` runs it is executed with `cargo run --no-default-features` if `devPath` is an URL
+default = ["custom-protocol"]
+# this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.
+# If you use cargo directly instead of tauri's cli you can use this feature flag to switch between tauri's `dev` and `build` modes.
+# DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+# Production optimizations
+opt-level = 3           # Maximum optimization
+lto = true              # Enable Link Time Optimization
+codegen-units = 1       # Better optimization at cost of compile time
+strip = true            # Strip symbols from binary
+panic = "abort"         # Abort on panic (smaller binary)
+
+[profile.dev]
+# Development optimizations
+opt-level = 0           # No optimization for faster compile
+debug = true            # Include debug symbols
+

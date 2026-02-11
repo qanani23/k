@@ -1,0 +1,699 @@
+Kiro AI: Full Implementation Prompt — Kiyya (Tauri + Vite + React + TypeScript)
+
+Purpose: give Kiro a complete, unambiguous, production-ready instruction set to build the Kiyya desktop streaming app (Tauri + Rust backend + Vite + React + TypeScript frontend) exactly to the spec we designed in this conversation. Be exhaustive: backend commands, frontend components, data flows, naming/tag rules, DB schema, caching, offline behavior, update checks, release process, GSAP animation rules, UI conventions, tests, packaging, docs, and developer notes. Use the first prompt the user gave (the long Kiyya spec) as authoritative and merge everything we discussed afterward (tags, playlist rules, hero_trailer, thumbnails, forced update, GitHub manifest approach, UI choices, animation rules, etc.). Wherever I gave options or recommendations, prefer the choices we agreed (custom components, GSAP allowed in narrow places, Inter font, glass-aurora accents used sparingly, etc.)
+
+IMPORTANT GLOBAL CONSTRAINTS (do not deviate)
+
+Single desktop app only (no Node server or external backend). No authentication. No admin dashboard.
+
+All content MUST come from a single Odysee channel (hard-coded channel id in a .env file).
+
+The app stores only local user state (favorites, progress, downloads) in SQLite.
+
+No third-party UI libraries other than small icon libs allowed; do not use shadcn. Build custom Tailwind components.
+
+Use GSAP for a few allowed animations only (Hero, hover micro-interactions, page transitions) and disable all animations when prefers-reduced-motion is set.
+
+Provide dark & light theme. Default dark. Use Inter as primary font.
+
+Respect accessibility (aria, keyboard, alt text).
+
+Implement tests (Vitest unit tests, Playwright E2E).
+
+Provide documentation files: README.md, ARCHITECTURE.md, UPLOADER_GUIDE.md, TESTS.md, DEVELOPER_NOTES.md
+
+ENV & REPO BASICS
+
+Private repo: all_kiyya_code — contains all source.
+
+Public repo: kiyya-releases — contains version.json and GitHub Releases assets only (no source code).
+
+.env (desktop / renderer) MUST include:
+
+VITE_ODYSSEE_PROXY=https://api.na-backend.odysee.com/api/v1/proxy
+VITE_CHANNEL_ID=@YourChannelName
+VITE_TELEGRAM_LINK=https://t.me/YourChannel
+APP_NAME=Kiyya
+APP_VERSION=1.0.0
+VITE_UPDATE_MANIFEST_URL=https://raw.githubusercontent.com/YOURNAME/kiyya-releases/main/version.json
+
+
+tauri.conf.json must restrict network to Odysee domains (api.na-backend.odysee.com, *.odysee.com, *.lbry.tv) and filesystem to app data folder only.
+
+HIGH LEVEL ARCHITECTURE
+
+Tauri (Rust) layer: handles network calls (reqwest), SQLite (rusqlite or sqlx), downloads, local HTTP streaming for offline playback (warp or axum), file IO, events to renderer (tauri::event::emit), and powers the tauri::command API surface.
+
+Frontend (renderer): Vite + React + TypeScript + Tailwind + GSAP (limited), Plyr for video wrapper, lucide-react icons, Axios or fetch wrapper, SWR-like caching hook or small custom cache hook.
+
+Local DB: single app.db SQLite file in app data; migrations on startup.
+
+Offline streaming: encrypted optional AES-GCM (toggle); local HTTP server returns Range-supporting responses for in-player streaming.
+
+Update check: app fetches public version.json URL; compares APP_VERSION with latestVersion and minSupportedVersion; implements optional + forced update logic; update assets uploaded to GitHub Releases (not repo files).
+
+HARD-CODED TAGS (frontend constants)
+
+The app expects these exact strings in code:
+
+series
+movie
+sitcom
+kids
+hero_trailer
+
+
+(Do NOT change spellings. Use them for discovery and UI groupings.)
+
+CATEGORY CONFIG (single source of truth)
+
+Create src/config/categories.ts (or .json) — editable single config object, e.g.:
+
+export const CATEGORIES = {
+  movies: {
+    label: "Movies",
+    baseTag: "movie",
+    filters: [
+      { label: "Comedy", tag: "comedy_movies" },
+      { label: "Action", tag: "action_movies" },
+      { label: "Romance", tag: "romance_movies" }
+    ]
+  },
+  series: {
+    label: "Series",
+    baseTag: "series",
+    filters: [
+      { label: "Comedy", tag: "comedy_series" },
+      { label: "Action", tag: "action_series" },
+      { label: "Romance", tag: "romance_series" }
+    ]
+  },
+  sitcoms: {
+    label: "Sitcoms",
+    baseTag: "sitcom",
+    filters: []
+  },
+  kids: {
+    label: "Kids",
+    baseTag: "kids",
+    filters: [
+      { label: "Comedy", tag: "comedy_kids" },
+      { label: "Action", tag: "action_kids" }
+    ]
+  }
+};
+
+
+UI reads this to render navbar dropdowns and drives all tag-based fetches.
+
+UPLOADER CONVENTION (copy into UPLOADER_GUIDE.md)
+
+Single Odysee channel only.
+
+Episode Titles: SeriesName S01E01 - Episode Title (zero-padded season/episode).
+
+Episode Tags: series, <series>_series (e.g., revenge_series). Optionally add revenge_s1 for fallback grouping.
+
+Movie Tags: movie + action_movies / comedy_movies etc. (use category tags matching CATEGORIES config).
+
+Hero: Tag hero videos hero_trailer.
+
+Playlist per season: Playlist title: SeriesName – Season X (en dash or hyphen but be consistent).
+
+Playlist items: Add episodes in order; playlist order is canonical for episode ordering.
+
+Thumbnails: Upload a custom thumbnail for every upload. Poster aspect ratio ~2:3 (720×1080 or 1280×1920).
+
+Season poster: Use first episode thumbnail as season poster v1.
+
+ODYSEE API USAGE (Rust-tailored payloads)
+
+All calls go through VITE_ODYSSEE_PROXY using JSON payloads. Implement timeouts and 1 retry for calls; TTL caching of results.
+
+claim_search (discovery / rows):
+
+{
+  "method": "claim_search",
+  "params": {
+    "channel": "@YourChannelName",
+    "any_tags": ["action_movies"],
+    "page_size": 50,
+    "order_by": ["release_time"]
+  }
+}
+
+
+playlist_search (list playlists of channel):
+
+{ "method": "playlist_search", "params": { "channel": "@YourChannelName", "page_size": 50 } }
+
+
+resolve / get (resolve claim to get streams & thumbnails):
+
+{ "method":"get", "params": { "uri": "<claim_uri>" } }
+
+
+Implementation notes:
+
+Always handle missing fields robustly (sd_url, hd_url, value.thumbnail shape variations).
+
+Respect 10s timeout and one retry.
+
+Use local cache TTL default 30 minutes (configurable).
+
+TAURI COMMANDS (Rust) — must implement exactly
+
+File: src-tauri/src/commands.rs (or main). Use Tokio runtime.
+
+fetch_channel_claims({ any_tags?: string[], text?: string, limit?: number, page?: number })
+
+Calls claim_search with channel, any_tags or text.
+
+Stores minimal metadata to local_cache table.
+
+Returns results to renderer.
+
+TTL caching (default 30m).
+
+fetch_playlists()
+
+Calls playlist_search for channel.
+
+Return list of playlists (id, title, items as claim ids optional) to renderer.
+
+resolve_claim(claimIdOrUri)
+
+Call get to resolve claim; parse streaming URLs (sd_url/hd_url/value.streams).
+
+Return metadata: title, description, tags, thumbnailUrl, videoUrls map (qualities), claimId.
+
+download_movie_quality({ claimId, quality, url })
+
+Stream via reqwest to .tmp file.
+
+Emit progress events via tauri::event::emit("download-progress", payload).
+
+On completion: optionally AES-GCM encrypt (if settings.encryptDownloads), move to <app_data>/Kiyya/vault/<uuid>.bin.
+
+Upsert offline_meta.
+
+Emit download-complete or download-error.
+
+stream_offline({ claimId, quality })
+
+Start local HTTP server (warp/axum) bound to 127.0.0.1:0 (random port).
+
+Serve decrypted bytes with Range support from vault path (if encrypted, decrypt on read stream; do not write decrypted full file).
+
+Return http://127.0.0.1:<port>/movies/<uuid> to renderer. Emit local-server-started.
+
+Provide fallback: file:// path only when necessary (documented as slower).
+
+delete_offline({ claimId, quality })
+
+Remove vault file and offline_meta entry; emit event.
+
+save_progress({ claimId, positionSeconds, quality })
+
+Upsert into progress.
+
+get_progress({ claimId })
+
+Return the progress row.
+
+open_external({ url })
+
+Use Tauri open.
+
+get_app_config()
+
+Return settings (theme, lastUsedQuality, encryptDownloads, vault path, app version).
+
+Events to emit: download-progress, download-complete, download-error, local-server-started.
+
+Security:
+
+FS restrictions: app data folder only.
+
+Network restrictions: only Odysee domains + update manifest host.
+
+SQLITE SCHEMA (single app.db)
+
+Create migrations on startup.
+
+favorites
+
+CREATE TABLE IF NOT EXISTS favorites (
+  claimId TEXT PRIMARY KEY,
+  title TEXT,
+  thumbnailUrl TEXT,
+  insertedAt INTEGER
+);
+
+
+progress
+
+CREATE TABLE IF NOT EXISTS progress (
+  claimId TEXT PRIMARY KEY,
+  positionSeconds INTEGER,
+  quality TEXT,
+  updatedAt INTEGER
+);
+
+
+offline_meta
+
+CREATE TABLE IF NOT EXISTS offline_meta (
+  claimId TEXT,
+  quality TEXT,
+  filename TEXT,
+  fileSize INTEGER,
+  addedAt INTEGER,
+  PRIMARY KEY (claimId, quality)
+);
+
+
+local_cache
+
+CREATE TABLE IF NOT EXISTS local_cache (
+  claimId TEXT PRIMARY KEY,
+  title TEXT,
+  titleLower TEXT,
+  description TEXT,
+  descriptionLower TEXT,
+  tags TEXT,
+  thumbnailUrl TEXT,
+  videoUrls TEXT,
+  updatedAt INTEGER
+);
+
+
+Implement simple migrations on startup. Use prepared statements and ensure DB locked access is safe across async tasks.
+
+FRONTEND ARCHITECTURE & COMPONENTS
+
+Folder structure (renderer):
+
+/desktop/src/renderer
+  /components
+    NavBar.tsx
+    Hero.tsx
+    RowCarousel.tsx
+    MovieCard.tsx
+    SeriesPage.tsx
+    PlayerModal.tsx
+    DownloadsPage.tsx
+    FavoritesPage.tsx
+    SettingsPage.tsx
+    Toast.tsx
+    ForcedUpdateScreen.tsx
+  /hooks
+    useOdysee.ts
+    useLocalCache.ts
+    useDebouncedSearch.ts
+    useDownloadManager.ts
+    useUpdateChecker.ts
+  /lib
+    api.ts         // wrapper for tauri commands
+    image.ts
+    quality.ts
+    storage.ts
+    semver.ts      // semver compare helper
+  /pages
+    Home.tsx
+    Search.tsx
+    MovieDetail.tsx
+    SeriesDetail.tsx
+    MoviesPage.tsx
+
+
+Key responsibilities — summarize (keep short in code comments).
+
+DETAILED FRONTEND LOGIC / PSEUDO-CODE SNIPPETS
+API wrapper (renderer/lib/api.ts)
+export const fetchByTag = async (tag, limit = 50) => {
+  return await window.__TAURI__.invoke('fetch_channel_claims', { any_tags: [tag], limit });
+}
+
+export const fetchPlaylists = async () => {
+  return await window.__TAURI__.invoke('fetch_playlists');
+}
+
+export const resolveClaim = async (claimId) => {
+  return await window.__TAURI__.invoke('resolve_claim', { claimId });
+}
+
+export const downloadQuality = async (args) => {
+  return await window.__TAURI__.invoke('download_movie_quality', args);
+}
+
+Semver compare (renderer/lib/semver.ts)
+export function compareVersions(a: string, b: string) {
+  const pa = a.split('.').map(Number);
+  const pb = b.split('.').map(Number);
+  for (let i=0; i<3; i++){
+    if ((pa[i] ?? 0) > (pb[i] ?? 0)) return 1;
+    if ((pa[i] ?? 0) < (pb[i] ?? 0)) return -1;
+  }
+  return 0;
+}
+
+Update check hook (useUpdateChecker)
+
+Fetch VITE_UPDATE_MANIFEST_URL.
+
+If fetch fails → do nothing (allow offline).
+
+If compare(localVersion, manifest.minSupportedVersion) === -1 → state = 'forced'.
+
+Else if compare(localVersion, manifest.latestVersion) === -1 → state = 'optional'.
+
+Provide openUpdate to call tauri.invoke('open_external', {url: manifest.downloadUrl}).
+
+Search normalization
+
+Implement normalizeQuery(q) to map:
+
+season one, s1 → S01 pattern
+
+episode ten, ep 10 → E10
+Use regex rules to produce s01e10 tokens and run SQL LIKE queries on titleLower and descriptionLower.
+
+Player quality selection (renderer/lib/quality.ts)
+export function chooseInitialQuality(available, lastQuality, downlinkMbps) {
+  if (lastQuality && available.includes(lastQuality)) return lastQuality;
+  downlinkMbps = downlinkMbps ?? navigator.connection?.downlink ?? 3;
+  if (downlinkMbps >= 5) return available.includes('1080p') ? '1080p' : (available.includes('720p') ? '720p' : available[0]);
+  if (downlinkMbps >= 2) return available.includes('720p') ? '720p' : (available.includes('480p') ? '480p' : available[0]);
+  return available.includes('480p') ? '480p' : available[available.length-1];
+}
+
+Play movie → show 10 random same-category recommendations
+
+When user opens a movie:
+
+Parse movie tags to find category tag (action_movies, etc.)
+
+Fetch fetchByTag(categoryTag, limit: 50)
+
+Shuffle results and pick up to 10 items (exclude current claim)
+
+Render as “You may also like” / inline carousel
+
+Series flow (SeriesDetail.tsx)
+
+Route has seriesKey (e.g. revenge_series).
+
+fetchPlaylists() → filter playlist titles that match ${SeriesName} – Season.
+
+For each playlist, fetch playlist items and resolve claims for items when opening the season accordion (defer resolve until user expands).
+
+If no playlists found: fallback -> fetch_channel_claims({ any_tags: [seriesKey] }), parse SxxEyy from titles, group by season number and sort episodes. Show notice “Seasons inferred automatically”.
+
+Hero component (Hero.tsx) logic
+
+On mount: call fetch_channel_claims({ any_tags: ['hero_trailer'], limit: 20 }).
+
+Pick random hero; cache for session.
+
+If available video -> render <video autoplay muted loop playsinline> using Plyr wrapper (no controls visible).
+
+If video fails -> use poster thumbnail.
+
+Animate content (GSAP fade+slide) on mount.
+
+Provide CTA: Play (resolves claim and opens PlayerModal) and Add to Favorites.
+
+UI / Styling & Tokens
+
+Tailwind config with color tokens:
+
+--bg-main: #05070A
+
+--glass-bg: rgba(255,255,255,0.05) + backdrop-filter blur(16px) for selective containers.
+
+--accent-gradient: linear-gradient(135deg,#4efcff,#7b5cff,#b44cff)
+
+--text-primary: #F5F7FA
+
+--text-secondary: #A0A6B0
+
+Use Inter font.
+
+Poster card CSS: aspect-ratio 2/3, object-fit cover, border-radius 12px.
+
+Use loading="lazy" and decoding="async" for images.
+
+Use srcset helper where possible if provider supports different sizes; fallback to single thumbnail.
+
+GSAP ANIMATION MAP (very strict)
+
+Allowed:
+
+Hero content fade/slide in (400ms).
+
+CTA hover pulse (subtle).
+
+Row card hover (transform: translateY(-6px) scale 1.03; quick).
+
+Page transitions: fade out + fade in (200–300ms).
+
+Modal open: scale + opacity.
+
+Forbidden:
+
+Animating blur/backdrop-filter.
+
+Animating long lists, scrolling containers.
+
+Animations inside the video player.
+
+Continuous or CPU-heavy animations.
+
+Respect prefers-reduced-motion: disable GSAP and use immediate state changes.
+
+NAVBAR / DROPDOWN IMPLEMENTATION
+
+NavBar reads CATEGORIES config to render top-level items and dropdowns.
+
+Dropdown opens on hover (120ms delay) on desktop, tap-to-open on mobile, keyboard accessible.
+
+Selecting an item navigates to /<category>?filter=<tag> — NavBar does NOT call APIs.
+
+Page component reads query param filter and calls fetchByTag(filter).
+
+Provide breadcrumbs showing Movies / Comedy on movies page.
+
+OFFLINE BEHAVIOR & CACHE STRATEGY
+
+Local cache (local_cache table) stores recent claim metadata (100–200 items default).
+
+On fetch: read local cache first; if results < 6 or expired -> call Odysee.
+
+TTL default 30 minutes.
+
+Use ETag / updatedAt if present to do delta checks (best-effort).
+
+When offline: show offline banner, allow Downloads & Favorites only; player uses stream_offline local HTTP server endpoint to play downloaded videos.
+
+DOWNLOAD FLOW
+
+Renderer calls downloadQuality(claimId, quality, url).
+
+Rust streams to .tmp file, emits download-progress events.
+
+On success: optionally encrypt with AES-GCM (toggle) and move to vault.
+
+Insert offline_meta row (claimId, quality, filename, fileSize, addedAt).
+
+Downloads page shows active downloads and completed ones; supports delete and play (calls stream_offline).
+
+PLAYER DESIGN & CONTROLS
+
+Use Plyr wrapper or custom simple wrapper around <video>.
+
+Player selects initial quality from quality.ts.
+
+Save progress every 20–30s via save_progress.
+
+Mid-playback buffering policy:
+
+If waiting occurs >= 3 times in 10s → degrade to next lower quality and show toast.
+
+If stable for 10s and navigator.connection improved → step up quality if autoUpgrade setting enabled.
+
+When playing offline: player uses returned http://127.0.0.1:<port>/movies/<uuid>.
+
+TESTING
+
+Vitest unit tests:
+
+quality.ts logic
+
+search normalization
+
+local_cache insert & read
+
+Playwright E2E:
+
+App startup; hero loads
+
+Search flows
+
+Play video, simulate waiting events (mock)
+
+Download test: mock small file download (tauri commands mocked) and test offline playback
+
+Provide TESTS.md with exact commands to run unit and E2E tests.
+
+BUILD / PACKAGING / RELEASE
+
+Provide npm run tauri:dev and npm run tauri:build scripts.
+
+tauri:build must produce platform installers (kiyya_1.0.2_x64-setup.exe) in src-tauri/target/release/bundle/.
+
+Release flow for human operator (document in README):
+
+Update APP_VERSION in .env / tauri.conf.json.
+
+npm run tauri:build.
+
+Go to kiyya-releases public repo → Create Release → Tag v{APP_VERSION} → Title Kiyya {APP_VERSION} → Upload installer asset as release asset.
+
+Update version.json in kiyya-releases repo with latestVersion, minSupportedVersion, releaseNotes, downloadUrl.
+
+App checks VITE_UPDATE_MANIFEST_URL at startup. Do not place binaries inside the repo file tree — use GitHub Releases assets.
+
+UPDATE / FORCED UPDATE LOGIC
+
+version.json shape:
+
+{
+  "latestVersion": "1.1.0",
+  "minSupportedVersion": "1.0.3",
+  "releaseNotes": "• Improved buffering logic",
+  "downloadUrl": "https://github.com/YOURNAME/kiyya-releases/releases/latest"
+}
+
+
+Startup:
+
+Fetch manifest (if offline -> continue).
+
+If compare(localVersion, minSupportedVersion) === -1 → show ForcedUpdateScreen (full-screen modal; only Update or Exit).
+
+Else if compare(localVersion, latestVersion) === -1 → show optional banner (can be dismissed, remember choice locally).
+
+Clicking Update opens downloadUrl in external browser via Tauri open.
+
+No automatic downloads or silent installers.
+
+ACCESSIBILITY & INTERNATIONALIZATION
+
+Use alt text for all images: alt={title}.
+
+Keyboard navigation for NavBar, Carousels, Modals.
+
+Provide aria-* roles in dropdowns and player controls.
+
+Respect prefers-reduced-motion.
+
+Prepare for i18n later (text in a single i18n module).
+
+DOCUMENTATION DELIVERABLES (must produce)
+
+README.md — run/dev/build/release instructions
+
+ARCHITECTURE.md — diagrams and data flow
+
+UPLOADER_GUIDE.md — exact tags, playlist rules, sample titles
+
+DEVELOPER_NOTES.md — constraints, known limitations, how to change channel id
+
+TESTS.md — run unit & E2E tests & CI guidance
+
+CHANGELOG.md — example release notes format
+
+SECURITY & PRIVACY
+
+No secrets in frontend.
+
+Limit Tauri network to needed domains only.
+
+Do not embed API tokens in app.
+
+Local encryption optional, documented; warn user about losing downloads if key lost.
+
+UX POLISH & DESIGN CHOICES (Glass Aurora + Cinematic)
+
+Base background #05070A
+
+Glass accents used only for nav, modals, settings, update gate (backdrop-filter blur on fixed containers)
+
+Accent gradient for CTAs: cyan → purple
+
+Typography: Inter
+
+Posters and content remain the visual hero (no glass on cards)
+
+Use Bento grids sparingly for Discover shortcuts only
+
+Respect contrast and legibility
+
+ACCEPTANCE CRITERIA (QA)
+
+Home loads hero from hero_trailer tags (random).
+
+Movies rows show content by category tags exactly per CATEGORIES config.
+
+Series pages build seasons from playlists; if missing, fallback to SxxEyy parse.
+
+Player chooses initial quality by connection + last used; downgrades on repeated buffering.
+
+Downloads save and show in Downloads page; offline playback works via local HTTP streaming.
+
+Progress saved and resumed within ±2 seconds.
+
+Search returns local cached results and falls back to channel search when needed.
+
+Forced update blocks older versions below minSupportedVersion.
+
+Tests cover quality selection, search normalization, local cache, E2E for main flows.
+
+SAMPLE FILES & SNIPPETS TO ADD TO REPO (todo list for Kiro)
+
+src/config/categories.ts — category mapping
+
+src/hooks/useUpdateChecker.ts — manifest fetch + compare
+
+src/renderer/components/Hero.tsx — implement hero structure and GSAP timeline
+
+src/renderer/components/NavBar.tsx — uses CATEGORIES and navigation without calling APIs
+
+src/renderer/pages/SeriesDetail.tsx — playlist handling + fallback
+
+src/renderer/lib/semver.ts — version compare
+
+src-tauri/src/commands.rs — all Tauri commands described above
+
+UPLOADER_GUIDE.md — copy uploader rules
+
+version.json sample in kiyya-releases repo
+
+FINAL NOTES & GUIDANCE FOR KIRO
+
+Be explicit: follow tag naming and playlist titles exactly.
+
+Keep code defensive: handle missing fields, offline cases, and API timeouts.
+
+Keep animations minimal and accessible.
+
+Build custom Tailwind components; do not import broad UI libraries.
+
+Use local_cache as the first source of truth for UI performance and fall back to remote calls only when necessary.
+
+Add comments/TODOs where trade-offs exist (e.g., encryption, signature).
+
+Include tests and CI-friendly scripts to run them.
+
+Produce production-grade README/ARCHITECTURE docs and clearly documented release steps for human operators.

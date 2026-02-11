@@ -1,0 +1,641 @@
+1) Defensive Odysee parsing & variability
+
+API fields vary. Never assume shape. For every get / claim_search response:
+
+Safely access value.thumbnail, value.thumbnail.url, value.sd_url, value.hd_url, value.streams, value.source, value.stream, value.files. Provide a deterministic extractor function:
+
+function extractThumbnails(claim) { /* try value.thumbnail.url, value.thumbnail, claim.thumbnail, claim.value?.thumbnail?.url etc */ }
+function extractVideoUrls(claim) { /* return map { "360p": ..., "480p": ..., "720p":..., "1080p":... } by checking sd_url/hd_url/streams array/url patterns */ }
+
+
+If HLS (.m3u8) appears, map it to the highest quality (and mark type=hls).
+
+If multiple streams present, prefer explicit quality labels; otherwise infer from resolution or filename. Document heuristics.
+
+If claim resolution returns no usable stream, return a clear error object to frontend and log the raw claim for debugging.
+
+2) Pagination, rate limiting, retries, backoff
+
+fetch_channel_claims must support pagination (page, page_size) and either:
+
+aggregate results with server-side pagination until limit reached, or
+
+return a cursor object so frontend can request more.
+
+Implement exponential backoff for 429/5xx; default: 1 retry + jitter, escalate to 3 retries for critical calls (resolve_claim). Use 10s timeout per request (configurable).
+
+Expose rateLimitExceeded flags to renderer so UI can show “Try again” rather than fail silently.
+
+3) Local cache & invalidation
+
+TTL default 30 minutes; expose CACHE_TTL_MS in settings.
+
+Use updatedAt/claim.timestamp or ETag-like behavior when available: on fetch, compare updatedAt and update DB only if changed.
+
+Provide a forceRefresh param to bypass TTL from UI.
+
+Store raw resolved JSON in local_cache.raw (compressed if large) to ease debugging and future migrations.
+
+4) Robust playlist handling (ordering is sacred)
+
+Playlist discovery must:
+
+playlist_search for channel -> collect playlist metadata (id, title, claim_id)
+
+For a given playlist id, call playlist resolve endpoint (or get on playlist uri) to fetch ordered items (claim ids) — do NOT assume the search result contains ordered items.
+
+Save exact playlist order to DB (playlists table with item position indexes).
+
+When resolving playlist items, fetch metadata in batch (resolve multiple claim ids in one get call) to reduce calls.
+
+If playlist title parsing to extract season number fails, mark playlist as unparsed and surface in UI with “Season inferred” badge.
+
+5) Title parsing & fallback grouping
+
+Implement robust regexes for SxxEyy variants:
+
+S?0?(\d{1,2})[ .xX-]*E?0?(\d{1,3})
+
+Support 1x10, s1 e10, season 1 episode 10, roman numerals optional.
+
+Normalizer must:
+
+produce canonical S01E10 form
+
+return null if not parseable
+
+Fallback grouping order:
+
+Playlist membership (always authoritative)
+
+series_sX tag if present
+
+Title parse SxxEyy
+
+If none, group under “Unsorted” season and show UI tooltip asking uploader to fix metadata.
+
+6) Search sanitization & SQL safety
+
+All user input used in SQL LIKE queries must be sanitized/escaped (avoid % injection leading to unexpected behavior).
+
+Use prepared statements and parameter binding.
+
+Add full-text search index (if sqlite FTS is available) or at minimum titleLower and descriptionLower indices to accelerate LIKE queries.
+
+Limit returned rows (default 50) and page results.
+
+7) Downloads: resumable, atomic, and safe
+
+Support resuming downloads:
+
+If interrupted, keep .tmp file and resume by Range header if server supports it.
+
+If server does not support Range, start over but detect partially downloaded file and reattempt.
+
+Write first to .tmp, verify checksum (if available) or file size heuristics, then move atomically using file rename into vault.
+
+Implement file locking to prevent concurrent writes to same vault item.
+
+For encryption:
+
+Provide deterministic key management: if encryptDownloads = true, ask user at first enable to set a passphrase stored only in OS keystore (documented). Do NOT hard-code key in app or DB.
+
+If key lost, show explicit irreversible warning. Provide UI export/import key instructions.
+
+Emit progress via download-progress events carrying { claimId, quality, percent, bytesWritten, totalBytes }.
+
+8) Local HTTP server: Range & concurrency
+
+Local server MUST implement:
+
+Byte Range header support
+
+Accept-Ranges: bytes header
+
+Correct Content-Length and 206 Partial Content responses
+
+Concurrent clients support (player + other preview)
+
+If encrypted, decrypt on-the-fly streaming slices (stream decrypt chunk-by-chunk)
+
+Choose a small server (warp/axum) with minimal dependencies; ensure random free port binding and socket lifetime is managed. Emit the local-server-started event including port and path.
+
+9) Quality selection + buffering heuristics — be exact
+
+Save last quality per claim in progress.
+
+Buffering policy:
+
+Count waiting events; track timestamps.
+
+If >=3 waiting events within rolling 10s AND current quality is not the lowest available -> switch down one quality and show non-blocking toast: “Switching to 480p to improve playback”.
+
+After 10s of stable playback, attempt one-step upgrade if autoUpgrade true.
+
+If switching fails or no lower quality available -> show “Playback may be impacted”.
+
+10) Hero: session caching and retry policy
+
+On app boot:
+
+Call hero tag search for 20 items.
+
+If API fails, use local_cache hero pool (persisted thumbnails and claims).
+
+Random pick per app session; persist sessionHeroId in memory until restart.
+
+Hero video auto-play rules:
+
+Try autoplay muted; if playback promise rejects, fallback to poster and show big Play CTA.
+
+Provide "shuffle hero" button for manual rotate.
+
+11) NavBar dropdown–page wiring specifics
+
+NavBar: purely presentational; on selection navigate to /<category> with ?filter=<tag>.
+
+MoviesPage handler:
+
+On mount or query param change:
+
+Check local cache for tag results.
+
+If results < 6 or empty -> call fetch_channel_claims.
+
+Merge and dedupe by claimId.
+
+Provide loadMore button and/or infinite scroll triggering paginated fetches.
+
+12) Forced update — edge cases
+
+If manifest fetch fails due to network -> allow app to continue (no forced block).
+
+If manifest fetched and minSupportedVersion > local:
+
+Display full-screen forced update with two buttons: Update (open URL) and Exit (close app).
+
+Prevent any background tasks (downloads, DB writes) from running while forced modal is shown.
+
+Remember user “defer optional update” choice in local settings with expiry (e.g., dismiss for 24h).
+
+13) Logging, local diagnostics, and error reporting
+
+Local logs: <app_data>/Kiyya/logs/app.log rotate by size (e.g., 5MB) and keep 3 files.
+
+Write structured logs for:
+
+Odysee responses (warnings for missing fields)
+
+Download errors
+
+Local server errors
+
+DB migration issues
+
+Optional Sentry integration: add as commented plugin with instructions to enable (DSN outside source code, environment-based).
+
+Add a “Collect Debug Package” action in Settings that zips small logs + DB metadata (no user data like vault contents) for manual support.
+
+14) Database & migration details
+
+Add a migrations folder and a simple migration runner:
+
+Version table { version INTEGER }
+
+On startup, run migrations in order and log failures.
+
+Ensure indices:
+
+CREATE INDEX idx_localcache_titleLower ON local_cache(titleLower);
+
+CREATE INDEX idx_localcache_tags ON local_cache(tags);
+
+CREATE INDEX idx_progress_updatedAt ON progress(updatedAt);
+
+Use transactions for multi-step updates (download complete → insert offline_meta → commit).
+
+15) Testing — exact scenarios Kiro must produce
+
+Unit tests (Vitest):
+
+compareVersions (edge cases: pre-release, missing patch)
+
+chooseInitialQuality under simulated navigator.connection
+
+normalizeQuery for many query variants: 1x10, s1 e03, season one ep ten, random whitespace and punctuation.
+
+extractVideoUrls given crafted claim JSON shapes including HLS, mp4 arrays, nested value.streams.
+
+Playwright E2E:
+
+Startup with mocked Odysee responses: hero shows and autoplay attempts.
+
+Series flow: playlists exist -> seasons listed in correct order (check DOM order).
+
+Playlist missing: fallback grouping by SxxEyy parsed from titles.
+
+Download flow: mock reqwest stream and assert download-progress events; verify offline playback via local server URL.
+
+Forced update: set manifest minSupportedVersion higher and assert UI blocking and app close behavior on Exit.
+
+Add CI step that runs unit tests and headless playwright with mocks.
+
+16) Packaging notes & platform quirks
+
+For Windows:
+
+Produce installer .exe. Name pattern: kiyya_{version}_x64-setup.exe.
+
+Document code signing expectations (warning: unsiged installers may trigger SmartScreen).
+
+For macOS:
+
+Produce .dmg or .pkg. Document notarization steps.
+
+In README.md, give human release checklist (bump version, build, create release, push release notes, update version.json).
+
+Do NOT auto-update or auto-install — only provide external link.
+
+17) Accessibility specifics (concrete)
+
+All interactive elements: role, tabindex, aria-label or clear visible label.
+
+Carousels: support keyboard left/right focusing on first interactive item.
+
+Modal: trap focus while open, restore focus on close.
+
+Use high-contrast text on glass layers; test with contrast checker.
+
+Respect prefers-reduced-motion: no animation, instant states.
+
+18) Performance budget
+
+Max initial local_cache hydrate: 100–200 items (configurable).
+
+Hero video preload: only metadata and poster; do not pre-download large trailers automatically.
+
+Lazy-load rows as user scrolls; use IntersectionObserver.
+
+Use requestIdleCallback for non-critical background cache writes.
+
+19) Developer ergonomics / TODO output
+
+Kiro must generate TODO comments where it chose tradeoffs, listing alternatives + reasons:
+
+Encryption: keystore vs user passphrase
+
+Resume download approach if server not supporting Range
+
+Local server approach: warp vs axum
+
+Kiro must output a DEV_NOTES.md summarizing these TODOs.
+
+20) Deliver concrete snippets Kiro MUST include
+
+src-tauri/src/commands.rs with actual skeletons including emit_event("download-progress", ..).
+
+src/hooks/useUpdateChecker.ts with fetch, compare, state machine.
+
+src/renderer/components/Hero.tsx with GSAP timeline (guarded by prefers-reduced-motion).
+
+src/renderer/pages/SeriesDetail.tsx showing playlist_search -> playlist resolution -> episode rendering with fallback parse.
+
+tests/ unit / e2e spec files (examples are required).
+
+UPLOADER_GUIDE.md copy from Basic Prompt 1.
+
+21) Acceptance checklist Kiro must append to PR
+
+Kiro’s PR (or generated output) must include a checklist with passing items:
+
+ All Tauri commands implemented and documented
+
+ Local HTTP server supports Range and concurrent streaming
+
+ Downloads resumable & atomic
+
+ DB migrations present and run cleanly
+
+ Hero randomization + session caching works
+
+ Playlist order respected (tests assert)
+
+ Forced update logic present and tested
+
+ Unit tests pass
+
+ E2E tests pass locally (mocked)
+
+ README, ARCHITECTURE, UPLOADER_GUIDE, TESTS, DEVELOPER_NOTES produced
+
+ Logging and diagnostics present
+
+ All user-facing text uses i18n keys or is clearly marked
+
+
+
+Be conservative and explicit. When uncertain about an API behavior, implement a defensive fallback, log the raw data, and surface a safe UI message rather than crashing. Produce small, testable increments and include TODOs for production decisions that require ops (code signing, notarization, key management). Output code, tests, docs, and a short DEV_NOTES.md describing where you made assumptions.
+
+
+
+Addendum — Silent Killers & Mandatory Fixes
+
+Purpose: implement explicit fixes for five operational problems that would otherwise break a Tauri streaming app in the wild. These items are mandatory. For each fix Kiro must implement code, tests, docs, and TODOs where choices remain.
+
+0) General rules for this addendum
+
+Add everything to the main repo skeleton (private repo). Do not assume any external paid service.
+
+Each change must include unit tests and at least one Playwright E2E test (mocked responses where necessary).
+
+Add a short DEV_NOTES section at top of PR describing tradeoffs and any ops steps required (e.g., code signing).
+
+Add acceptance tests to CI pipeline (unit + headless E2E).
+
+1) Gateway Failover (The “Gateway Dead-End”)
+
+Problem: single gateway hardcoding makes app brick if that gateway is down / rate-limited.
+
+Requirements (must implement):
+
+Add a configurable array GATEWAYS in src/config/gateways.ts (renderer + tauri-read config):
+
+export const GATEWAYS = [
+  "https://api.na-backend.odysee.com/api/v1/proxy",
+  "https://api.lbry.tv/api/v1/proxy",
+  "https://api.odysee.com/api/v1/proxy"
+];
+
+
+All Odysee calls must be made through a small Gateway client that:
+
+Tries the current gateway first.
+
+If it receives network error, 429, 5xx, or blocked User-Agent, it retries the same request on the next gateway in the prioritized list.
+
+Uses exponential backoff + jitter between gateway retries (initial 300ms → 1s → 2s).
+
+Exposes the gateway used in logs and returns it to the frontend (for diagnostic).
+
+Implement per-request attempt limits (max 3 gateways).
+
+Allow dynamic override in Settings (advanced): admin array to reorder the list locally.
+
+Acceptance tests:
+
+Unit: mock first gateway returns 500, second returns 200 — verify the client uses second and returns data.
+
+E2E: simulate gateway 1 down and show UI still loads with no user-visible errors.
+
+Dev note: log failing gateway URLs and error codes to <app_data>/Kiyya/logs/gateway.log.
+
+2) Local HTTP Streamer & Range Support (The “Range Header” bug)
+
+Problem: video seeking fails if local streamer doesn't support HTTP Range requests and partial content.
+
+Requirements (must implement in Rust backend):
+
+Implement a minimal HTTP streamer (warp or axum) that:
+
+Binds to 127.0.0.1:0 and returns the port (emit local-server-started).
+
+Serves endpoints like /movies/:uuid.
+
+Supports Range header:
+
+Parse Range: bytes=start-end
+
+Return 206 Partial Content with correct Content-Range and Content-Length.
+
+Set Accept-Ranges: bytes.
+
+Support concurrent reads (player + other clients).
+
+Stream from vault file (decrypt on the fly if encrypted); read file slices and stream with Tokio async reads — do not load full file into memory.
+
+Tests:
+
+Unit: requesting a specific range returns correct bytes and headers.
+
+E2E: download a small test file, start local streamer, open stream URL in player, test seeking to 75% of duration and confirm playback continues.
+
+Edge cases:
+
+If Range header missing → return 200 with full content.
+
+For invalid ranges → return 416 Range Not Satisfiable.
+
+Pseudocode hint (for Kiro):
+
+Use warp/axum to read request headers, compute start, end, open file with tokio::fs::File::open, .seek() to start, and stream chunk_size bytes; set correct headers.
+
+3) HLS & Codec Compatibility (The “Platform Codec Trap”)
+
+Problem: system WebViews differ in codec support (WebKit on macOS has more restrictions).
+
+Requirements:
+
+Player architecture
+
+Integrate hls.js as the primary handler for .m3u8 (HLS) playlists when native HLS is not supported on the platform.
+
+Use native <video> playback for MP4 if HTMLVideoElement.canPlayType() indicates support for video/mp4; codecs="avc1.42E01E, mp4a.40.2".
+
+At runtime, perform capability checks:
+
+const canPlayMp4 = video.canPlayType('video/mp4; codecs="avc1.42E01E, mp4a.40.2"');
+
+
+If claim stream is .m3u8, use hls.js if MediaSource HLS not supported natively.
+
+Claim filtering & UI
+
+When resolving claim, inspect videoUrls and set a compatibility flag:
+
+compatible: true if at least one stream is likely playable (HLS or MP4 H.264/AAC).
+
+compatible: false otherwise.
+
+If compatible is false:
+
+Show a clear UI message on Movie/Detail page: “This video may not play on your platform. Try Play via external player or Download.”
+
+Fallback strategy
+
+For .m3u8 — use hls.js first (if platform needs it); for mp4 with unknown codecs — attempt canPlayType; if false, show message.
+
+Unit/E2E tests
+
+Unit: mock claims with m3u8 and mp4 and assert player chooses hls.js or native accordingly.
+
+E2E: emulate canPlayType returning unsupported and verify UI shows compatibility message.
+
+Dev note: Do NOT attempt to transcode client-side. Only detect and present a helpful fallback.
+
+4) SQLite Migrations & Data Safety (The “SQLite Migration Wall”)
+
+Problem: schema changes will break user DB if migration strategy missing.
+
+Requirements (mandatory):
+
+Use a migration-driven approach:
+
+Use sqlx (with sqlite feature) or tauri-plugin-sql with migrations directory.
+
+Add migrations/ folder with numbered migration files: 001_init.sql, 002_add_playlists.sql, etc.
+
+On startup, run a migration runner:
+
+Read DB version in meta table.
+
+Execute pending migrations inside a transaction; on failure, roll back and log.
+
+Maintain backward compatibility policy:
+
+Add new columns as NULLable when possible.
+
+If removing columns, mark as deprecated and add to next major migration docs.
+
+Tests:
+
+Unit: simulate old DB schema, run migrations, assert new columns exist and old data preserved.
+
+E2E: migration test where you copy a sample older DB and run app start.
+
+Dev note: add DB_MIGRATIONS.md explaining how to write and test migrations.
+
+5) Code Signing / Manual Install Guide (The “SmartScreen / Notarization” Barrier)
+
+Problem: Unsigned installers trigger OS warnings.
+
+Requirements (docs + optional automation):
+
+Documentation (MANDATORY):
+
+Add RELEASE_SIGNING.md that:
+
+Explains code-signing costs and why it matters.
+
+Shows how to sign Windows installer (signtool) — placeholder commands and where to insert certificate.
+
+Shows macOS notarization steps (altool, stapler) — placeholder commands.
+
+If signing not available, provide Manual Install Guide:
+
+Windows:
+
+Right-click the downloaded .exe → “Properties” → “Unblock” (if present) → Run as Administrator or “More info” → “Run anyway”.
+
+Or use PowerShell to run installer: Start-Process -FilePath .\kiyya_1.0.2_x64-setup.exe -Verb RunAs
+
+Warn users about SmartScreen and recommend verifying SHA256 published on release page.
+
+macOS:
+
+Open Finder → right-click the app → Open → Confirm “Open” in Security & Privacy (Gatekeeper) dialog.
+
+Explain xattr -d com.apple.quarantine /path/to/App.app as advanced option (documented with clear warnings).
+
+Include a short FAQ and sample screenshots.
+
+Optional automation TODO: annotate CI pipeline with placeholders for code signing steps (commented out).
+
+Acceptance: the release process doc must exist and include both signing and manual install steps.
+
+Note: Kiro must not attempt to bypass OS security programmatically.
+
+6) Disk Space Check / Download Safety
+
+Problem: Downloading large files without checking free disk space can fill disk.
+
+Requirements:
+
+Before starting a download, check free space on target volume (platform-appropriate):
+
+Rust: use fs2::statvfs or sysinfo crate to check free bytes at <app_data>/Kiyya/vault.
+
+If freeBytes < estimatedSize + buffer(200MB), abort start and show UI: “Not enough disk space. Need X MB free.”
+
+If server doesn't supply content-length, attempt HEAD request to estimate size; if not available, present a warning and proceed only if user confirms.
+
+Tests:
+
+Unit: mock low-disk scenario; ensure download refused and error message returned.
+
+E2E: attempt download with mocked small file and verify disk-check logic ran.
+
+7) Global Search Fallback (useDebouncedSearch behavior)
+
+Problem: Empty search can produce blank screens.
+
+Requirement (must implement):
+
+In useDebouncedSearch:
+
+Run local cache search first.
+
+If local results count === 0:
+
+Trigger secondary fetch: fetch_channel_claims({ any_tags: [], page_size: 10, order_by: ["release_time"] }) (10 most recent uploads).
+
+Alternatively, fetch Community Picks if available.
+
+Merge results and show user-friendly message: “No exact matches. Here are the latest uploads you might like.”
+
+Provide a telemetry/logging event for zero-results queries for future tuning.
+
+Acceptance test:
+
+Simulate search that returns 0 from local cache and 0 from remote; app should still surface latest uploads (if any) or show friendly empty state with suggestions.
+
+8) Extra diagnostics & developer ergonomics
+
+Add a health-check API in Tauri commands: diagnostics() returns gateway health, DB version, free disk bytes, local-server status, last successful manifest fetch timestamp. Expose in Settings > Diagnostics UI.
+
+Add a --debug flag for dev builds that prints chosen gateway and streaming port to console.
+
+9) Required tests for this Addendum (Kiro must implement)
+
+Gateway failover unit test (mock gateways).
+
+Range header streaming unit test (Rust).
+
+HLS vs native detection unit tests (player logic).
+
+Migration runner test with sample old DB.
+
+Disk-check test before download (simulate low disk).
+
+Search fallback E2E (mock no results and assert latest uploads displayed).
+
+Playwright scenario: download -> start local stream -> seek -> play continues.
+
+10) Acceptance checklist (append to PR)
+
+Kiro must add this checklist to its PR and mark items as implemented and tested:
+
+ Gateway failover with prioritized list + logs
+
+ Local HTTP streamer supports Range + concurrent streaming
+
+ hls.js integration + codec compatibility checks + fallback UI
+
+ Migration system implemented and tested with sample older DB
+
+ Manual Install Guide & Signing docs added
+
+ Disk space check before starting downloads
+
+ Global search fallback implemented
+
+ Diagnostics endpoint and Settings UI showing health
+
+ All tests for this addendum pass in CI
+
+Final instruction to Kiro (copy verbatim)
+
+Read basic_prompt_1.txt, basic_prompt_1_hardened_addendum.txt, and this basic_prompt_1_hardened_addendum_silent_killers.txt in that order. Treat this silent-killers addendum as mandatory. For each required item above, provide code, unit tests, Playwright E2E tests, and documentation. Add TODOs and a small DEV_NOTES.md explaining any decisions. Do not continue until all tests above pass locally.
+Validate the last section against Basic Prompt 1 + Hardened Addendum.
+List bugs, edge cases, and missing tests.
+Do not proceed until fixed.
+and run a test command after each section or route codes are written!

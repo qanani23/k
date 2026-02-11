@@ -1,0 +1,9 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc ba26141e62fe756aadf90876138b301164b2bc64151769d777d9570091fb7b24 # shrinks to claim_id = "0aaaa00000a000aaaa00000000a0aa00a0a0aaaa", tags = ["\u{b}"], url = "https://a/a.mp4"
+cc 813a0be8a1348fc92224f12a56db668dd53d61f2cbdae40ffce807abbcc29b84 # shrinks to claim_id = "a0a0a000aa0aa00a0aa0a00aa0aaa000aaa000aa", valid_url = "https://./_.mp4", invalid_url = "0", height = 360
+cc 4b56e3f19baf750a3ace87e2add1c290b3b31bae3e1311d9a3b7247806c85741 # shrinks to claim_id = "a00aa0a00a00aaaa000aaa0000aaa00aa0000a00", valid_url = "https://./a.mp4", invalid_url = "0", height = 360

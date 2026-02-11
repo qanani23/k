@@ -1,0 +1,11 @@
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "link-arg=/STACK:16777216"]
+
+[target.x86_64-pc-windows-gnu]
+rustflags = ["-C", "link-arg=-Wl,--stack,16777216"]
+
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-C", "link-arg=-Wl,-zstack-size=16777216"]
+
+[target.x86_64-apple-darwin]
+rustflags = ["-C", "link-arg=-Wl,-stack_size,0x1000000"]

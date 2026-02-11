@@ -1,0 +1,13 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc fdeabbb7abbe1ef0f87c62792e61368a37ba5f9a55f4f1c86a6abc1c192bd4e5 # shrinks to claim_id = "bdcdc5a46e92a568a7b24c5cfe61c5fbfa0ba510", title = "wxMY893 V ", ttl_seconds = 1
+cc daa18ad96fb659cac8073d4866bec3a89454daa1f2ac96803b6178db73628f92 # shrinks to claim_id = "db53194b770ded5ada39a6bdccf9e777c698e1de", title = "  k6fMV3   ja0GVr0M", ttl_seconds = 1
+cc b218de6b4c0a686c7ef123b389f24539761d24e69f1b4c43a097306faa06f6ad # shrinks to claim_id = "c0dd099a78c356e722da3d1b8a815b41baba0bb1", title = "dIxm7R ", ttl_seconds = 60
+cc c369672da5fb95805545e760b0dc09c8f10491648b268106ce00e9146577aa5f # shrinks to claim_id = "bb3fa9a6a24d1bad890a1d1c08fdea45622d3c59", title = "5QwhLrIZP  iYZgIaI6 1", ttl_seconds = 1800
+cc 84070cdcaeb6f65703bb6ed41c035c82ed2484e469b9236bed3b2f3e3c61f691 # shrinks to claim_id = "2d012c5d8bd4cea49afdfed94d825c5a7cdcb05f", title = "vM2GP 4SIp4SN55TorQu p4D4U6 oRBMeEnJe X 2w", ttl_seconds = 3600
+cc 70013d6504f9a0ed658c4248c92a84dbd370be7619626055f3d3f1b262c46b0e # shrinks to claim_id = "b0f3f157b5fa92b0e4e9d6b85adfb0a67b63ae8d", title = "g  DukO1mp vYC Y5 o bzk  TN WT6", ttl_seconds = 1800
+cc 3101604cdc58267d7bfc280e850611982a945523a96a01010af25a450f5cad28 # shrinks to claim_id = "aab093aecdfabfffc50f8f32b348b7be55eee0ea", title = "B 00f S9ih ", ttl_seconds = 3600

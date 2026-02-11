@@ -1,0 +1,116 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+
+# Production builds
+dist/
+build/
+*.local
+
+# Tauri
+src-tauri/target/
+src-tauri/WixTools/
+
+# Environment files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+.loadpath
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.cache
+
+# Debug files
+*.pdb
+*.ilk
+
+# Application data (for testing)
+vault/
+*.db
+*.db-shm
+*.db-wal
+
+# Build artifacts
+*.msi
+*.exe
+*.dmg
+*.deb
+*.rpm
+*.AppImage
+*.app
+
+# Code signing
+*.p12
+*.pfx
+*.cer
+*.crt
+*.key
+
+# Rust
+**/*.rs.bk
+Cargo.lock
+
+# Package manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Misc
+.cache/
+.parcel-cache/
+.next/
+out/
+.nuxt/
+.vuepress/dist/
+.serverless/
+.fusebox/
+.dynamodb/
+.tern-port
+.vscode-test
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
