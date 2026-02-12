@@ -363,28 +363,28 @@ This document outlines the complete implementation plan for the Kiyya desktop st
 - [x] Implement comprehensive error logging
 - [x] Add diagnostic information collection
 - [x] Create debug package generation
-- [ ] Implement crash reporting (optional)
-- [ ] Add health check endpoints
+- [x] Implement crash reporting (optional)
+- [x] Add health check endpoints
 
 **Test Command**: `npm run test:error-scenarios`
 **Expected**: All error scenarios handled gracefully
 
 ### 11.2 Security Audit
-- [ ] Validate network restrictions work (only Odysee domains + update manifest)
-- [ ] Test filesystem access limitations (app data folder only)
-- [ ] Verify encryption key management (OS keystore only, never in code/DB)
-- [ ] Audit input sanitization (no unwrap() on external data, no unchecked casts)
-- [ ] Test security boundary enforcement
-- [ ] Verify tag system immutability (hard-coded tags never change)
+- [x] Validate network restrictions work (only Odysee domains + update manifest) 
+- [x] Test filesystem access limitations (app data folder only)
+- [x] Verify encryption key management (OS keystore only, never in code/DB)
+- [x] Audit input sanitization (no unwrap() on external data, no unchecked casts)
+- [x] Test security boundary enforcement
+- [x] Verify tag system immutability (hard-coded tags never change)
 
 **Test Command**: `npm run security:audit`
 **Expected**: No security vulnerabilities detected, all boundaries enforced
 
 ### 11.3 Final Acceptance Testing
-- [ ] Verify core correctness properties pass (content categorization, cache TTL, series ordering, gateway failover, HTTP Range, version comparison, content parsing)
-- [ ] Test complete user workflows with deterministic unit/E2E tests
-- [ ] Validate offline functionality
-- [ ] Test gateway failover in production
+- [x] Verify core correctness properties pass (content categorization, cache TTL, series ordering, gateway failover, HTTP Range, version comparison, content parsing)
+- [x] Test complete user workflows with deterministic unit/E2E tests
+- [x] Validate offline functionality
+- [x] Test gateway failover in production
 - [ ] Verify update mechanism works with emergency disable
 - [ ] Confirm tag system immutability (no dynamic tags, no inference)
 - [ ] Validate NavBar routes only (never fetches)

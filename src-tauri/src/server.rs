@@ -44,12 +44,13 @@ impl LocalServer {
     }
 
     pub async fn start(&mut self) -> Result<u16> {
-        if self.port.is_some() {
-            return Ok(self.port.unwrap());
+        if let Some(port) = self.port {
+            return Ok(port);
         }
 
         // Bind to random available port
-        let addr: SocketAddr = "127.0.0.1:0".parse().unwrap();
+        let addr: SocketAddr = "127.0.0.1:0".parse()
+            .expect("Hardcoded localhost address should always parse successfully");
         let listener = tokio::net::TcpListener::bind(addr).await?;
         let local_addr = listener.local_addr()?;
         let port = local_addr.port();
@@ -71,7 +72,31 @@ impl LocalServer {
                 }
             });
 
+        // Health check endpoint
+        let active_streams_health = self.active_streams.clone();
+        let health_route = warp::path!("health")
+            .and(warp::get())
+            .and_then(move || {
+                let active_streams = active_streams_health.clone();
+                async move {
+                    health_check(active_streams).await
+                }
+            });
+
+        // Status endpoint with detailed information
+        let active_streams_status = self.active_streams.clone();
+        let status_route = warp::path!("status")
+            .and(warp::get())
+            .and_then(move || {
+                let active_streams = active_streams_status.clone();
+                async move {
+                    status_check(active_streams).await
+                }
+            });
+
         let routes = movies_route
+            .or(health_route)
+            .or(status_route)
             .with(warp::cors().allow_any_origin().allow_headers(vec!["range"]).allow_methods(vec!["GET", "HEAD", "OPTIONS"]));
 
         // Start server
@@ -226,6 +251,47 @@ async fn serve_content(
             ).into_response())
         }
     }
+}
+
+/// Health check endpoint - returns 200 OK if server is running
+async fn health_check(
+    _active_streams: Arc<RwLock<HashMap<String, StreamInfo>>>,
+) -> std::result::Result<impl Reply, Rejection> {
+    Ok(warp::reply::with_status(
+        warp::reply::json(&serde_json::json!({
+            "status": "ok",
+            "service": "kiyya-local-server"
+        })),
+        StatusCode::OK,
+    ))
+}
+
+/// Status endpoint - returns detailed server status
+async fn status_check(
+    active_streams: Arc<RwLock<HashMap<String, StreamInfo>>>,
+) -> std::result::Result<impl Reply, Rejection> {
+    let streams = active_streams.read().await;
+    let active_count = streams.len();
+    
+    // Calculate total size of registered content
+    let total_size: u64 = streams.values().map(|s| s.file_size).sum();
+    
+    // Count encrypted vs unencrypted streams
+    let encrypted_count = streams.values().filter(|s| s.encrypted).count();
+    let unencrypted_count = active_count - encrypted_count;
+    
+    Ok(warp::reply::with_status(
+        warp::reply::json(&serde_json::json!({
+            "status": "ok",
+            "service": "kiyya-local-server",
+            "active_streams": active_count,
+            "encrypted_streams": encrypted_count,
+            "unencrypted_streams": unencrypted_count,
+            "total_content_size_bytes": total_size,
+            "uptime_info": "Server is running"
+        })),
+        StatusCode::OK,
+    ))
 }
 
 fn parse_range_header(range: &str, file_size: u64) -> Result<(u64, u64)> {
@@ -817,8 +883,6 @@ mod tests {
         
         server.stop().await.unwrap();
     }
-}
-
 
     #[tokio::test]
     async fn test_encrypted_file_streaming() {
@@ -1042,3 +1106,128 @@ mod tests {
         server.stop().await.unwrap();
         encryption_manager.disable_encryption().unwrap();
     }
+
+    #[tokio::test]
+    async fn test_health_check_endpoint() {
+        let mut server = LocalServer::new().await.unwrap();
+        let port = server.start().await.unwrap();
+        
+        let client = reqwest::Client::new();
+        let url = format!("http://127.0.0.1:{}/health", port);
+        
+        // Test health check endpoint
+        let response = client.get(&url).send().await.unwrap();
+        
+        assert_eq!(response.status(), 200);
+        
+        let json: serde_json::Value = response.json().await.unwrap();
+        assert_eq!(json["status"], "ok");
+        assert_eq!(json["service"], "kiyya-local-server");
+        
+        server.stop().await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_status_endpoint_no_streams() {
+        let mut server = LocalServer::new().await.unwrap();
+        let port = server.start().await.unwrap();
+        
+        let client = reqwest::Client::new();
+        let url = format!("http://127.0.0.1:{}/status", port);
+        
+        // Test status endpoint with no active streams
+        let response = client.get(&url).send().await.unwrap();
+        
+        assert_eq!(response.status(), 200);
+        
+        let json: serde_json::Value = response.json().await.unwrap();
+        assert_eq!(json["status"], "ok");
+        assert_eq!(json["service"], "kiyya-local-server");
+        assert_eq!(json["active_streams"], 0);
+        assert_eq!(json["encrypted_streams"], 0);
+        assert_eq!(json["unencrypted_streams"], 0);
+        assert_eq!(json["total_content_size_bytes"], 0);
+        
+        server.stop().await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_status_endpoint_with_streams() {
+        use tempfile::TempDir;
+        use tokio::fs::write;
+        
+        let temp_dir = TempDir::new().unwrap();
+        let file1 = temp_dir.path().join("video1.mp4");
+        let file2 = temp_dir.path().join("video2.mp4");
+        let file3 = temp_dir.path().join("video3.mp4");
+        
+        // Create test files with different sizes
+        let content1: Vec<u8> = vec![0; 1000];
+        let content2: Vec<u8> = vec![0; 2000];
+        let content3: Vec<u8> = vec![0; 3000];
+        
+        write(&file1, &content1).await.unwrap();
+        write(&file2, &content2).await.unwrap();
+        write(&file3, &content3).await.unwrap();
+        
+        let mut server = LocalServer::new().await.unwrap();
+        let port = server.start().await.unwrap();
+        
+        // Register content (2 unencrypted, 1 encrypted)
+        server.register_content("video1", file1, false).await.unwrap();
+        server.register_content("video2", file2, false).await.unwrap();
+        server.register_content("video3", file3, true).await.unwrap();
+        
+        let client = reqwest::Client::new();
+        let url = format!("http://127.0.0.1:{}/status", port);
+        
+        // Test status endpoint with active streams
+        let response = client.get(&url).send().await.unwrap();
+        
+        assert_eq!(response.status(), 200);
+        
+        let json: serde_json::Value = response.json().await.unwrap();
+        assert_eq!(json["status"], "ok");
+        assert_eq!(json["service"], "kiyya-local-server");
+        assert_eq!(json["active_streams"], 3);
+        assert_eq!(json["encrypted_streams"], 1);
+        assert_eq!(json["unencrypted_streams"], 2);
+        assert_eq!(json["total_content_size_bytes"], 6000);
+        
+        server.stop().await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_health_and_status_endpoints_cors() {
+        let mut server = LocalServer::new().await.unwrap();
+        let port = server.start().await.unwrap();
+        
+        let client = reqwest::Client::new();
+        
+        // Test CORS on health endpoint
+        let health_url = format!("http://127.0.0.1:{}/health", port);
+        let response = client
+            .get(&health_url)
+            .header("Origin", "http://localhost:3000")
+            .send()
+            .await
+            .unwrap();
+        
+        assert_eq!(response.status(), 200);
+        assert!(response.headers().contains_key("access-control-allow-origin"));
+        
+        // Test CORS on status endpoint
+        let status_url = format!("http://127.0.0.1:{}/status", port);
+        let response = client
+            .get(&status_url)
+            .header("Origin", "http://localhost:3000")
+            .send()
+            .await
+            .unwrap();
+        
+        assert_eq!(response.status(), 200);
+        assert!(response.headers().contains_key("access-control-allow-origin"));
+        
+        server.stop().await.unwrap();
+    }
+}

@@ -11,6 +11,7 @@ mod models;
 mod error;
 mod error_logging;
 mod diagnostics;
+mod crash_reporting;
 mod migrations;
 mod logging;
 mod path_security;
@@ -50,6 +51,9 @@ mod api_parsing_test;
 
 #[cfg(test)]
 mod security_restrictions_test;
+
+#[cfg(test)]
+mod filesystem_access_test;
 
 #[cfg(test)]
 mod cache_ttl_property_test;
@@ -93,6 +97,15 @@ mod integration_test;
 #[cfg(test)]
 mod error_logging_test;
 
+#[cfg(test)]
+mod encryption_key_management_test;
+
+#[cfg(test)]
+mod tag_immutability_test;
+
+#[cfg(test)]
+mod gateway_production_test;
+
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tauri::{Manager, State};
@@ -117,6 +130,13 @@ async fn main() {
     if let Err(e) = crate::logging::init_logging() {
         eprintln!("Failed to initialize logging: {}", e);
         // Continue without logging rather than crash
+    }
+    
+    // Initialize crash reporting (optional)
+    if let Ok(app_data_path) = crate::path_security::get_app_data_dir() {
+        crate::crash_reporting::init_crash_reporting(&app_data_path);
+    } else {
+        eprintln!("Failed to get app data directory for crash reporting");
     }
     
     // CRITICAL: Emergency disable check runs before all other startup logic
@@ -144,6 +164,8 @@ async fn main() {
             commands::open_external,
             commands::get_diagnostics,
             commands::collect_debug_package,
+            commands::get_recent_crashes,
+            commands::clear_crash_log,
             commands::save_favorite,
             commands::remove_favorite,
             commands::get_favorites,

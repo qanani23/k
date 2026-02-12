@@ -214,24 +214,53 @@ mod tests {
 
     #[tokio::test]
     async fn test_encryption_key_removed_from_keystore_on_disable() {
-        let mut manager = EncryptionManager::new().unwrap();
+        // Clean up any existing keys first to ensure test isolation
+        let mut cleanup_manager = EncryptionManager::new().unwrap();
+        let _ = cleanup_manager.disable_encryption();
 
-        // Enable and then disable encryption
-        manager.enable_encryption("test_key_removal").unwrap();
+        // Wait a bit to ensure keystore operations complete
+        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+
+        // Create a fresh manager and enable encryption
+        let mut manager = EncryptionManager::new().unwrap();
+        let enable_result = manager.enable_encryption("test_key_removal");
+        assert!(
+            enable_result.is_ok(),
+            "Encryption should be enabled successfully"
+        );
+        
+        // Verify encryption is enabled in the current manager
+        assert!(
+            manager.is_encryption_enabled(),
+            "Encryption should be enabled in current manager"
+        );
+        
+        // Now disable encryption
         let disable_result = manager.disable_encryption();
         assert!(
             disable_result.is_ok(),
-            "Encryption should be disabled successfully"
+            "Encryption should be disabled successfully: {:?}",
+            disable_result.err()
         );
 
-        // Try to load key - should not be found
+        // Wait a bit to ensure keystore deletion completes
+        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+
+        // Try to load key with a new manager - should not be found
         let mut manager2 = EncryptionManager::new().unwrap();
         let load_result = manager2.load_encryption_from_keystore();
-        assert!(load_result.is_ok(), "Load operation should not error");
+        assert!(
+            load_result.is_ok(),
+            "Load operation should not error: {:?}",
+            load_result.err()
+        );
         assert!(
             !load_result.unwrap(),
             "Key should not be found after removal"
         );
+        
+        // Final cleanup to ensure no keys are left
+        let _ = manager2.disable_encryption();
     }
 
     #[tokio::test]

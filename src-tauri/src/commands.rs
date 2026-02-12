@@ -507,6 +507,28 @@ pub async fn collect_debug_package(
     Ok(debug_package_path.to_string_lossy().to_string())
 }
 
+// Crash reporting commands
+
+#[command]
+pub async fn get_recent_crashes(limit: usize) -> Result<Vec<crate::crash_reporting::CrashReport>> {
+    info!("Getting recent crashes (limit: {})", limit);
+    
+    let crashes = crate::crash_reporting::get_recent_crashes(limit)
+        .map_err(|e| KiyyaError::Io(e))?;
+    
+    Ok(crashes)
+}
+
+#[command]
+pub async fn clear_crash_log() -> Result<()> {
+    info!("Clearing crash log");
+    
+    crate::crash_reporting::clear_crash_log()
+        .map_err(|e| KiyyaError::Io(e))?;
+    
+    Ok(())
+}
+
 // Cache management commands
 
 #[command]

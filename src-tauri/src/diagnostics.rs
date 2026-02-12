@@ -131,6 +131,9 @@ pub async fn collect_debug_package(
     // Add gateway health logs
     add_gateway_logs(&mut zip, app_data_path, options).await?;
     
+    // Add crash reports (if any)
+    add_crash_reports(&mut zip, app_data_path, options).await?;
+    
     // Add configuration (sanitized)
     add_sanitized_config(&mut zip, db, options).await?;
     
@@ -362,6 +365,30 @@ async fn add_gateway_logs(
         }
     } else {
         warn!("Gateway log file does not exist: {:?}", gateway_log_path);
+    }
+    
+    Ok(())
+}
+
+async fn add_crash_reports(
+    zip: &mut ZipWriter<fs::File>,
+    app_data_path: &Path,
+    options: FileOptions,
+) -> Result<()> {
+    let crash_log_path = app_data_path.join("logs").join("crash.log");
+    
+    if crash_log_path.exists() {
+        if let Ok(content) = fs::read_to_string(&crash_log_path) {
+            // Include all crash reports (they should be relatively small)
+            zip.start_file("logs/crash.log", options)?;
+            zip.write_all(content.as_bytes())?;
+            
+            info!("Added crash log to debug package");
+        }
+    } else {
+        // No crashes - add a note
+        zip.start_file("logs/crash.log", options)?;
+        zip.write_all(b"No crashes recorded.\n")?;
     }
     
     Ok(())
