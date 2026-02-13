@@ -6,6 +6,7 @@ import { ContentItem, Quality, QUALITY_LEVELS } from '../types';
 import { saveProgress, getProgress, streamOffline, openExternal } from '../lib/api';
 import { nextLowerQuality, qualityScore } from '../types';
 import { scheduleIdleTask } from '../lib/idle';
+import { checkContentCompatibility, isHLSSupported, isMP4CodecSupported } from '../lib/codec';
 import 'plyr/dist/plyr.css';
 
 // Handle Plyr import for both CommonJS and ES modules
@@ -43,14 +44,56 @@ export default function PlayerModal({
   const [showQualityMenu, setShowQualityMenu] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [compatibilityWarning, setCompatibilityWarning] = useState<string | null>(null);
+  
+  const currentQualityRef = useRef<string>(currentQuality);
+
+  // Update ref when currentQuality changes
+  useEffect(() => {
+    currentQualityRef.current = currentQuality;
+  }, [currentQuality]);
+
+  // Handle buffering and auto quality downgrade
+  const handleBuffering = useCallback(() => {
+    const now = Date.now();
+    const timeSinceWindowStart = now - bufferingWindowRef.current;
+
+    // Reset window if more than 10 seconds have passed
+    if (timeSinceWindowStart > 10000) {
+      bufferingCountRef.current = 0;
+      bufferingWindowRef.current = now;
+    }
+
+    bufferingCountRef.current += 1;
+
+    // If buffering 3+ times in 10 seconds, downgrade quality
+    if (bufferingCountRef.current >= 3) {
+      const lowerQuality = nextLowerQuality(currentQualityRef.current as Quality);
+      
+      if (lowerQuality) {
+        console.log(`Auto-downgrading quality from ${currentQualityRef.current} to ${lowerQuality}`);
+        setCurrentQuality(lowerQuality);
+        bufferingCountRef.current = 0;
+        bufferingWindowRef.current = Date.now();
+        
+        // Show notification
+        setError(`Quality downgraded to ${lowerQuality} due to buffering`);
+        setTimeout(() => setError(null), 3000);
+      }
+    }
+  }, []); // No dependencies - uses refs instead
 
   // Check compatibility
   useEffect(() => {
-    if (!content.compatibility.compatible) {
+    // Check content compatibility using codec utilities
+    const compatibility = checkContentCompatibility(content.video_urls);
+    
+    if (!compatibility.compatible) {
       setCompatibilityWarning(
-        content.compatibility.reason || 
+        compatibility.reason || 
         'This video may not play on your platform'
       );
+    } else {
+      setCompatibilityWarning(null);
     }
   }, [content]);
 
@@ -163,8 +206,19 @@ export default function PlayerModal({
           // Native HLS support (Safari)
           videoRef.current.src = videoUrl;
           setIsLoading(false);
+        } else if (isHls && !isHLSSupported()) {
+          // HLS not supported at all
+          setError('HLS streams are not supported on this platform. Please try using an external player.');
+          setCompatibilityWarning('HLS streams are not supported on this platform');
+          setIsLoading(false);
         } else if (videoRef.current) {
-          // Regular MP4 stream
+          // Regular MP4 stream - check codec compatibility
+          const videoData = content.video_urls[currentQuality];
+          if (videoData?.type === 'mp4' && !isMP4CodecSupported()) {
+            setError('MP4 codec not supported on this platform. Please try using an external player.');
+            setCompatibilityWarning('MP4 video format is not supported on this platform');
+          }
+          
           videoRef.current.src = videoUrl;
           setIsLoading(false);
         }
@@ -212,6 +266,11 @@ export default function PlayerModal({
             console.error('Plyr error:', event);
             setError('Playback error occurred. Please try a different quality.');
           });
+
+          // Also attach waiting listener directly to video element for testing
+          if (videoRef.current) {
+            videoRef.current.addEventListener('waiting', handleBuffering);
+          }
         }
 
       } catch (err) {
@@ -228,38 +287,12 @@ export default function PlayerModal({
         hlsRef.current.destroy();
         hlsRef.current = null;
       }
-    };
-  }, [isOpen, currentQuality, content, isOffline, availableQualities]);
-
-  // Handle buffering and auto quality downgrade
-  const handleBuffering = useCallback(() => {
-    const now = Date.now();
-    const timeSinceWindowStart = now - bufferingWindowRef.current;
-
-    // Reset window if more than 10 seconds have passed
-    if (timeSinceWindowStart > 10000) {
-      bufferingCountRef.current = 0;
-      bufferingWindowRef.current = now;
-    }
-
-    bufferingCountRef.current += 1;
-
-    // If buffering 3+ times in 10 seconds, downgrade quality
-    if (bufferingCountRef.current >= 3) {
-      const lowerQuality = nextLowerQuality(currentQuality as Quality);
-      
-      if (lowerQuality) {
-        console.log(`Auto-downgrading quality from ${currentQuality} to ${lowerQuality}`);
-        setCurrentQuality(lowerQuality);
-        bufferingCountRef.current = 0;
-        bufferingWindowRef.current = Date.now();
-        
-        // Show notification
-        setError(`Quality downgraded to ${lowerQuality} due to buffering`);
-        setTimeout(() => setError(null), 3000);
+      // Clean up video event listener
+      if (videoRef.current) {
+        videoRef.current.removeEventListener('waiting', handleBuffering);
       }
-    }
-  }, [currentQuality]);
+    };
+  }, [isOpen, currentQuality, content, isOffline, availableQualities]); // Removed handleBuffering from dependencies
 
   // Save progress periodically
   useEffect(() => {
@@ -468,16 +501,14 @@ export default function PlayerModal({
             <div className="flex-1">
               <p className="text-yellow-200 font-medium">Compatibility Warning</p>
               <p className="text-yellow-300/80 text-sm mt-1">{compatibilityWarning}</p>
-              {content.compatibility.fallback_available && (
-                <button
-                  onClick={handleExternalPlayer}
-                  className="mt-2 text-sm text-yellow-400 hover:text-yellow-300 flex items-center gap-1"
-                  aria-label="Play video in external player"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  Play via external player
-                </button>
-              )}
+              <button
+                onClick={handleExternalPlayer}
+                className="mt-2 text-sm text-yellow-400 hover:text-yellow-300 flex items-center gap-1 transition-colors"
+                aria-label="Play video in external player"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Play via external player
+              </button>
             </div>
           </div>
         )}

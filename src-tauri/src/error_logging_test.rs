@@ -93,7 +93,7 @@ async fn test_mark_resolved() {
 async fn test_cleanup_old_errors() {
     let (db, _temp_dir) = create_test_db().await;
     
-    // Log and resolve some errors
+    // Log and resolve some errors with old timestamps
     for i in 0..5 {
         let error = KiyyaError::gateway_error(format!("Old error {}", i));
         log_error_simple(&db, &error).await.unwrap();
@@ -104,6 +104,9 @@ async fn test_cleanup_old_errors() {
     for error in errors {
         mark_error_resolved(&db, error.id).await.unwrap();
     }
+    
+    // Wait a moment to ensure timestamps are in the past
+    tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
     
     // Cleanup should remove resolved errors older than 0 days (all of them)
     let deleted = cleanup_old_errors(&db, 0).await.unwrap();

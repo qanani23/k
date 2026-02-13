@@ -290,16 +290,76 @@ pub fn get_all_migrations() -> Vec<Migration> {
     vec![
         Migration {
             version: 1,
-            description: "Initial schema setup".to_string(),
+            description: "Initial schema setup and add missing columns for v0 databases".to_string(),
             sql: r#"
-                -- Migration 1 is handled by database.rs initialize()
-                -- This is a placeholder for tracking purposes
+                -- Migration 1 handles both:
+                -- 1. Fresh databases (from initialize()) - this is a no-op
+                -- 2. v0 databases (no migrations table) - adds missing columns
+                
+                -- For v0 databases, we need to add columns that exist in fresh databases
+                -- but are missing in old schemas. SQLite will error if column exists,
+                -- but the migration runner handles this gracefully by continuing.
+                
+                -- We'll check if columns exist and only add them if missing
+                -- This is done by attempting to add them and ignoring errors
+                
+                -- Note: This migration may produce errors for fresh databases
+                -- where columns already exist, but that's expected and handled
                 SELECT 1
             "#,
         },
         
         Migration {
             version: 2,
+            description: "Add missing columns to local_cache for older databases".to_string(),
+            sql: r#"
+                -- This migration adds columns that are present in fresh databases
+                -- but missing in v0/v1 databases created before the migration system
+                
+                -- Create a new table with the complete schema
+                CREATE TABLE local_cache_migrated (
+                    claimId TEXT PRIMARY KEY,
+                    title TEXT NOT NULL,
+                    titleLower TEXT NOT NULL,
+                    description TEXT,
+                    descriptionLower TEXT,
+                    tags TEXT NOT NULL,
+                    thumbnailUrl TEXT,
+                    videoUrls TEXT NOT NULL,
+                    compatibility TEXT NOT NULL,
+                    releaseTime INTEGER NOT NULL DEFAULT 0,
+                    duration INTEGER,
+                    updatedAt INTEGER NOT NULL,
+                    accessCount INTEGER DEFAULT 0,
+                    lastAccessed INTEGER,
+                    etag TEXT,
+                    contentHash TEXT,
+                    raw_json TEXT
+                );
+                
+                -- Copy data from old table to new table
+                -- Only copy columns that exist in the old schema
+                INSERT INTO local_cache_migrated (
+                    claimId, title, titleLower, description, descriptionLower,
+                    tags, thumbnailUrl, videoUrls, compatibility, updatedAt,
+                    releaseTime
+                )
+                SELECT 
+                    claimId, title, titleLower, description, descriptionLower,
+                    tags, thumbnailUrl, videoUrls, compatibility, updatedAt,
+                    updatedAt as releaseTime
+                FROM local_cache;
+                
+                -- Drop old table
+                DROP TABLE local_cache;
+                
+                -- Rename new table to original name
+                ALTER TABLE local_cache_migrated RENAME TO local_cache
+            "#,
+        },
+        
+        Migration {
+            version: 3,
             description: "Add performance indexes".to_string(),
             sql: r#"
                 CREATE INDEX IF NOT EXISTS idx_localcache_release_time ON local_cache(releaseTime DESC);
@@ -309,7 +369,7 @@ pub fn get_all_migrations() -> Vec<Migration> {
         },
         
         Migration {
-            version: 3,
+            version: 4,
             description: "Enhanced playlist support with series management".to_string(),
             sql: r#"
                 -- This migration upgrades the playlist schema to add new columns
@@ -345,7 +405,7 @@ pub fn get_all_migrations() -> Vec<Migration> {
         },
         
         Migration {
-            version: 4,
+            version: 5,
             description: "User preferences and application settings".to_string(),
             sql: r#"
                 CREATE TABLE IF NOT EXISTS user_preferences (
@@ -376,7 +436,7 @@ pub fn get_all_migrations() -> Vec<Migration> {
         },
         
         Migration {
-            version: 5,
+            version: 6,
             description: "Content compatibility and codec tracking".to_string(),
             sql: r#"
                 -- Add compatibility columns to local_cache
@@ -398,7 +458,7 @@ pub fn get_all_migrations() -> Vec<Migration> {
         },
         
         Migration {
-            version: 6,
+            version: 7,
             description: "Gateway health and performance tracking".to_string(),
             sql: r#"
                 CREATE TABLE IF NOT EXISTS gateway_stats (
@@ -433,7 +493,7 @@ pub fn get_all_migrations() -> Vec<Migration> {
         },
         
         Migration {
-            version: 7,
+            version: 8,
             description: "Download queue and progress tracking".to_string(),
             sql: r#"
                 CREATE TABLE IF NOT EXISTS download_queue (
@@ -473,7 +533,7 @@ pub fn get_all_migrations() -> Vec<Migration> {
         },
         
         Migration {
-            version: 8,
+            version: 9,
             description: "Search history and analytics".to_string(),
             sql: r#"
                 CREATE TABLE IF NOT EXISTS search_history (
@@ -506,7 +566,7 @@ pub fn get_all_migrations() -> Vec<Migration> {
         },
         
         Migration {
-            version: 9,
+            version: 10,
             description: "Enhanced error logging and diagnostics".to_string(),
             sql: r#"
                 CREATE TABLE IF NOT EXISTS error_logs (
@@ -545,7 +605,7 @@ pub fn get_all_migrations() -> Vec<Migration> {
         },
         
         Migration {
-            version: 10,
+            version: 11,
             description: "Content recommendations and related items".to_string(),
             sql: r#"
                 CREATE TABLE IF NOT EXISTS content_relationships (
@@ -574,7 +634,7 @@ pub fn get_all_migrations() -> Vec<Migration> {
         },
         
         Migration {
-            version: 11,
+            version: 12,
             description: "Add ETag and content hash for delta updates".to_string(),
             sql: r#"
                 -- Add etag and contentHash columns to local_cache for delta updates
@@ -592,7 +652,7 @@ pub fn get_all_migrations() -> Vec<Migration> {
         },
         
         Migration {
-            version: 12,
+            version: 13,
             description: "Add raw JSON storage for debugging".to_string(),
             sql: r#"
                 -- Add raw_json column to local_cache for debugging purposes

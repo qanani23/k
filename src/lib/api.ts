@@ -7,6 +7,7 @@ import {
   AppConfig, 
   DiagnosticsData,
   CacheStats,
+  MemoryStats,
   DownloadRequest,
   StreamOfflineResponse
 } from '../types';

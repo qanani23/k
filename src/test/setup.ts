@@ -20,6 +20,10 @@ const mockTauri = {
 // @ts-ignore
 global.__TAURI__ = mockTauri;
 
+// Mock Tauri IPC function
+// @ts-ignore
+window.__TAURI_IPC__ = vi.fn().mockResolvedValue({ event: 'test', payload: {} });
+
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

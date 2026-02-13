@@ -385,10 +385,10 @@ This document outlines the complete implementation plan for the Kiyya desktop st
 - [x] Test complete user workflows with deterministic unit/E2E tests
 - [x] Validate offline functionality
 - [x] Test gateway failover in production
-- [ ] Verify update mechanism works with emergency disable
-- [ ] Confirm tag system immutability (no dynamic tags, no inference)
-- [ ] Validate NavBar routes only (never fetches)
-- [ ] Test hero system strict rules (session persistence, no retry loops)
+- [x] Verify update mechanism works with emergency disable
+- [x] Confirm tag system immutability (no dynamic tags, no inference)
+- [x] Validate NavBar routes only (never fetches)
+- [x] Test hero system strict rules (session persistence, no retry loops)
 
 **Test Command**: `npm run test:acceptance`
 **Expected**: All acceptance criteria met, no architectural drift detected
@@ -397,26 +397,26 @@ This document outlines the complete implementation plan for the Kiyya desktop st
 
 Upon completion, verify all items are implemented and tested:
 
-- [ ] All Tauri commands implemented and documented
-- [ ] Local HTTP server supports Range and concurrent streaming
-- [ ] Downloads resumable & atomic
-- [ ] DB migrations present and run cleanly
-- [ ] Hero randomization + session caching works
-- [ ] Playlist order respected (tests assert)
-- [ ] Forced update logic present and tested
-- [ ] Unit tests pass
-- [ ] E2E tests pass locally (mocked)
-- [ ] README, ARCHITECTURE, UPLOADER_GUIDE, TESTS, DEVELOPER_NOTES produced
-- [ ] Logging and diagnostics present
-- [ ] All user-facing text uses i18n keys or is clearly marked
-- [ ] Gateway failover with prioritized list + logs
-- [ ] hls.js integration + codec compatibility checks + fallback UI
-- [ ] Migration system implemented and tested with sample older DB
-- [ ] Manual Install Guide & Signing docs added
-- [ ] Disk space check before starting downloads
-- [ ] Global search fallback implemented
-- [ ] Diagnostics endpoint and Settings UI showing health
-- [ ] All tests for hardened addendum pass in CI
+- [x] All Tauri commands implemented and documented
+- [x] Local HTTP server supports Range and concurrent streaming
+- [x] Downloads resumable & atomic
+- [x] DB migrations present and run cleanly
+- [x] Hero randomization + session caching works
+- [x] Playlist order respected (tests assert)
+- [x] Forced update logic present and tested
+- [x] Unit tests pass
+- [x] E2E tests pass locally (mocked)
+- [x] README, ARCHITECTURE, UPLOADER_GUIDE, TESTS, DEVELOPER_NOTES produced
+- [x] Logging and diagnostics present
+- [x] All user-facing text uses i18n keys or is clearly marked
+- [x] Gateway failover with prioritized list + logs
+- [x] hls.js integration + codec compatibility checks + fallback UI
+- [x] Migration system implemented and tested with sample older DB
+- [x] Manual Install Guide & Signing docs added
+- [x] Disk space check before starting downloads
+- [x] Global search fallback implemented
+- [x] Diagnostics endpoint and Settings UI showing health
+- [x] All tests for hardened addendum pass in CI
 
 ## Notes
 

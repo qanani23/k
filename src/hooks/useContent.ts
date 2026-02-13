@@ -131,33 +131,34 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
 
 // Specialized hooks for common use cases
 
-export function useMovies(filterTag?: string) {
+export function useMovies(filterTag?: string, options?: Partial<UseContentOptions>) {
   const tags = filterTag ? ['movie', filterTag] : ['movie'];
-  return useContent({ tags });
+  return useContent({ tags, ...options });
 }
 
-export function useSeries(filterTag?: string) {
+export function useSeries(filterTag?: string, options?: Partial<UseContentOptions>) {
   const tags = filterTag ? ['series', filterTag] : ['series'];
-  return useContent({ tags });
+  return useContent({ tags, ...options });
 }
 
-export function useSitcoms() {
-  return useContent({ tags: ['sitcom'] });
+export function useSitcoms(options?: Partial<UseContentOptions>) {
+  return useContent({ tags: ['sitcom'], ...options });
 }
 
-export function useKidsContent(filterTag?: string) {
+export function useKidsContent(filterTag?: string, options?: Partial<UseContentOptions>) {
   const tags = filterTag ? ['kids', filterTag] : ['kids'];
-  return useContent({ tags });
+  return useContent({ tags, ...options });
 }
 
-export function useHeroContent() {
-  return useContent({ tags: ['hero_trailer'], limit: 20 });
+export function useHeroContent(options?: Partial<UseContentOptions>) {
+  return useContent({ tags: ['hero_trailer'], limit: 20, ...options });
 }
 
-export function useSearch(query: string) {
+export function useSearch(query: string, options?: Partial<UseContentOptions>) {
   return useContent({ 
     text: query, 
-    autoFetch: !!query.trim() 
+    autoFetch: !!query.trim(),
+    ...options
   });
 }
 

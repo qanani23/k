@@ -89,6 +89,9 @@ mod diagnostics_test;
 mod migration_property_test;
 
 #[cfg(test)]
+mod download_resumable_atomic_property_test;
+
+#[cfg(test)]
 mod database_optimization_test;
 
 #[cfg(test)]
@@ -105,6 +108,12 @@ mod tag_immutability_test;
 
 #[cfg(test)]
 mod gateway_production_test;
+
+#[cfg(test)]
+mod migration_clean_run_test;
+
+#[cfg(test)]
+mod migration_older_db_test;
 
 use std::sync::Arc;
 use tokio::sync::Mutex;

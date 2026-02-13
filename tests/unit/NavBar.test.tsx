@@ -234,6 +234,105 @@ describe('NavBar Component', () => {
       // The component is rendered successfully without any API dependencies
       expect(screen.getByText('Kiyya')).toBeInTheDocument();
     });
+
+    it('should only read from CATEGORIES config without triggering fetches', async () => {
+      // Spy on window.fetch to ensure no API calls are made
+      const fetchSpy = vi.spyOn(window, 'fetch');
+      
+      render(
+        <BrowserRouter>
+          <NavBar updateState={defaultUpdateState} />
+        </BrowserRouter>
+      );
+
+      // Open all dropdowns to verify no fetches occur
+      const moviesButton = screen.getAllByText('Movies')[0];
+      fireEvent.click(moviesButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('All Movies')).toBeInTheDocument();
+      });
+
+      const seriesButton = screen.getAllByText('Series')[0];
+      fireEvent.click(seriesButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('All Series')).toBeInTheDocument();
+      });
+
+      // Verify no fetch calls were made
+      expect(fetchSpy).not.toHaveBeenCalled();
+      
+      fetchSpy.mockRestore();
+    });
+
+    it('should render dropdown items from configuration without API calls', async () => {
+      render(
+        <BrowserRouter>
+          <NavBar updateState={defaultUpdateState} />
+        </BrowserRouter>
+      );
+
+      // Open Movies dropdown
+      const moviesButton = screen.getAllByText('Movies')[0];
+      fireEvent.click(moviesButton);
+
+      await waitFor(() => {
+        // Verify all filter items are rendered from config
+        expect(screen.getByText('All Movies')).toBeInTheDocument();
+        expect(screen.getByText('Comedy')).toBeInTheDocument();
+        expect(screen.getByText('Action')).toBeInTheDocument();
+        expect(screen.getByText('Romance')).toBeInTheDocument();
+      });
+
+      // These items should be rendered immediately from config, not fetched
+      // If they were fetched, there would be a loading state or delay
+    });
+
+    it('should use navigation for category clicks without fetching', async () => {
+      const fetchSpy = vi.spyOn(window, 'fetch');
+      
+      render(
+        <BrowserRouter>
+          <NavBar updateState={defaultUpdateState} />
+        </BrowserRouter>
+      );
+
+      // Open dropdown and click a filter
+      const moviesButton = screen.getAllByText('Movies')[0];
+      fireEvent.click(moviesButton);
+
+      await waitFor(() => {
+        const comedyButton = screen.getByText('Comedy');
+        fireEvent.click(comedyButton);
+      });
+
+      // Verify no fetch calls were made during navigation
+      expect(fetchSpy).not.toHaveBeenCalled();
+      
+      fetchSpy.mockRestore();
+    });
+
+    it('should construct correct route paths from category configuration', async () => {
+      render(
+        <BrowserRouter>
+          <NavBar updateState={defaultUpdateState} />
+        </BrowserRouter>
+      );
+
+      // Open Movies dropdown
+      const moviesButton = screen.getAllByText('Movies')[0];
+      fireEvent.click(moviesButton);
+
+      await waitFor(() => {
+        // Verify dropdown items are buttons (for navigation), not links with hrefs
+        const comedyButton = screen.getByText('Comedy').closest('button');
+        expect(comedyButton).toBeInTheDocument();
+        expect(comedyButton?.tagName).toBe('BUTTON');
+      });
+
+      // NavBar uses navigate() function to route, not direct API calls
+    });
   });
 
   describe('Update Banner', () => {

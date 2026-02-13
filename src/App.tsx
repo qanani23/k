@@ -170,6 +170,27 @@ function App() {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
+  // Global keyboard shortcut for search (/)
+  useEffect(() => {
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      // Check if user is typing in an input, textarea, or contenteditable element
+      const target = event.target as HTMLElement;
+      const isTyping = 
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.contentEditable === 'true';
+
+      // Only trigger if not typing and '/' key is pressed
+      if (!isTyping && event.key === '/') {
+        event.preventDefault();
+        navigate('/search');
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [navigate]);
+
   // Show loading screen during initialization
   if (isInitializing) {
     return (

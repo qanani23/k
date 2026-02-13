@@ -499,7 +499,7 @@ describe('Home Page', () => {
     });
   });
 
-  it('handles loading state for content rows', () => {
+  it('handles loading state for content rows', async () => {
     // Create a fresh mock for this test
     const loadingHook = {
       content: [],
@@ -509,10 +509,9 @@ describe('Home Page', () => {
     };
 
     // Temporarily replace the mock
-    const originalMock = vi.mocked(useContentHooks.useMovies);
     vi.mocked(useContentHooks.useMovies).mockReturnValue(loadingHook);
 
-    render(
+    const { unmount } = render(
       <BrowserRouter>
         <Home />
       </BrowserRouter>
@@ -521,11 +520,11 @@ describe('Home Page', () => {
     // Row should still render even in loading state
     expect(screen.getByTestId('row-movies')).toBeInTheDocument();
     
-    // Restore original mock
-    vi.mocked(useContentHooks.useMovies).mockImplementation(originalMock);
+    // Clean up
+    unmount();
   });
 
-  it('handles error state for content rows', () => {
+  it('handles error state for content rows', async () => {
     // Create a fresh mock for this test
     const errorHook = {
       content: [],
@@ -536,7 +535,7 @@ describe('Home Page', () => {
 
     vi.mocked(useContentHooks.useMovies).mockReturnValue(errorHook);
 
-    render(
+    const { unmount } = render(
       <BrowserRouter>
         <Home />
       </BrowserRouter>
@@ -544,6 +543,9 @@ describe('Home Page', () => {
 
     // Row should still render even in error state
     expect(screen.getByTestId('row-movies')).toBeInTheDocument();
+    
+    // Clean up
+    unmount();
   });
 
   it('handles hero play click navigation', async () => {
@@ -580,7 +582,7 @@ describe('Home Page', () => {
     });
   });
 
-  it('handles empty content gracefully', () => {
+  it('handles empty content gracefully', async () => {
     // Create fresh mocks for this test
     vi.mocked(useContentHooks.useMovies).mockReturnValue({
       content: [],
@@ -611,7 +613,7 @@ describe('Home Page', () => {
       refetch: vi.fn()
     });
 
-    render(
+    const { unmount } = render(
       <BrowserRouter>
         <Home />
       </BrowserRouter>
@@ -620,5 +622,8 @@ describe('Home Page', () => {
     // Page should still render without crashing
     expect(screen.getByTestId('hero-component')).toBeInTheDocument();
     expect(screen.getByTestId('row-movies')).toBeInTheDocument();
+    
+    // Clean up
+    unmount();
   });
 });

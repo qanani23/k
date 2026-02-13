@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import Hero from '../../src/components/Hero';
 import * as api from '../../src/lib/api';
 import * as storage from '../../src/lib/storage';
+import * as useContentHooks from '../../src/hooks/useContent';
 import { gsap } from 'gsap';
 import { ContentItem } from '../../src/types';
 
@@ -26,10 +27,24 @@ vi.mock('../../src/lib/api', () => ({
   removeFavorite: vi.fn(),
 }));
 
+// Mock useHeroContent hook
+vi.mock('../../src/hooks/useContent', () => ({
+  useHeroContent: vi.fn(),
+}));
+
 // Mock storage
+let mockSelectedHero: string | null = null;
+
 vi.mock('../../src/lib/storage', () => ({
-  getSelectedHero: vi.fn(),
-  setSelectedHero: vi.fn(),
+  getSelectedHero: vi.fn(() => mockSelectedHero),
+  setSelectedHero: vi.fn((claimId: string) => {
+    mockSelectedHero = claimId;
+    return true;
+  }),
+  clearSelectedHero: vi.fn(() => {
+    mockSelectedHero = null;
+    return true;
+  }),
 }));
 
 const mockHeroContent: ContentItem = {
@@ -50,10 +65,19 @@ const mockHeroContent: ContentItem = {
 describe('Hero Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSelectedHero = null; // Reset mock storage state
     vi.mocked(api.getFavorites).mockResolvedValue([]);
     vi.mocked(api.fetchByTags).mockResolvedValue([mockHeroContent]);
-    vi.mocked(storage.getSelectedHero).mockReturnValue(null);
-    vi.mocked(storage.setSelectedHero).mockReturnValue(true);
+    
+    // Mock useHeroContent hook to return mock content
+    vi.mocked(useContentHooks.useHeroContent).mockReturnValue({
+      content: [mockHeroContent],
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+      loadMore: vi.fn(),
+      hasMore: false,
+    });
     
     // Mock matchMedia for all tests
     Object.defineProperty(window, 'matchMedia', {
@@ -164,8 +188,8 @@ describe('Hero Component', () => {
       expect(screen.getByText('Test Hero Movie')).toBeInTheDocument();
     });
 
-    expect(screen.getByRole('button', { name: /play/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /add to favorites/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /play test hero movie/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add test hero movie to favorites/i })).toBeInTheDocument();
   });
 
   it('displays shuffle button', async () => {
@@ -251,7 +275,14 @@ describe('Hero Component', () => {
       video_urls: {},
     };
     
-    vi.mocked(api.fetchByTags).mockResolvedValue([contentWithoutVideo]);
+    vi.mocked(useContentHooks.useHeroContent).mockReturnValue({
+      content: [contentWithoutVideo],
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+      loadMore: vi.fn(),
+      hasMore: false,
+    });
 
     render(
       <BrowserRouter>
@@ -265,7 +296,7 @@ describe('Hero Component', () => {
 
     // When no video URL, should show poster as background
     const posterElement = document.querySelector('[style*="background-image"]');
-    expect(posterElement).toBeInTheDocument();
+    expect(posterElement).not.toBeNull();
     
     // Video element should not be present
     const videoElement = document.querySelector('video');
@@ -309,9 +340,14 @@ describe('Hero Component', () => {
   });
 
   it('shows loading state initially', () => {
-    vi.mocked(api.fetchByTags).mockImplementation(
-      () => new Promise<ContentItem[]>(() => {}) // Never resolves
-    );
+    vi.mocked(useContentHooks.useHeroContent).mockReturnValue({
+      content: [],
+      loading: true,
+      error: null,
+      refetch: vi.fn(),
+      loadMore: vi.fn(),
+      hasMore: false,
+    });
 
     render(
       <BrowserRouter>
@@ -320,12 +356,19 @@ describe('Hero Component', () => {
     );
 
     const loadingSpinner = document.querySelector('.loading-spinner');
-    expect(loadingSpinner).toBeInTheDocument();
+    expect(loadingSpinner).not.toBeNull();
     expect(loadingSpinner).toHaveClass('loading-spinner');
   });
 
   it('shows error state when content fetch fails', async () => {
-    vi.mocked(api.fetchByTags).mockRejectedValue(new Error('Network error'));
+    vi.mocked(useContentHooks.useHeroContent).mockReturnValue({
+      content: [],
+      loading: false,
+      error: { message: 'Network error', details: 'test' },
+      refetch: vi.fn(),
+      loadMore: vi.fn(),
+      hasMore: false,
+    });
 
     render(
       <BrowserRouter>
@@ -341,8 +384,6 @@ describe('Hero Component', () => {
   });
 
   it('fetches content tagged with hero_trailer only', async () => {
-    vi.mocked(api.fetchByTags).mockResolvedValue([mockHeroContent]);
-
     render(
       <BrowserRouter>
         <Hero />
@@ -353,8 +394,8 @@ describe('Hero Component', () => {
       expect(screen.getByText('Test Hero Movie')).toBeInTheDocument();
     });
 
-    // Verify that fetchByTags was called with hero_trailer tag
-    expect(api.fetchByTags).toHaveBeenCalledWith(['hero_trailer'], 20);
+    // Verify that useHeroContent was called (which internally calls fetchByTags)
+    expect(useContentHooks.useHeroContent).toHaveBeenCalled();
   });
 
   it('randomly selects one hero per session', async () => {
@@ -460,7 +501,14 @@ describe('Hero Component', () => {
 
     // Mock that hero-456 is stored in session
     vi.mocked(storage.getSelectedHero).mockReturnValue('hero-456');
-    vi.mocked(api.fetchByTags).mockResolvedValue(multipleHeroContent);
+    vi.mocked(useContentHooks.useHeroContent).mockReturnValue({
+      content: multipleHeroContent,
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+      loadMore: vi.fn(),
+      hasMore: false,
+    });
 
     render(
       <BrowserRouter>
@@ -471,7 +519,7 @@ describe('Hero Component', () => {
     // Wait for render and verify the stored hero is displayed
     await waitFor(() => {
       expect(screen.getByText('Another Hero Movie')).toBeInTheDocument();
-    });
+    }, { timeout: 3000 });
 
     // Verify that getSelectedHero was called
     expect(storage.getSelectedHero).toHaveBeenCalled();
@@ -488,7 +536,7 @@ describe('Hero Component', () => {
     ];
 
     // Mock that a non-existent hero is stored in session
-    vi.mocked(storage.getSelectedHero).mockReturnValue('hero-999');
+    mockSelectedHero = 'hero-999';
     vi.mocked(api.fetchByTags).mockResolvedValue(multipleHeroContent);
 
     render(

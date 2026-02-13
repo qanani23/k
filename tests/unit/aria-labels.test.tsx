@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import Hero from '../../src/components/Hero';
 import DownloadsPage from '../../src/pages/DownloadsPage';
@@ -22,6 +22,34 @@ vi.mock('@tauri-apps/api/event', () => ({
 
 vi.mock('@tauri-apps/api/shell', () => ({
   open: vi.fn(),
+}));
+
+// Mock API
+vi.mock('../../src/lib/api', () => ({
+  fetchChannelClaims: vi.fn(),
+  fetchByTags: vi.fn(() => Promise.resolve([{
+    claim_id: 'test-123',
+    title: 'Test Movie',
+    description: 'Test description',
+    tags: ['movie', 'hero_trailer'],
+    thumbnail_url: 'https://example.com/thumb.jpg',
+    duration: 7200,
+    release_time: Date.now() / 1000,
+    video_urls: {
+      '720p': {
+        url: 'https://example.com/video.mp4',
+        quality: '720p',
+        type: 'mp4',
+      },
+    },
+    compatibility: {
+      compatible: true,
+      fallback_available: false,
+    },
+  }])),
+  getFavorites: vi.fn(() => Promise.resolve([])),
+  saveFavorite: vi.fn(),
+  removeFavorite: vi.fn(),
 }));
 
 // Mock GSAP
@@ -70,7 +98,7 @@ const mockContent: ContentItem = {
 
 describe('ARIA Labels - Accessibility', () => {
   describe('Hero Component', () => {
-    it('should have ARIA labels on action buttons', () => {
+    it('should have ARIA labels on action buttons', async () => {
       render(
         <BrowserRouter>
           <Hero onPlayClick={vi.fn()} />
@@ -78,14 +106,14 @@ describe('ARIA Labels - Accessibility', () => {
       );
 
       // Wait for content to load (mocked)
-      setTimeout(() => {
+      await waitFor(() => {
         const playButton = screen.queryByLabelText(/play/i);
         const favoriteButton = screen.queryByLabelText(/add.*to favorites|remove.*from favorites/i);
         const shuffleButton = screen.queryByLabelText(/shuffle/i);
 
         // At least one of these should exist when content is loaded
         expect(playButton || favoriteButton || shuffleButton).toBeTruthy();
-      }, 100);
+      }, { timeout: 3000 });
     });
   });
 

@@ -35,8 +35,8 @@ describe('ForcedUpdateScreen Component', () => {
     it('should render Update and Exit buttons', () => {
       render(<ForcedUpdateScreen {...defaultProps} />);
 
-      expect(screen.getByRole('button', { name: /Update Now/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Exit/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Update application now/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Exit application/i })).toBeInTheDocument();
     });
 
     it('should render warning message about required update', () => {
@@ -77,7 +77,7 @@ describe('ForcedUpdateScreen Component', () => {
       const user = userEvent.setup();
       render(<ForcedUpdateScreen {...defaultProps} />);
 
-      const updateButton = screen.getByRole('button', { name: /Update Now/i });
+      const updateButton = screen.getByRole('button', { name: /Update application now/i });
       await user.click(updateButton);
 
       expect(mockWindowOpen).toHaveBeenCalledWith('https://example.com/download', '_blank');
@@ -99,7 +99,7 @@ describe('ForcedUpdateScreen Component', () => {
       const user = userEvent.setup();
       render(<ForcedUpdateScreen {...defaultProps} />);
 
-      const updateButton = screen.getByRole('button', { name: /Update Now/i });
+      const updateButton = screen.getByRole('button', { name: /Update application now/i });
       await user.click(updateButton);
       await user.click(updateButton);
 
@@ -136,7 +136,7 @@ describe('ForcedUpdateScreen Component', () => {
     it('should display download icon in Update button', () => {
       render(<ForcedUpdateScreen {...defaultProps} />);
 
-      const updateButton = screen.getByRole('button', { name: /Update Now/i });
+      const updateButton = screen.getByRole('button', { name: /Update application now/i });
       const icon = updateButton.querySelector('svg');
       expect(icon).toBeInTheDocument();
     });
@@ -154,8 +154,8 @@ describe('ForcedUpdateScreen Component', () => {
     it('should have proper button labels', () => {
       render(<ForcedUpdateScreen {...defaultProps} />);
 
-      const updateButton = screen.getByRole('button', { name: /Update Now/i });
-      const exitButton = screen.getByRole('button', { name: /Exit/i });
+      const updateButton = screen.getByRole('button', { name: /Update application now/i });
+      const exitButton = screen.getByRole('button', { name: /Exit application/i });
 
       expect(updateButton).toBeInTheDocument();
       expect(exitButton).toBeInTheDocument();
@@ -198,7 +198,7 @@ describe('ForcedUpdateScreen Component', () => {
     it('should handle empty download URL', () => {
       render(<ForcedUpdateScreen {...defaultProps} downloadUrl="" />);
 
-      const updateButton = screen.getByRole('button', { name: /Update Now/i });
+      const updateButton = screen.getByRole('button', { name: /Update application now/i });
       expect(updateButton).toBeInTheDocument();
     });
   });
@@ -207,8 +207,8 @@ describe('ForcedUpdateScreen Component', () => {
     it('should have proper button styling classes', () => {
       render(<ForcedUpdateScreen {...defaultProps} />);
 
-      const updateButton = screen.getByRole('button', { name: /Update Now/i });
-      const exitButton = screen.getByRole('button', { name: /Exit/i });
+      const updateButton = screen.getByRole('button', { name: /Update application now/i });
+      const exitButton = screen.getByRole('button', { name: /Exit application/i });
 
       expect(updateButton).toHaveClass('bg-blue-600', 'hover:bg-blue-700');
       expect(exitButton).toHaveClass('bg-slate-600', 'hover:bg-slate-700');
