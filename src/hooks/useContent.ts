@@ -46,7 +46,8 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
           validTransitions: validTransitions[currentStatus]
         });
       }
-      return;
+      // TEMPORARILY: Allow the transition anyway for debugging
+      // return;
     }
     
     // Update both ref and state
@@ -84,8 +85,8 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
   const isDev = import.meta.env.DEV;
 
   const fetchContent = useCallback(async (pageNum: number = 1, append: boolean = false, force: boolean = false) => {
-    // Prevent duplicate fetches
-    if (fetchInProgressRef.current) {
+    // Prevent duplicate fetches unless it's a forced refetch
+    if (fetchInProgressRef.current && !force) {
       if (isDev) console.log('[useContent] Fetch already in progress, skipping');
       return;
     }
@@ -117,10 +118,12 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
     if (!append && !force && memoryManager) {
       const cachedContent = memoryManager.getCollection(collectionId);
       if (cachedContent && cachedContent.length > 0) {
+        // Update state synchronously before returning
         setContent(cachedContent);
         setHasMore(cachedContent.length === limit);
         setPage(pageNum);
         setStatusWithValidation('success');
+        fetchInProgressRef.current = false; // Reset before returning
         if (isDev) {
           const duration = performance.now() - startTime;
           console.log('[useContent] Cache hit', {
@@ -131,7 +134,6 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
             duration: `${duration.toFixed(2)}ms`
           });
         }
-        fetchInProgressRef.current = false;
         return;
       }
     }
