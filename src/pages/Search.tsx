@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Search as SearchIcon, X, Clock, TrendingUp } from 'lucide-react';
 import MovieCard from '../components/MovieCard';
+import SkeletonCard from '../components/SkeletonCard';
 import OfflineEmptyState from '../components/OfflineEmptyState';
 import { ContentItem } from '../types';
 import { useDebouncedSearch, useSearchHistory } from '../hooks/useDebouncedSearch';
@@ -298,13 +299,7 @@ export default function Search() {
       {/* Loading State */}
       {loading && (
         <div className="content-grid">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <div key={index} className="space-y-3">
-              <div className="loading-skeleton aspect-poster rounded-xl"></div>
-              <div className="loading-skeleton h-4 w-full rounded"></div>
-              <div className="loading-skeleton h-3 w-3/4 rounded"></div>
-            </div>
-          ))}
+          <SkeletonCard count={8} size="medium" variant="poster" />
         </div>
       )}
 

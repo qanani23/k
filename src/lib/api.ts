@@ -23,6 +23,32 @@ const CHANNEL_ID = import.meta.env.VITE_CHANNEL_ID || '@kiyyamovies:b';
 // Development mode flag
 const isDev = import.meta.env.DEV;
 
+// Retry configuration types
+export interface RetryConfig {
+  maxRetries: number;
+  initialDelay: number; // in milliseconds
+  backoffMultiplier: number;
+}
+
+// Retry configurations for different fetch types
+export const RETRY_CONFIGS: Record<string, RetryConfig> = {
+  hero: {
+    maxRetries: 3,
+    initialDelay: 1000,
+    backoffMultiplier: 2
+  },
+  category: {
+    maxRetries: 3,
+    initialDelay: 1000,
+    backoffMultiplier: 2
+  },
+  search: {
+    maxRetries: 3,
+    initialDelay: 1000,
+    backoffMultiplier: 2
+  }
+};
+
 // Validation types
 interface ValidationResult {
   valid: boolean;
@@ -109,6 +135,53 @@ function validateAndFilterContent(items: any[]): ContentItem[] {
   return validatedItems as ContentItem[];
 }
 
+/**
+ * Retry utility function with exponential backoff
+ * Retries a fetch operation with configurable retry strategy
+ * 
+ * @param fetchFn - The async function to retry
+ * @param config - Retry configuration (maxRetries, initialDelay, backoffMultiplier)
+ * @returns Promise resolving to the fetch result
+ * @throws The last error if all retries fail
+ */
+export async function fetchWithRetry<T>(
+  fetchFn: () => Promise<T>,
+  config: RetryConfig = RETRY_CONFIGS.category
+): Promise<T> {
+  let lastError: Error;
+  
+  for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
+    try {
+      return await fetchFn();
+    } catch (error) {
+      lastError = error as Error;
+      
+      // If this is not the last attempt, wait before retrying
+      if (attempt < config.maxRetries) {
+        const delay = config.initialDelay * Math.pow(config.backoffMultiplier, attempt);
+        
+        if (isDev) {
+          console.log(`[Retry] Attempt ${attempt + 1} failed, retrying in ${delay}ms`, {
+            error: lastError.message,
+            nextAttempt: attempt + 2,
+            maxRetries: config.maxRetries + 1
+          });
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        if (isDev) {
+          console.error(`[Retry] All ${config.maxRetries + 1} attempts failed`, {
+            error: lastError.message
+          });
+        }
+      }
+    }
+  }
+  
+  throw lastError!;
+}
+
 // Content discovery
 export const fetchChannelClaims = async (params: {
   any_tags?: string[];
@@ -117,41 +190,47 @@ export const fetchChannelClaims = async (params: {
   page?: number;
   force_refresh?: boolean;
 }): Promise<ContentItem[]> => {
-  try {
-    const response = await invoke('fetch_channel_claims', {
-      channel_id: CHANNEL_ID,
-      ...params
-    });
-    
-    if (isDev) {
-      console.log('[API] fetchChannelClaims response:', {
-        tags: params.any_tags,
-        text: params.text,
-        count: Array.isArray(response) ? response.length : 0
+  return await fetchWithRetry(async () => {
+    try {
+      const response = await invoke('fetch_channel_claims', {
+        channel_id: CHANNEL_ID,
+        ...params
       });
+      
+      if (isDev) {
+        console.log('[API] fetchChannelClaims response:', {
+          tags: params.any_tags,
+          text: params.text,
+          count: Array.isArray(response) ? response.length : 0
+        });
+      }
+      
+      // Validate and filter response
+      return validateAndFilterContent(response as any[]);
+    } catch (error) {
+      if (isDev) {
+        console.error('[API] fetchChannelClaims error:', {
+          params,
+          error
+        });
+      }
+      throw error;
     }
-    
-    // Validate and filter response
-    return validateAndFilterContent(response as any[]);
-  } catch (error) {
-    if (isDev) {
-      console.error('[API] fetchChannelClaims error:', {
-        params,
-        error
-      });
-    }
-    throw error;
-  }
+  }, RETRY_CONFIGS.category);
 };
 
 export const fetchPlaylists = async (): Promise<Playlist[]> => {
-  return await invoke('fetch_playlists', {
-    channel_id: CHANNEL_ID
-  });
+  return await fetchWithRetry(async () => {
+    return await invoke('fetch_playlists', {
+      channel_id: CHANNEL_ID
+    });
+  }, RETRY_CONFIGS.category);
 };
 
 export const resolveClaim = async (claimIdOrUri: string): Promise<ContentItem> => {
-  return await invoke('resolve_claim', { claim_id_or_uri: claimIdOrUri });
+  return await fetchWithRetry(async () => {
+    return await invoke('resolve_claim', { claim_id_or_uri: claimIdOrUri });
+  }, RETRY_CONFIGS.category);
 };
 
 // Content fetching by tags (convenience functions)
@@ -196,10 +275,13 @@ export const fetchByTags = async (tags: string[], limit: number = 50, forceRefre
 };
 
 export const searchContent = async (text: string, limit: number = 50): Promise<ContentItem[]> => {
+  // Uses fetchChannelClaims which already has retry logic
   return await fetchChannelClaims({ text, limit });
 };
 
 export const fetchHeroContent = async (limit: number = 20): Promise<ContentItem[]> => {
+  // Uses fetchByTag which calls fetchChannelClaims with retry logic
+  // Use hero-specific retry config for critical hero content
   return await fetchByTag('hero_trailer', limit);
 };
 

@@ -266,6 +266,8 @@ export interface ApiError {
   message: string;
   code?: string;
   details?: any;
+  retryable?: boolean;
+  category?: 'network' | 'timeout' | 'offline' | 'validation' | 'unknown';
 }
 
 // Hook return types
@@ -277,6 +279,7 @@ export interface UseContentReturn {
   refetch: () => Promise<void>;
   loadMore: () => Promise<void>;
   hasMore: boolean;
+  fromCache: boolean;
 }
 
 export interface UsePlayerReturn {

@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { ContentItem } from '../types';
 import MovieCard from './MovieCard';
+import SkeletonCard from './SkeletonCard';
 import { gsap } from 'gsap';
 
 interface RowCarouselProps {
@@ -217,14 +218,14 @@ export default function RowCarousel({
             <div className="loading-skeleton h-8 w-20 rounded"></div>
           )}
         </div>
-        <div className="flex gap-4 overflow-hidden">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="flex-shrink-0 w-40">
-              <div className="loading-skeleton aspect-poster rounded-xl mb-3"></div>
-              <div className="loading-skeleton h-4 w-full rounded mb-2"></div>
-              <div className="loading-skeleton h-3 w-3/4 rounded"></div>
-            </div>
-          ))}
+        <div 
+          className="flex gap-4 overflow-hidden"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <span className="sr-only">Loading {title} content...</span>
+          <SkeletonCard count={6} size="medium" variant="poster" />
         </div>
       </div>
     );
@@ -234,7 +235,11 @@ export default function RowCarousel({
     return (
       <div className="mb-8">
         <h2 className="text-xl font-semibold text-text-primary mb-4">{title}</h2>
-        <div className="glass rounded-xl p-6 text-center">
+        <div 
+          className="glass rounded-xl p-6 text-center"
+          role="alert"
+          aria-live="assertive"
+        >
           <p className="text-text-secondary mb-4">{error}</p>
           <button 
             onClick={() => window.location.reload()}
@@ -252,7 +257,11 @@ export default function RowCarousel({
     return (
       <div className="mb-8">
         <h2 className="text-xl font-semibold text-text-primary mb-4">{title}</h2>
-        <div className="glass rounded-xl p-6 text-center">
+        <div 
+          className="glass rounded-xl p-6 text-center"
+          role="status"
+          aria-live="polite"
+        >
           <p className="text-text-secondary">No content available</p>
         </div>
       </div>

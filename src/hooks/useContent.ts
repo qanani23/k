@@ -22,6 +22,7 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
   const [error, setError] = useState<ApiError | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [fromCache, setFromCache] = useState(false);
   
   // State transition validation
   const statusRef = useRef<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -94,13 +95,37 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
     fetchInProgressRef.current = true;
     const startTime = isDev ? performance.now() : 0;
     
-    // If offline and not in offline-only mode, show error
+    // If offline and not in offline-only mode, check cache first
     if (!isOnline && !offlineOnly) {
+      // Try to load from cache when offline
+      if (memoryManager) {
+        const cachedContent = memoryManager.getCollection(collectionId);
+        if (cachedContent && cachedContent.length > 0) {
+          setContent(cachedContent);
+          setHasMore(false); // Can't load more when offline
+          setPage(pageNum);
+          setFromCache(true); // Mark as loaded from cache
+          setStatusWithValidation('success');
+          fetchInProgressRef.current = false;
+          if (isDev) {
+            console.log('[useContent] Offline cache hit', {
+              collectionId,
+              itemCount: cachedContent.length
+            });
+          }
+          return;
+        }
+      }
+      
+      // No cache available, show offline error
       const apiError: ApiError = {
         message: 'No internet connection. Only downloaded content is available.',
         details: 'offline',
+        retryable: false,
+        category: 'offline'
       };
       setError(apiError);
+      setFromCache(false);
       setStatusWithValidation('error');
       if (isDev) {
         console.log('[useContent] State transition: idle → error (offline)', {
@@ -122,6 +147,7 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
         setContent(cachedContent);
         setHasMore(cachedContent.length === limit);
         setPage(pageNum);
+        setFromCache(true); // Mark as loaded from cache
         setStatusWithValidation('success');
         fetchInProgressRef.current = false; // Reset before returning
         if (isDev) {
@@ -184,6 +210,7 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
       // Check if there are more results
       setHasMore(results.length === limit);
       setPage(pageNum);
+      setFromCache(false); // Mark as loaded from network
       
       setStatusWithValidation('success');
       if (isDev) {
@@ -199,10 +226,67 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
       }
 
     } catch (err) {
-      const apiError: ApiError = {
-        message: err instanceof Error ? err.message : 'Failed to fetch content',
-        details: err,
-      };
+      // Categorize and format error
+      let apiError: ApiError;
+      
+      if (err instanceof Error) {
+        const errorMessage = err.message.toLowerCase();
+        
+        // Timeout errors
+        if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
+          apiError = {
+            message: 'Request timed out. Please check your connection and try again.',
+            details: err,
+            retryable: true,
+            category: 'timeout'
+          };
+        }
+        // Offline errors - check before network errors to catch "no internet connection"
+        else if (errorMessage.includes('offline') || errorMessage.includes('no internet')) {
+          apiError = {
+            message: 'No internet connection. Only downloaded content is available.',
+            details: err,
+            retryable: false,
+            category: 'offline'
+          };
+        }
+        // Network errors
+        else if (errorMessage.includes('network') || errorMessage.includes('fetch') || errorMessage.includes('connection')) {
+          apiError = {
+            message: 'Network error. Please check your internet connection and try again.',
+            details: err,
+            retryable: true,
+            category: 'network'
+          };
+        }
+        // Validation errors
+        else if (errorMessage.includes('invalid') || errorMessage.includes('validation')) {
+          apiError = {
+            message: 'Invalid content data received. Please try again later.',
+            details: err,
+            retryable: true,
+            category: 'validation'
+          };
+        }
+        // Generic errors
+        else {
+          apiError = {
+            message: 'Failed to fetch content. Please try again.',
+            details: err,
+            retryable: true,
+            category: 'unknown'
+          };
+        }
+      } else {
+        // Non-Error objects
+        apiError = {
+          message: 'An unexpected error occurred. Please try again.',
+          details: err,
+          retryable: true,
+          category: 'unknown'
+        };
+      }
+      
       setError(apiError);
       setStatusWithValidation('error');
       if (isDev) {
@@ -212,7 +296,9 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
           pageNum,
           append,
           duration: `${duration.toFixed(2)}ms`,
-          error: err instanceof Error ? err.message : String(err)
+          error: err instanceof Error ? err.message : String(err),
+          category: apiError.category,
+          retryable: apiError.retryable
         });
       }
       
@@ -235,11 +321,15 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
   }, [fetchContent, hasMore, page]);
 
   // Auto-fetch on mount or when dependencies change
+  // Use a ref to track if we've already fetched for this collectionId
+  const hasFetchedRef = useRef<string | null>(null);
+  
   useEffect(() => {
-    if (autoFetch) {
+    if (autoFetch && hasFetchedRef.current !== collectionId) {
+      hasFetchedRef.current = collectionId;
       fetchContent(1, false);
     }
-  }, [fetchContent, autoFetch]);
+  }, [autoFetch, collectionId, fetchContent]);
 
   // Derive loading from status for backward compatibility
   const loading = status === 'loading';
@@ -252,6 +342,7 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
     refetch,
     loadMore,
     hasMore,
+    fromCache,
   };
 }
 
@@ -309,10 +400,50 @@ export function useRelatedContent(categoryTag: string, excludeClaimId: string) {
       setRelatedContent(shuffled.slice(0, 10));
 
     } catch (err) {
-      const apiError: ApiError = {
-        message: err instanceof Error ? err.message : 'Failed to fetch related content',
-        details: err,
-      };
+      // Categorize and format error
+      let apiError: ApiError;
+      
+      if (err instanceof Error) {
+        const errorMessage = err.message.toLowerCase();
+        
+        if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
+          apiError = {
+            message: 'Request timed out. Please try again.',
+            details: err,
+            retryable: true,
+            category: 'timeout'
+          };
+        } else if (errorMessage.includes('offline') || errorMessage.includes('no internet')) {
+          apiError = {
+            message: 'No internet connection. Please try again.',
+            details: err,
+            retryable: false,
+            category: 'offline'
+          };
+        } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+          apiError = {
+            message: 'Network error. Please try again.',
+            details: err,
+            retryable: true,
+            category: 'network'
+          };
+        } else {
+          apiError = {
+            message: 'Failed to fetch related content. Please try again.',
+            details: err,
+            retryable: true,
+            category: 'unknown'
+          };
+        }
+      } else {
+        apiError = {
+          message: 'Failed to fetch related content. Please try again.',
+          details: err,
+          retryable: true,
+          category: 'unknown'
+        };
+      }
+      
       setError(apiError);
       setRelatedContent([]);
     } finally {
@@ -423,10 +554,50 @@ export function useContentWithOfflineStatus(claimId: string) {
       }
 
     } catch (err) {
-      const apiError: ApiError = {
-        message: err instanceof Error ? err.message : 'Failed to fetch content details',
-        details: err,
-      };
+      // Categorize and format error
+      let apiError: ApiError;
+      
+      if (err instanceof Error) {
+        const errorMessage = err.message.toLowerCase();
+        
+        if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
+          apiError = {
+            message: 'Request timed out. Please try again.',
+            details: err,
+            retryable: true,
+            category: 'timeout'
+          };
+        } else if (errorMessage.includes('offline') || errorMessage.includes('no internet')) {
+          apiError = {
+            message: 'No internet connection. Please try again.',
+            details: err,
+            retryable: false,
+            category: 'offline'
+          };
+        } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+          apiError = {
+            message: 'Network error. Please try again.',
+            details: err,
+            retryable: true,
+            category: 'network'
+          };
+        } else {
+          apiError = {
+            message: 'Failed to fetch content details. Please try again.',
+            details: err,
+            retryable: true,
+            category: 'unknown'
+          };
+        }
+      } else {
+        apiError = {
+          message: 'Failed to fetch content details. Please try again.',
+          details: err,
+          retryable: true,
+          category: 'unknown'
+        };
+      }
+      
       setError(apiError);
       setContent(null);
     } finally {

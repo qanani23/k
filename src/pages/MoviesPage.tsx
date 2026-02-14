@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Filter, Grid, List } from 'lucide-react';
 import MovieCard from '../components/MovieCard';
+import SkeletonCard from '../components/SkeletonCard';
 import OfflineEmptyState from '../components/OfflineEmptyState';
 import { ContentItem } from '../types';
 import { useMovies } from '../hooks/useContent';
@@ -21,7 +22,7 @@ export default function MoviesPage() {
   const { isOffline } = useOffline();
 
   const filterTag = searchParams.get('filter');
-  const { content: movies, loading, error, loadMore, hasMore } = useMovies(filterTag || undefined);
+  const { content: movies, loading, error, loadMore, hasMore, refetch } = useMovies(filterTag || undefined);
   const { downloadContent } = useDownloadManager();
 
   // Check if error is due to offline status
@@ -110,20 +111,17 @@ export default function MoviesPage() {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Skeleton */}
-        <div className="mb-8">
-          <div className="loading-skeleton h-6 w-32 rounded mb-4"></div>
-          <div className="loading-skeleton h-8 w-48 rounded"></div>
-        </div>
+        <SkeletonCard variant="header" />
 
         {/* Content Grid Skeleton */}
-        <div className="content-grid">
-          {Array.from({ length: 12 }).map((_, index) => (
-            <div key={index} className="space-y-3">
-              <div className="loading-skeleton aspect-poster rounded-xl"></div>
-              <div className="loading-skeleton h-4 w-full rounded"></div>
-              <div className="loading-skeleton h-3 w-3/4 rounded"></div>
-            </div>
-          ))}
+        <div 
+          className="content-grid"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <span className="sr-only">Loading movies...</span>
+          <SkeletonCard count={12} size="medium" variant="poster" />
         </div>
       </div>
     );
@@ -228,11 +226,16 @@ export default function MoviesPage() {
           message="You are currently offline. Connect to the internet to browse movies, or view your downloaded content."
         />
       ) : error ? (
-        <div className="glass rounded-xl p-6 text-center mb-8">
+        <div 
+          className="glass rounded-xl p-6 text-center mb-8"
+          role="alert"
+          aria-live="assertive"
+        >
           <p className="text-text-secondary mb-4">{error.message}</p>
           <button 
-            onClick={() => window.location.reload()}
+            onClick={refetch}
             className="btn-secondary"
+            aria-label="Retry loading movies"
           >
             Try Again
           </button>
@@ -270,7 +273,11 @@ export default function MoviesPage() {
           )}
         </>
       ) : !loading && (
-        <div className="glass rounded-xl p-12 text-center">
+        <div 
+          className="glass rounded-xl p-12 text-center"
+          role="status"
+          aria-live="polite"
+        >
           <h3 className="text-xl font-medium text-text-primary mb-2">
             No Movies Found
           </h3>

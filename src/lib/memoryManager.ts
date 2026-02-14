@@ -41,6 +41,7 @@ const DEFAULT_CONFIG: MemoryManagerConfig = {
 interface CollectionMetadata {
   id: string;
   items: ContentItem[];
+  createdAt: number; // Timestamp when collection was created
   lastAccessed: number;
   accessCount: number;
   size: number; // Approximate size in bytes
@@ -76,10 +77,12 @@ export class MemoryManager {
 
     // Update or create collection metadata
     const existing = this.collections.get(id);
+    const now = Date.now();
     this.collections.set(id, {
       id,
       items: limitedItems,
-      lastAccessed: Date.now(),
+      createdAt: existing ? existing.createdAt : now, // Preserve creation time if updating
+      lastAccessed: now,
       accessCount: existing ? existing.accessCount + 1 : 1,
       size,
     });
@@ -100,8 +103,19 @@ export class MemoryManager {
       return null;
     }
 
+    // Check if collection has expired (based on creation time)
+    const now = Date.now();
+    if (now - collection.createdAt > this.config.collectionTTL) {
+      // Collection has expired, remove it and return null
+      this.collections.delete(id);
+      if (import.meta.env.DEV) {
+        console.debug(`[MemoryManager] Collection expired: ${id}`);
+      }
+      return null;
+    }
+
     // Update access metadata
-    collection.lastAccessed = Date.now();
+    collection.lastAccessed = now;
     collection.accessCount++;
 
     return collection.items;
@@ -132,6 +146,7 @@ export class MemoryManager {
       id: string;
       itemCount: number;
       size: number;
+      createdAt: number;
       lastAccessed: number;
       accessCount: number;
     }>;
@@ -142,6 +157,7 @@ export class MemoryManager {
       id: string;
       itemCount: number;
       size: number;
+      createdAt: number;
       lastAccessed: number;
       accessCount: number;
     }> = [];
@@ -153,6 +169,7 @@ export class MemoryManager {
         id: collection.id,
         itemCount: collection.items.length,
         size: collection.size,
+        createdAt: collection.createdAt,
         lastAccessed: collection.lastAccessed,
         accessCount: collection.accessCount,
       });
@@ -199,22 +216,22 @@ export class MemoryManager {
   }
 
   /**
-   * Cleanup expired collections based on TTL
+   * Cleanup expired collections based on TTL (using creation time)
    */
   private cleanupExpired(): void {
     const now = Date.now();
     const expiredIds: string[] = [];
 
     this.collections.forEach((collection, id) => {
-      if (now - collection.lastAccessed > this.config.collectionTTL) {
+      if (now - collection.createdAt > this.config.collectionTTL) {
         expiredIds.push(id);
       }
     });
 
     expiredIds.forEach((id) => this.collections.delete(id));
 
-    if (expiredIds.length > 0) {
-      console.debug(`Cleaned up ${expiredIds.length} expired collections`);
+    if (expiredIds.length > 0 && import.meta.env.DEV) {
+      console.debug(`[MemoryManager] Cleaned up ${expiredIds.length} expired collections`);
     }
   }
 

@@ -10,6 +10,7 @@ import {
   RefreshCw,
   ExternalLink
 } from 'lucide-react';
+import SkeletonCard from '../components/SkeletonCard';
 import { AppConfig, DiagnosticsData } from '../types';
 import { getAppConfig, updateSettings, getDiagnostics, openExternal } from '../lib/api';
 import { formatFileSize } from '../lib/api';
@@ -126,9 +127,7 @@ export default function SettingsPage() {
         <div className="loading-skeleton h-8 w-48 rounded mb-8"></div>
         <div className="glass rounded-xl p-6">
           <div className="space-y-4">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="loading-skeleton h-12 rounded"></div>
-            ))}
+            <SkeletonCard count={6} variant="settings" />
           </div>
         </div>
       </div>

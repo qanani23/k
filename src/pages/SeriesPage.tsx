@@ -133,10 +133,16 @@ const SeriesPage = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
         <div className="max-w-6xl mx-auto">
-          <div className="animate-pulse">
-            <div className="h-8 bg-slate-700 rounded w-1/3 mb-4"></div>
-            <div className="h-4 bg-slate-700 rounded w-2/3 mb-8"></div>
-            <div className="space-y-4">
+          <div 
+            className="animate-pulse"
+            role="status"
+            aria-live="polite"
+            aria-busy="true"
+          >
+            <span className="sr-only">Loading series...</span>
+            <div className="h-8 bg-slate-700 rounded w-1/3 mb-4" aria-hidden="true"></div>
+            <div className="h-4 bg-slate-700 rounded w-2/3 mb-8" aria-hidden="true"></div>
+            <div className="space-y-4" aria-hidden="true">
               <div className="h-32 bg-slate-700 rounded"></div>
               <div className="h-32 bg-slate-700 rounded"></div>
             </div>
@@ -150,7 +156,11 @@ const SeriesPage = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center py-12">
+          <div 
+            className="text-center py-12"
+            role="alert"
+            aria-live="assertive"
+          >
             <h1 className="text-2xl font-bold text-red-400 mb-4">Error Loading Series</h1>
             <p className="text-slate-300 mb-6">{error || 'Series not found'}</p>
             <button
@@ -178,7 +188,11 @@ const SeriesPage = () => {
 
         {/* Seasons List */}
         {series.seasons.length === 0 ? (
-          <div className="text-center py-12">
+          <div 
+            className="text-center py-12"
+            role="status"
+            aria-live="polite"
+          >
             <p className="text-slate-400">No episodes available</p>
           </div>
         ) : (
@@ -229,6 +243,8 @@ const SeriesPage = () => {
                             <div 
                               key={episode.claim_id} 
                               className="flex items-center justify-between bg-slate-700/30 hover:bg-slate-700/50 rounded-lg p-4 transition-colors group"
+                              role="article"
+                              aria-label={`${episode.title} - Episode ${episode.episode_number}${episode.duration ? ` - ${Math.floor(episode.duration / 60)} minutes` : ''}`}
                             >
                               {/* Episode Info */}
                               <div className="flex items-start space-x-4 flex-1">
@@ -261,7 +277,7 @@ const SeriesPage = () => {
                                   aria-label={`Play ${episode.title}`}
                                   title="Play episode"
                                 >
-                                  <Play className="w-4 h-4 text-white" />
+                                  <Play className="w-4 h-4 text-white" aria-hidden="true" />
                                 </button>
                                 <button
                                   onClick={() => handleDownload(episode)}
@@ -269,7 +285,7 @@ const SeriesPage = () => {
                                   aria-label={`Download ${episode.title}`}
                                   title="Download episode"
                                 >
-                                  <Download className="w-4 h-4 text-white" />
+                                  <Download className="w-4 h-4 text-white" aria-hidden="true" />
                                 </button>
                                 <button
                                   onClick={() => handleToggleFavorite(episode)}
@@ -279,10 +295,12 @@ const SeriesPage = () => {
                                       : 'bg-slate-600 hover:bg-slate-700'
                                   }`}
                                   aria-label={isFavorite ? `Remove ${episode.title} from favorites` : `Add ${episode.title} to favorites`}
+                                  aria-pressed={isFavorite}
                                   title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                                 >
                                   <Heart 
                                     className={`w-4 h-4 ${isFavorite ? 'fill-white' : ''} text-white`}
+                                    aria-hidden="true"
                                   />
                                 </button>
                               </div>

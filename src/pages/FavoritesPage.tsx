@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Heart, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import MovieCard from '../components/MovieCard';
+import SkeletonCard from '../components/SkeletonCard';
 import { FavoriteItem, ContentItem } from '../types';
 import { getFavorites, removeFavorite, resolveClaim } from '../lib/api';
 
@@ -138,20 +139,11 @@ export default function FavoritesPage() {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Skeleton */}
-        <div className="mb-8">
-          <div className="loading-skeleton h-8 w-48 rounded mb-2"></div>
-          <div className="loading-skeleton h-4 w-64 rounded"></div>
-        </div>
+        <SkeletonCard variant="header" />
 
         {/* Content Grid Skeleton */}
         <div className="content-grid">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <div key={index} className="space-y-3">
-              <div className="loading-skeleton aspect-poster rounded-xl"></div>
-              <div className="loading-skeleton h-4 w-full rounded"></div>
-              <div className="loading-skeleton h-3 w-3/4 rounded"></div>
-            </div>
-          ))}
+          <SkeletonCard count={8} size="medium" variant="poster" />
         </div>
       </div>
     );

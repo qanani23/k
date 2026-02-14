@@ -84,6 +84,9 @@ export default function MovieCard({
     large: 'text-base'
   };
 
+  // Format duration for aria-label
+  const durationText = content.duration ? ` - ${formatDuration(content.duration)}` : '';
+  
   return (
     <div 
       className={`movie-card ${sizeClasses[size]} flex-shrink-0`}
@@ -92,8 +95,8 @@ export default function MovieCard({
       onMouseEnter={() => setShowActionsState(true)}
       onMouseLeave={() => setShowActionsState(false)}
       tabIndex={0}
-      role="button"
-      aria-label={`${content.title}${content.description ? ` - ${content.description.substring(0, 100)}` : ''}`}
+      role="article"
+      aria-label={`${content.title}${durationText}`}
     >
       {/* Poster Image */}
       <div className="relative">
@@ -153,7 +156,7 @@ export default function MovieCard({
                 className="bg-white/20 hover:bg-white/30 p-3 rounded-full transition-colors"
                 aria-label={`Play ${content.title}`}
               >
-                <Play className="w-6 h-6 text-white" />
+                <Play className="w-6 h-6 text-white" aria-hidden="true" />
               </button>
 
               {/* Download Button */}
@@ -166,7 +169,7 @@ export default function MovieCard({
                   }`}
                   aria-label={`Download ${content.title}`}
                 >
-                  <Download className="w-5 h-5 text-white" />
+                  <Download className="w-5 h-5 text-white" aria-hidden="true" />
                 </button>
               )}
 
@@ -177,8 +180,9 @@ export default function MovieCard({
                   isFavorite ? 'bg-red-500/50' : ''
                 }`}
                 aria-label={isFavorite ? `Remove ${content.title} from favorites` : `Add ${content.title} to favorites`}
+                aria-pressed={isFavorite}
               >
-                <Heart className={`w-5 h-5 ${isFavorite ? 'text-red-400 fill-current' : 'text-white'}`} />
+                <Heart className={`w-5 h-5 ${isFavorite ? 'text-red-400 fill-current' : 'text-white'}`} aria-hidden="true" />
               </button>
             </div>
           </div>
