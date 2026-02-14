@@ -52,7 +52,10 @@ describe('API Wrapper', () => {
           tags: ['movie', 'action_movies'],
           release_time: 1234567890,
           video_urls: {},
-          compatibility: { compatible: true, fallback_available: false }
+          compatibility: { compatible: true, fallback_available: false },
+          value: {
+            source: { sd_hash: 'test-hash' }
+          }
         }
       ];
       
@@ -449,7 +452,10 @@ describe('API Wrapper', () => {
           tags: ['movie'],
           release_time: 1234567890,
           video_urls: {},
-          compatibility: { compatible: true, fallback_available: false }
+          compatibility: { compatible: true, fallback_available: false },
+          value: {
+            source: { sd_hash: 'test-hash-1' }
+          }
         },
         {
           claim_id: 'claim-2',
@@ -457,7 +463,10 @@ describe('API Wrapper', () => {
           tags: ['movie'],
           release_time: 1234567890,
           video_urls: {},
-          compatibility: { compatible: true, fallback_available: false }
+          compatibility: { compatible: true, fallback_available: false },
+          value: {
+            source: { sd_hash: 'test-hash-2' }
+          }
         },
         {
           claim_id: 'claim-3',
@@ -465,7 +474,10 @@ describe('API Wrapper', () => {
           tags: ['movie'],
           release_time: 1234567890,
           video_urls: {},
-          compatibility: { compatible: true, fallback_available: false }
+          compatibility: { compatible: true, fallback_available: false },
+          value: {
+            source: { sd_hash: 'test-hash-3' }
+          }
         }
       ];
       (invoke as any).mockResolvedValue(mockContent);
@@ -630,3 +642,374 @@ describe('API Wrapper', () => {
     });
   });
 });
+
+  describe('API Response Validation Edge Cases', () => {
+    describe('validateContentItem', () => {
+      it('should handle undefined tags array', async () => {
+        const invalidContent = [
+          {
+            claim_id: 'test-claim',
+            value: {
+              source: { sd_hash: 'test-hash' }
+            },
+            tags: undefined // Missing tags
+          }
+        ];
+        
+        (invoke as any).mockResolvedValue(invalidContent);
+        
+        const result = await api.fetchByTag('movie', 50);
+        
+        // Should filter out items with undefined tags
+        expect(result).toEqual([]);
+      });
+
+      it('should handle null tags array', async () => {
+        const invalidContent = [
+          {
+            claim_id: 'test-claim',
+            value: {
+              source: { sd_hash: 'test-hash' }
+            },
+            tags: null // Null tags
+          }
+        ];
+        
+        (invoke as any).mockResolvedValue(invalidContent);
+        
+        const result = await api.fetchByTag('movie', 50);
+        
+        // Should filter out items with null tags
+        expect(result).toEqual([]);
+      });
+
+      it('should handle non-array tags', async () => {
+        const invalidContent = [
+          {
+            claim_id: 'test-claim',
+            value: {
+              source: { sd_hash: 'test-hash' }
+            },
+            tags: 'movie' // String instead of array
+          }
+        ];
+        
+        (invoke as any).mockResolvedValue(invalidContent);
+        
+        const result = await api.fetchByTag('movie', 50);
+        
+        // Should filter out items with non-array tags
+        expect(result).toEqual([]);
+      });
+    });
+
+    describe('malformed data structures', () => {
+      it('should handle missing claim_id', async () => {
+        const invalidContent = [
+          {
+            // Missing claim_id
+            value: {
+              source: { sd_hash: 'test-hash' }
+            },
+            tags: ['movie']
+          }
+        ];
+        
+        (invoke as any).mockResolvedValue(invalidContent);
+        
+        const result = await api.fetchByTag('movie', 50);
+        
+        // Should filter out items without claim_id
+        expect(result).toEqual([]);
+      });
+
+      it('should handle missing value object', async () => {
+        const invalidContent = [
+          {
+            claim_id: 'test-claim',
+            // Missing value object
+            tags: ['movie']
+          }
+        ];
+        
+        (invoke as any).mockResolvedValue(invalidContent);
+        
+        const result = await api.fetchByTag('movie', 50);
+        
+        // Should filter out items without value object
+        expect(result).toEqual([]);
+      });
+
+      it('should handle missing value.source', async () => {
+        const invalidContent = [
+          {
+            claim_id: 'test-claim',
+            value: {
+              // Missing source
+              title: 'Test Movie'
+            },
+            tags: ['movie']
+          }
+        ];
+        
+        (invoke as any).mockResolvedValue(invalidContent);
+        
+        const result = await api.fetchByTag('movie', 50);
+        
+        // Should filter out items without value.source
+        expect(result).toEqual([]);
+      });
+
+      it('should handle value as array instead of object', async () => {
+        const invalidContent = [
+          {
+            claim_id: 'test-claim',
+            value: ['invalid', 'array'], // Array instead of object
+            tags: ['movie']
+          }
+        ];
+        
+        (invoke as any).mockResolvedValue(invalidContent);
+        
+        const result = await api.fetchByTag('movie', 50);
+        
+        // Should filter out items with array value
+        expect(result).toEqual([]);
+      });
+
+      it('should handle value.source as array instead of object', async () => {
+        const invalidContent = [
+          {
+            claim_id: 'test-claim',
+            value: {
+              source: ['invalid', 'array'] // Array instead of object
+            },
+            tags: ['movie']
+          }
+        ];
+        
+        (invoke as any).mockResolvedValue(invalidContent);
+        
+        const result = await api.fetchByTag('movie', 50);
+        
+        // Should filter out items with array source
+        expect(result).toEqual([]);
+      });
+
+      it('should handle completely malformed object', async () => {
+        const invalidContent = [
+          {
+            random_field: 'random_value',
+            another_field: 123
+          }
+        ];
+        
+        (invoke as any).mockResolvedValue(invalidContent);
+        
+        const result = await api.fetchByTag('movie', 50);
+        
+        // Should filter out completely malformed items
+        expect(result).toEqual([]);
+      });
+
+      it('should handle null item in array', async () => {
+        const invalidContent = [
+          null,
+          {
+            claim_id: 'valid-claim',
+            value: {
+              source: { sd_hash: 'test-hash' }
+            },
+            tags: ['movie']
+          }
+        ];
+        
+        (invoke as any).mockResolvedValue(invalidContent);
+        
+        const result = await api.fetchByTag('movie', 50);
+        
+        // Should filter out null items but keep valid ones
+        expect(result.length).toBe(1);
+        expect(result[0].claim_id).toBe('valid-claim');
+      });
+
+      it('should handle undefined item in array', async () => {
+        const invalidContent = [
+          undefined,
+          {
+            claim_id: 'valid-claim',
+            value: {
+              source: { sd_hash: 'test-hash' }
+            },
+            tags: ['movie']
+          }
+        ];
+        
+        (invoke as any).mockResolvedValue(invalidContent);
+        
+        const result = await api.fetchByTag('movie', 50);
+        
+        // Should filter out undefined items but keep valid ones
+        expect(result.length).toBe(1);
+        expect(result[0].claim_id).toBe('valid-claim');
+      });
+    });
+
+    describe('graceful failure for invalid responses', () => {
+      it('should return empty array for non-array response', async () => {
+        const invalidResponse = {
+          data: 'not an array'
+        };
+        
+        (invoke as any).mockResolvedValue(invalidResponse);
+        
+        const result = await api.fetchByTag('movie', 50);
+        
+        // Should gracefully handle non-array response
+        expect(result).toEqual([]);
+      });
+
+      it('should return empty array for null response', async () => {
+        (invoke as any).mockResolvedValue(null);
+        
+        const result = await api.fetchByTag('movie', 50);
+        
+        // Should gracefully handle null response
+        expect(result).toEqual([]);
+      });
+
+      it('should return empty array for undefined response', async () => {
+        (invoke as any).mockResolvedValue(undefined);
+        
+        const result = await api.fetchByTag('movie', 50);
+        
+        // Should gracefully handle undefined response
+        expect(result).toEqual([]);
+      });
+
+      it('should filter mixed valid and invalid items', async () => {
+        const mixedContent = [
+          {
+            claim_id: 'valid-1',
+            value: {
+              source: { sd_hash: 'hash-1' }
+            },
+            tags: ['movie']
+          },
+          {
+            claim_id: 'invalid-no-source',
+            value: {
+              title: 'Missing source'
+            },
+            tags: ['movie']
+          },
+          {
+            claim_id: 'valid-2',
+            value: {
+              source: { sd_hash: 'hash-2' }
+            },
+            tags: ['movie', 'action_movies']
+          },
+          {
+            // Missing claim_id
+            value: {
+              source: { sd_hash: 'hash-3' }
+            },
+            tags: ['movie']
+          },
+          {
+            claim_id: 'valid-3',
+            value: {
+              source: { sd_hash: 'hash-3' }
+            },
+            tags: ['movie']
+          }
+        ];
+        
+        (invoke as any).mockResolvedValue(mixedContent);
+        
+        const result = await api.fetchByTag('movie', 50);
+        
+        // Should only return valid items
+        expect(result.length).toBe(3);
+        expect(result[0].claim_id).toBe('valid-1');
+        expect(result[1].claim_id).toBe('valid-2');
+        expect(result[2].claim_id).toBe('valid-3');
+      });
+
+      it('should handle empty array response', async () => {
+        (invoke as any).mockResolvedValue([]);
+        
+        const result = await api.fetchByTag('movie', 50);
+        
+        // Should gracefully handle empty array
+        expect(result).toEqual([]);
+      });
+
+      it('should handle API error gracefully', async () => {
+        (invoke as any).mockRejectedValue(new Error('API Error'));
+        
+        // Should throw the error (not silently fail)
+        await expect(api.fetchByTag('movie', 50)).rejects.toThrow('API Error');
+      });
+    });
+
+    describe('validation across different fetch functions', () => {
+      it('should validate content in fetchByTags', async () => {
+        const invalidContent = [
+          {
+            claim_id: 'test-claim',
+            value: {
+              // Missing source
+            },
+            tags: ['movie', 'action_movies']
+          }
+        ];
+        
+        (invoke as any).mockResolvedValue(invalidContent);
+        
+        const result = await api.fetchByTags(['movie', 'action_movies'], 50);
+        
+        // Should filter out invalid items
+        expect(result).toEqual([]);
+      });
+
+      it('should validate content in fetchHeroContent', async () => {
+        const invalidContent = [
+          {
+            claim_id: 'hero-claim',
+            value: {
+              source: { sd_hash: 'hash' }
+            }
+            // Missing tags
+          }
+        ];
+        
+        (invoke as any).mockResolvedValue(invalidContent);
+        
+        const result = await api.fetchHeroContent(20);
+        
+        // Should filter out invalid items
+        expect(result).toEqual([]);
+      });
+
+      it('should validate content in fetchCategoryContent', async () => {
+        const invalidContent = [
+          {
+            // Missing claim_id
+            value: {
+              source: { sd_hash: 'hash' }
+            },
+            tags: ['movie']
+          }
+        ];
+        
+        (invoke as any).mockResolvedValue(invalidContent);
+        
+        const result = await api.fetchCategoryContent('movie', 'action_movies', 50);
+        
+        // Should filter out invalid items
+        expect(result).toEqual([]);
+      });
+    });
+  });

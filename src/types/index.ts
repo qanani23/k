@@ -273,6 +273,7 @@ export interface UseContentReturn {
   content: ContentItem[];
   loading: boolean;
   error: ApiError | null;
+  status: 'idle' | 'loading' | 'success' | 'error';
   refetch: () => Promise<void>;
   loadMore: () => Promise<void>;
   hasMore: boolean;

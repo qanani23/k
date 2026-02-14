@@ -14,6 +14,8 @@ import OfflineIndicator from './components/OfflineIndicator';
 import Home from './pages/Home';
 import MoviesPage from './pages/MoviesPage';
 import SeriesPage from './pages/SeriesPage';
+import SitcomsPage from './pages/SitcomsPage';
+import KidsPage from './pages/KidsPage';
 import Search from './pages/Search';
 import MovieDetail from './pages/MovieDetail';
 import SeriesDetail from './pages/SeriesDetail';
@@ -261,6 +263,16 @@ function App() {
           <Route path="/series" element={
             <ErrorBoundary>
               <SeriesPage />
+            </ErrorBoundary>
+          } />
+          <Route path="/sitcoms" element={
+            <ErrorBoundary>
+              <SitcomsPage />
+            </ErrorBoundary>
+          } />
+          <Route path="/kids" element={
+            <ErrorBoundary>
+              <KidsPage />
             </ErrorBoundary>
           } />
           <Route path="/search" element={

@@ -999,6 +999,52 @@ fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
         }
     }
 
+    // FALLBACK: If no direct URLs found, generate Odysee CDN URLs
+    // This handles the case where claim_search returns basic info without streaming URLs
+    if video_urls.is_empty() {
+        // Extract claim_name and claim_id to construct CDN URLs
+        let claim_name = item.get("name")
+            .and_then(|v| v.as_str())
+            .filter(|s| !s.is_empty());
+        
+        let claim_id = item.get("claim_id")
+            .and_then(|v| v.as_str())
+            .filter(|s| !s.is_empty());
+
+        if let (Some(name), Some(id)) = (claim_name, claim_id) {
+            // Get video height to determine available qualities
+            let height = value.get("video")
+                .and_then(|v| v.get("height"))
+                .and_then(|v| v.as_u64())
+                .unwrap_or(720); // Default to 720p if not specified
+
+            // Generate CDN URLs for available qualities based on source video height
+            let qualities = match height {
+                h if h >= 1080 => vec![("1080p", 1080), ("720p", 720), ("480p", 480)],
+                h if h >= 720 => vec![("720p", 720), ("480p", 480)],
+                h if h >= 480 => vec![("480p", 480), ("360p", 360)],
+                _ => vec![("360p", 360)],
+            };
+
+            for (quality_label, _) in qualities {
+                // Odysee CDN URL pattern
+                let cdn_url = format!(
+                    "https://player.odycdn.com/api/v4/streams/free/{}/{}",
+                    name, id
+                );
+
+                video_urls.insert(quality_label.to_string(), VideoUrl {
+                    url: cdn_url,
+                    quality: quality_label.to_string(),
+                    url_type: "mp4".to_string(),
+                    codec: None,
+                });
+            }
+
+            info!("Generated {} CDN URLs for claim {} ({})", video_urls.len(), name, id);
+        }
+    }
+
     if video_urls.is_empty() {
         warn!("No video URLs found in item - Raw value: {}", value);
         return Err(KiyyaError::ContentParsing {

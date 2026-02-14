@@ -380,7 +380,7 @@ describe('Hero Component', () => {
       expect(screen.getByText(/failed to load hero content/i)).toBeInTheDocument();
     });
 
-    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /retry loading hero content/i })).toBeInTheDocument();
   });
 
   it('fetches content tagged with hero_trailer only', async () => {

@@ -20,6 +20,95 @@ import {
 // Read channel ID from environment with fallback
 const CHANNEL_ID = import.meta.env.VITE_CHANNEL_ID || '@kiyyamovies:b';
 
+// Development mode flag
+const isDev = import.meta.env.DEV;
+
+// Validation types
+interface ValidationResult {
+  valid: boolean;
+  errors: string[];
+}
+
+/**
+ * Validate content item structure
+ * Ensures required fields exist for proper rendering and tag filtering
+ */
+function validateContentItem(item: any): ValidationResult {
+  const errors: string[] = [];
+  
+  // Handle null or undefined items
+  if (!item || typeof item !== 'object') {
+    errors.push('Item is null, undefined, or not an object');
+    return {
+      valid: false,
+      errors
+    };
+  }
+  
+  // Check required fields
+  if (!item.claim_id || typeof item.claim_id !== 'string') {
+    errors.push('Missing or invalid claim_id');
+  }
+  
+  if (!item.value || typeof item.value !== 'object' || Array.isArray(item.value)) {
+    errors.push('Missing or invalid value object');
+  } else {
+    // Check nested required fields in value
+    if (!item.value.source || typeof item.value.source !== 'object' || Array.isArray(item.value.source)) {
+      errors.push('Missing or invalid value.source');
+    }
+  }
+  
+  if (!item.tags || !Array.isArray(item.tags)) {
+    errors.push('Missing or invalid tags array');
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors
+  };
+}
+
+/**
+ * Validate and filter content array
+ * Removes invalid items and logs validation errors in development mode
+ */
+function validateAndFilterContent(items: any[]): ContentItem[] {
+  if (!Array.isArray(items)) {
+    if (isDev) {
+      console.error('[API Validation] Expected array, received:', typeof items);
+    }
+    return [];
+  }
+  
+  const validatedItems = items.filter(item => {
+    const validation = validateContentItem(item);
+    
+    if (!validation.valid) {
+      if (isDev) {
+        console.warn('[API Validation] Invalid content item:', {
+          errors: validation.errors,
+          claim_id: item?.claim_id || 'unknown',
+          item
+        });
+      }
+      return false;
+    }
+    
+    return true;
+  });
+  
+  if (isDev && validatedItems.length < items.length) {
+    console.warn('[API Validation] Filtered out invalid items:', {
+      original: items.length,
+      valid: validatedItems.length,
+      filtered: items.length - validatedItems.length
+    });
+  }
+  
+  return validatedItems as ContentItem[];
+}
+
 // Content discovery
 export const fetchChannelClaims = async (params: {
   any_tags?: string[];
@@ -28,10 +117,31 @@ export const fetchChannelClaims = async (params: {
   page?: number;
   force_refresh?: boolean;
 }): Promise<ContentItem[]> => {
-  return await invoke('fetch_channel_claims', {
-    channel_id: CHANNEL_ID,
-    ...params
-  });
+  try {
+    const response = await invoke('fetch_channel_claims', {
+      channel_id: CHANNEL_ID,
+      ...params
+    });
+    
+    if (isDev) {
+      console.log('[API] fetchChannelClaims response:', {
+        tags: params.any_tags,
+        text: params.text,
+        count: Array.isArray(response) ? response.length : 0
+      });
+    }
+    
+    // Validate and filter response
+    return validateAndFilterContent(response as any[]);
+  } catch (error) {
+    if (isDev) {
+      console.error('[API] fetchChannelClaims error:', {
+        params,
+        error
+      });
+    }
+    throw error;
+  }
 };
 
 export const fetchPlaylists = async (): Promise<Playlist[]> => {
@@ -46,11 +156,43 @@ export const resolveClaim = async (claimIdOrUri: string): Promise<ContentItem> =
 
 // Content fetching by tags (convenience functions)
 export const fetchByTag = async (tag: string, limit: number = 50, forceRefresh: boolean = false): Promise<ContentItem[]> => {
-  return await fetchChannelClaims({ any_tags: [tag], limit, force_refresh: forceRefresh });
+  try {
+    const response = await fetchChannelClaims({ any_tags: [tag], limit, force_refresh: forceRefresh });
+    
+    if (isDev) {
+      console.log('[API] fetchByTag response:', {
+        tag,
+        count: response.length
+      });
+    }
+    
+    return response;
+  } catch (error) {
+    if (isDev) {
+      console.error('[API] fetchByTag error:', { tag, error });
+    }
+    throw error;
+  }
 };
 
 export const fetchByTags = async (tags: string[], limit: number = 50, forceRefresh: boolean = false): Promise<ContentItem[]> => {
-  return await fetchChannelClaims({ any_tags: tags, limit, force_refresh: forceRefresh });
+  try {
+    const response = await fetchChannelClaims({ any_tags: tags, limit, force_refresh: forceRefresh });
+    
+    if (isDev) {
+      console.log('[API] fetchByTags response:', {
+        tags,
+        count: response.length
+      });
+    }
+    
+    return response;
+  } catch (error) {
+    if (isDev) {
+      console.error('[API] fetchByTags error:', { tags, error });
+    }
+    throw error;
+  }
 };
 
 export const searchContent = async (text: string, limit: number = 50): Promise<ContentItem[]> => {

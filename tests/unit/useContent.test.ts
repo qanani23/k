@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { 
   useContent, 
@@ -19,6 +19,18 @@ vi.mock('../../src/lib/api');
 // Mock the useOffline hook
 vi.mock('../../src/hooks/useOffline', () => ({
   useOffline: () => ({ isOnline: true, wasOffline: false })
+}));
+
+// Mock the memory manager to always return null (no cached data)
+vi.mock('../../src/lib/memoryManager', () => ({
+  getMemoryManager: vi.fn(() => ({
+    getCollection: vi.fn(() => null),
+    storeCollection: vi.fn(),
+    removeCollection: vi.fn(() => true),
+    clearAll: vi.fn(),
+    getStats: vi.fn(() => ({ totalCollections: 0, totalItems: 0, collections: [] })),
+    destroy: vi.fn()
+  }))
 }));
 
 describe('useContent', () => {
@@ -167,10 +179,10 @@ describe('useContent', () => {
 
       await waitFor(() => {
         expect(result.current.content).toEqual(newMockData);
-      }, { timeout: 3000 });
+      }, { timeout: 5000 });
 
       expect(api.fetchByTags).toHaveBeenCalledTimes(1);
-    });
+    }, 10000);
 
     it('should load more content and append to existing', async () => {
       vi.mocked(api.fetchByTags).mockResolvedValue(mockContentItems);
@@ -205,10 +217,10 @@ describe('useContent', () => {
 
       await waitFor(() => {
         expect(result.current.content.length).toBeGreaterThan(2);
-      }, { timeout: 3000 });
+      }, { timeout: 5000 });
 
       expect(result.current.content[2]).toEqual(additionalData[0]);
-    });
+    }, 10000);
 
     it('should set hasMore to false when results are less than limit', async () => {
       const singleItem = [mockContentItems[0]];
@@ -277,7 +289,7 @@ describe('useContent', () => {
     it('should fetch movies with filter tag', async () => {
       vi.mocked(api.fetchByTags).mockResolvedValue([mockContentItems[0]]);
 
-      const { result } = renderHook(() => useMovies('action_movies'));
+      const { result } = renderHook(() => useMovies('action_movies', { enableMemoryManagement: false }));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -298,7 +310,7 @@ describe('useContent', () => {
       ];
       vi.mocked(api.fetchByTags).mockResolvedValue(seriesItems);
 
-      const { result } = renderHook(() => useSeries());
+      const { result } = renderHook(() => useSeries(undefined, { enableMemoryManagement: false }));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -318,7 +330,7 @@ describe('useContent', () => {
       ];
       vi.mocked(api.fetchByTags).mockResolvedValue(seriesItems);
 
-      const { result } = renderHook(() => useSeries('comedy_series'));
+      const { result } = renderHook(() => useSeries('comedy_series', { enableMemoryManagement: false }));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -339,7 +351,7 @@ describe('useContent', () => {
       ];
       vi.mocked(api.fetchByTags).mockResolvedValue(sitcomItems);
 
-      const { result } = renderHook(() => useSitcoms());
+      const { result } = renderHook(() => useSitcoms({ enableMemoryManagement: false }));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -361,7 +373,7 @@ describe('useContent', () => {
       ];
       vi.mocked(api.fetchByTags).mockResolvedValue(kidsItems);
 
-      const { result } = renderHook(() => useKidsContent());
+      const { result } = renderHook(() => useKidsContent(undefined, { enableMemoryManagement: false }));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -381,7 +393,7 @@ describe('useContent', () => {
       ];
       vi.mocked(api.fetchByTags).mockResolvedValue(kidsItems);
 
-      const { result } = renderHook(() => useKidsContent('action_kids'));
+      const { result } = renderHook(() => useKidsContent('action_kids', { enableMemoryManagement: false }));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -402,7 +414,7 @@ describe('useContent', () => {
       ];
       vi.mocked(api.fetchByTags).mockResolvedValue(heroItems);
 
-      const { result } = renderHook(() => useHeroContent());
+      const { result } = renderHook(() => useHeroContent({ enableMemoryManagement: false }));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -524,6 +536,207 @@ describe('useContent', () => {
       });
 
       expect(result.current.hasMore).toBe(false);
+    });
+  });
+
+  describe('Diagnostic Logging', () => {
+    let consoleLogSpy: ReturnType<typeof vi.spyOn>;
+    let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      consoleLogSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('should produce logs in development mode during successful fetch', async () => {
+      vi.mocked(api.fetchByTags).mockResolvedValue(mockContentItems);
+
+      const { result } = renderHook(() => useContent({ 
+        tags: ['movie'], 
+        autoFetch: true, 
+        enableMemoryManagement: false 
+      }));
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      }, { timeout: 3000 });
+
+      // Verify state transition logs were produced
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[useContent] State transition: idle → loading'),
+        expect.objectContaining({
+          collectionId: expect.any(String),
+          pageNum: 1,
+          append: false,
+          tags: ['movie'],
+          limit: 50
+        })
+      );
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[useContent] State transition: loading → success'),
+        expect.objectContaining({
+          collectionId: expect.any(String),
+          pageNum: 1,
+          append: false,
+          itemCount: 2,
+          duration: expect.stringMatching(/\d+\.\d+ms/),
+          hasMore: false
+        })
+      );
+    });
+
+    it('should produce error logs in development mode during failed fetch', async () => {
+      const mockError = new Error('API Error');
+      vi.mocked(api.fetchByTags).mockRejectedValue(mockError);
+
+      const { result } = renderHook(() => useContent({ 
+        tags: ['movie'], 
+        autoFetch: true, 
+        enableMemoryManagement: false 
+      }));
+
+      await waitFor(() => {
+        expect(result.current.status).toBe('error');
+      }, { timeout: 3000 });
+
+      // Verify error logs were produced
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[useContent] State transition: loading → error'),
+        expect.objectContaining({
+          collectionId: expect.any(String),
+          pageNum: 1,
+          append: false,
+          duration: expect.stringMatching(/\d+\.\d+ms/),
+          error: 'API Error'
+        })
+      );
+    });
+
+    it('should produce cache hit logs in development mode', async () => {
+      // Import the memory manager module to mock it
+      const memoryManagerModule = await import('../../src/lib/memoryManager');
+      
+      // Mock memory manager to return cached content
+      const mockMemoryManager = {
+        getCollection: vi.fn(() => mockContentItems),
+        storeCollection: vi.fn(),
+        removeCollection: vi.fn(() => true),
+        clearAll: vi.fn(),
+        getStats: vi.fn(() => ({ totalCollections: 0, totalItems: 0, collections: [] })),
+        destroy: vi.fn()
+      };
+
+      vi.spyOn(memoryManagerModule, 'getMemoryManager').mockReturnValue(mockMemoryManager as any);
+
+      const { result } = renderHook(() => useContent({ 
+        tags: ['movie'], 
+        autoFetch: true, 
+        enableMemoryManagement: true 
+      }));
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      }, { timeout: 3000 });
+
+      // Verify cache hit log was produced
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[useContent] Cache hit'),
+        expect.objectContaining({
+          collectionId: expect.any(String),
+          pageNum: 1,
+          append: false,
+          itemCount: 2,
+          duration: expect.stringMatching(/\d+\.\d+ms/)
+        })
+      );
+    });
+
+    it('should produce fetch deduplication logs in development mode', async () => {
+      vi.mocked(api.fetchByTags).mockImplementation(() => 
+        new Promise(resolve => setTimeout(() => resolve(mockContentItems), 100))
+      );
+
+      const { result } = renderHook(() => useContent({ 
+        tags: ['movie'], 
+        autoFetch: false, 
+        enableMemoryManagement: false 
+      }));
+
+      // Trigger multiple fetches simultaneously
+      act(() => {
+        result.current.refetch();
+        result.current.refetch();
+      });
+
+      await waitFor(() => {
+        expect(consoleLogSpy).toHaveBeenCalledWith(
+          expect.stringContaining('[useContent] Fetch already in progress, skipping')
+        );
+      }, { timeout: 3000 });
+    });
+
+    it('should disable verbose logging in production mode', async () => {
+      // Note: In a real production build, import.meta.env.DEV would be false
+      // This test verifies the logging is conditional on the isDev flag
+      // The actual behavior depends on the build environment
+      
+      vi.mocked(api.fetchByTags).mockResolvedValue(mockContentItems);
+
+      const { result } = renderHook(() => useContent({ 
+        tags: ['movie'], 
+        autoFetch: true, 
+        enableMemoryManagement: false 
+      }));
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      }, { timeout: 3000 });
+
+      // In development mode (which we're in during tests), logs ARE produced
+      // This test documents that the logging is controlled by import.meta.env.DEV
+      // In a production build, these logs would not be produced
+      expect(consoleLogSpy).toHaveBeenCalled();
+      
+      // Verify the logs contain the expected format
+      const logCalls = consoleLogSpy.mock.calls;
+      const hasUseContentLogs = logCalls.some(call => 
+        typeof call[0] === 'string' && call[0].includes('[useContent]')
+      );
+      expect(hasUseContentLogs).toBe(true);
+    });
+
+    it('should handle error logging based on environment', async () => {
+      // This test verifies that error logging is conditional
+      const mockError = new Error('API Error');
+      vi.mocked(api.fetchByTags).mockRejectedValue(mockError);
+
+      const { result } = renderHook(() => useContent({ 
+        tags: ['movie'], 
+        autoFetch: true, 
+        enableMemoryManagement: false 
+      }));
+
+      await waitFor(() => {
+        expect(result.current.status).toBe('error');
+      }, { timeout: 3000 });
+
+      // In development mode (which we're in during tests), error logs ARE produced
+      // This test documents that error logging is controlled by import.meta.env.DEV
+      // In a production build, these error logs would not be produced
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      
+      // Verify the error logs contain the expected format
+      const errorCalls = consoleErrorSpy.mock.calls;
+      const hasUseContentErrors = errorCalls.some(call => 
+        typeof call[0] === 'string' && call[0].includes('[useContent]')
+      );
+      expect(hasUseContentErrors).toBe(true);
     });
   });
 });

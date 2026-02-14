@@ -1,0 +1,439 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import * as fc from 'fast-check';
+import { renderHook, waitFor } from '@testing-library/react';
+import { useContent } from '../../src/hooks/useContent';
+import * as api from '../../src/lib/api';
+
+/**
+ * Property-Based Tests for useContent Hook - Collection ID Stability
+ * 
+ * **Feature: ui-data-fetching-fixes, Property 5: Collection ID Stability**
+ * 
+ * For any stable set of tags and text parameters, the generated collectionId 
+ * should remain constant across multiple renders of the same component instance.
+ * 
+ * Validates: Requirements 7.2, 14.4
+ */
+
+// Mock the API module
+vi.mock('../../src/lib/api');
+
+// Mock the useOffline hook
+vi.mock('../../src/hooks/useOffline', () => ({
+  useOffline: () => ({ isOnline: true, wasOffline: false })
+}));
+
+// Mock the memory manager to track collectionId usage
+const mockGetCollection = vi.fn(() => null);
+const mockStoreCollection = vi.fn();
+
+vi.mock('../../src/lib/memoryManager', () => ({
+  getMemoryManager: vi.fn(() => ({
+    getCollection: mockGetCollection,
+    storeCollection: mockStoreCollection,
+    removeCollection: vi.fn(() => true),
+    clearAll: vi.fn(),
+    getStats: vi.fn(() => ({ totalCollections: 0, totalItems: 0, collections: [] })),
+    destroy: vi.fn()
+  }))
+}));
+
+// Arbitrary generators for hook parameters
+
+// Generate valid tag arrays (non-whitespace-only strings)
+const tagsArb = fc.array(
+  fc.string({ minLength: 1, maxLength: 20 }).filter(s => s.trim().length > 0),
+  { minLength: 1, maxLength: 5 }
+);
+
+// Generate search text (non-whitespace-only strings)
+const searchTextArb = fc.string({ minLength: 1, maxLength: 100 }).filter(s => s.trim().length > 0);
+
+// Generate limit parameter
+const limitArb = fc.integer({ min: 1, max: 100 });
+
+describe('Property-Based Tests: Collection ID Stability', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Mock successful API responses
+    vi.mocked(api.fetchByTags).mockResolvedValue([]);
+    vi.mocked(api.searchContent).mockResolvedValue([]);
+    vi.mocked(api.fetchChannelClaims).mockResolvedValue([]);
+  });
+
+  describe('Property 5: Collection ID Stability', () => {
+    it('should generate the same collectionId for the same tags across multiple renders', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          tagsArb,
+          limitArb,
+          async (tags, limit) => {
+            mockGetCollection.mockClear();
+            mockStoreCollection.mockClear();
+
+            const { result, rerender } = renderHook(
+              ({ tags, limit }) => useContent({ tags, limit, enableMemoryManagement: true }),
+              { initialProps: { tags, limit } }
+            );
+
+            // Wait for initial fetch to complete
+            await waitFor(() => {
+              expect(result.current.loading).toBe(false);
+            }, { timeout: 3000 });
+
+            // Capture the collectionId from the first render
+            const firstCallArgs = mockGetCollection.mock.calls[0];
+            const firstCollectionId = firstCallArgs ? firstCallArgs[0] : null;
+
+            expect(firstCollectionId).toBeDefined();
+            expect(typeof firstCollectionId).toBe('string');
+
+            // Force multiple re-renders with the same props
+            for (let i = 0; i < 5; i++) {
+              rerender({ tags, limit });
+            }
+
+            // Wait a bit for any potential re-fetches
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Check all getCollection calls used the same collectionId
+            const allGetCollectionIds = mockGetCollection.mock.calls.map(call => call[0]);
+            
+            for (const collectionId of allGetCollectionIds) {
+              expect(collectionId).toBe(firstCollectionId);
+            }
+
+            // Check all storeCollection calls used the same collectionId
+            const allStoreCollectionIds = mockStoreCollection.mock.calls.map(call => call[0]);
+            
+            for (const collectionId of allStoreCollectionIds) {
+              expect(collectionId).toBe(firstCollectionId);
+            }
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+
+    it('should generate the same collectionId for the same text search across multiple renders', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          searchTextArb,
+          limitArb,
+          async (text, limit) => {
+            mockGetCollection.mockClear();
+            mockStoreCollection.mockClear();
+
+            const { result, rerender } = renderHook(
+              ({ text, limit }) => useContent({ text, limit, enableMemoryManagement: true }),
+              { initialProps: { text, limit } }
+            );
+
+            // Wait for initial fetch to complete
+            await waitFor(() => {
+              expect(result.current.loading).toBe(false);
+            }, { timeout: 3000 });
+
+            // Capture the collectionId from the first render
+            const firstCallArgs = mockGetCollection.mock.calls[0];
+            const firstCollectionId = firstCallArgs ? firstCallArgs[0] : null;
+
+            expect(firstCollectionId).toBeDefined();
+            expect(typeof firstCollectionId).toBe('string');
+
+            // Force multiple re-renders with the same props
+            for (let i = 0; i < 5; i++) {
+              rerender({ text, limit });
+            }
+
+            // Wait a bit for any potential re-fetches
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Check all getCollection calls used the same collectionId
+            const allGetCollectionIds = mockGetCollection.mock.calls.map(call => call[0]);
+            
+            for (const collectionId of allGetCollectionIds) {
+              expect(collectionId).toBe(firstCollectionId);
+            }
+
+            // Check all storeCollection calls used the same collectionId
+            const allStoreCollectionIds = mockStoreCollection.mock.calls.map(call => call[0]);
+            
+            for (const collectionId of allStoreCollectionIds) {
+              expect(collectionId).toBe(firstCollectionId);
+            }
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+
+    it('should generate different collectionIds for different tag combinations', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          tagsArb,
+          tagsArb,
+          async (tags1, tags2) => {
+            // Precondition: tags must be different
+            fc.pre(JSON.stringify(tags1) !== JSON.stringify(tags2));
+
+            mockGetCollection.mockClear();
+            mockStoreCollection.mockClear();
+
+            // Render with first tags
+            const { result: result1 } = renderHook(() => 
+              useContent({ tags: tags1, enableMemoryManagement: true })
+            );
+
+            await waitFor(() => {
+              expect(result1.current.loading).toBe(false);
+            }, { timeout: 3000 });
+
+            const collectionId1 = mockGetCollection.mock.calls[0]?.[0];
+
+            mockGetCollection.mockClear();
+            mockStoreCollection.mockClear();
+
+            // Render with second tags
+            const { result: result2 } = renderHook(() => 
+              useContent({ tags: tags2, enableMemoryManagement: true })
+            );
+
+            await waitFor(() => {
+              expect(result2.current.loading).toBe(false);
+            }, { timeout: 3000 });
+
+            const collectionId2 = mockGetCollection.mock.calls[0]?.[0];
+
+            // Different tags should produce different collectionIds
+            expect(collectionId1).toBeDefined();
+            expect(collectionId2).toBeDefined();
+            expect(collectionId1).not.toBe(collectionId2);
+          }
+        ),
+        { numRuns: 50 }
+      );
+    });
+
+    it('should generate the same collectionId when tags array has same elements in same order', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          tagsArb,
+          async (tags) => {
+            mockGetCollection.mockClear();
+            mockStoreCollection.mockClear();
+
+            // Create a copy of the tags array
+            const tagsCopy = [...tags];
+
+            // Render with original tags
+            const { result: result1 } = renderHook(() => 
+              useContent({ tags, enableMemoryManagement: true })
+            );
+
+            await waitFor(() => {
+              expect(result1.current.loading).toBe(false);
+            }, { timeout: 3000 });
+
+            const collectionId1 = mockGetCollection.mock.calls[0]?.[0];
+
+            mockGetCollection.mockClear();
+            mockStoreCollection.mockClear();
+
+            // Render with copied tags
+            const { result: result2 } = renderHook(() => 
+              useContent({ tags: tagsCopy, enableMemoryManagement: true })
+            );
+
+            await waitFor(() => {
+              expect(result2.current.loading).toBe(false);
+            }, { timeout: 3000 });
+
+            const collectionId2 = mockGetCollection.mock.calls[0]?.[0];
+
+            // Same tags should produce the same collectionId
+            expect(collectionId1).toBeDefined();
+            expect(collectionId2).toBeDefined();
+            expect(collectionId1).toBe(collectionId2);
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+
+    it('should maintain collectionId stability when limit changes', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          tagsArb,
+          limitArb,
+          limitArb,
+          async (tags, limit1, limit2) => {
+            // Precondition: limits must be different
+            fc.pre(limit1 !== limit2);
+
+            mockGetCollection.mockClear();
+            mockStoreCollection.mockClear();
+
+            // Render with first limit
+            const { result, rerender } = renderHook(
+              ({ tags, limit }) => useContent({ tags, limit, enableMemoryManagement: true }),
+              { initialProps: { tags, limit: limit1 } }
+            );
+
+            await waitFor(() => {
+              expect(result.current.loading).toBe(false);
+            }, { timeout: 3000 });
+
+            const collectionId1 = mockGetCollection.mock.calls[0]?.[0];
+
+            mockGetCollection.mockClear();
+            mockStoreCollection.mockClear();
+
+            // Re-render with different limit but same tags
+            rerender({ tags, limit: limit2 });
+
+            await waitFor(() => {
+              expect(result.current.loading).toBe(false);
+            }, { timeout: 3000 });
+
+            const collectionId2 = mockGetCollection.mock.calls[0]?.[0];
+
+            // CollectionId should remain the same even when limit changes
+            // because collectionId is based on tags/text, not limit
+            expect(collectionId1).toBeDefined();
+            expect(collectionId2).toBeDefined();
+            expect(collectionId1).toBe(collectionId2);
+          }
+        ),
+        { numRuns: 50 }
+      );
+    });
+
+    it('should use default collectionId when no tags or text provided', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.constant(null),
+          async () => {
+            mockGetCollection.mockClear();
+            mockStoreCollection.mockClear();
+
+            const { result, rerender } = renderHook(() => 
+              useContent({ enableMemoryManagement: true })
+            );
+
+            await waitFor(() => {
+              expect(result.current.loading).toBe(false);
+            }, { timeout: 3000 });
+
+            const firstCollectionId = mockGetCollection.mock.calls[0]?.[0];
+
+            expect(firstCollectionId).toBeDefined();
+            expect(firstCollectionId).toBe('content-default');
+
+            // Force multiple re-renders
+            for (let i = 0; i < 5; i++) {
+              rerender();
+            }
+
+            // Wait a bit for any potential re-fetches
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // All calls should use the same default collectionId
+            const allCollectionIds = mockGetCollection.mock.calls.map(call => call[0]);
+            
+            for (const collectionId of allCollectionIds) {
+              expect(collectionId).toBe('content-default');
+            }
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+
+    it('should generate collectionId based on tags join with hyphen', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          tagsArb,
+          async (tags) => {
+            mockGetCollection.mockClear();
+            mockStoreCollection.mockClear();
+
+            const { result } = renderHook(() => 
+              useContent({ tags, enableMemoryManagement: true })
+            );
+
+            await waitFor(() => {
+              expect(result.current.loading).toBe(false);
+            }, { timeout: 3000 });
+
+            const collectionId = mockGetCollection.mock.calls[0]?.[0];
+            // Account for trimming behavior in the implementation
+            const tagsStr = tags.join('-').trim();
+            const expectedCollectionId = `content-${tagsStr || 'default'}`;
+
+            expect(collectionId).toBe(expectedCollectionId);
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+
+    it('should generate collectionId based on text when provided', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          searchTextArb,
+          async (text) => {
+            mockGetCollection.mockClear();
+            mockStoreCollection.mockClear();
+
+            const { result } = renderHook(() => 
+              useContent({ text, enableMemoryManagement: true })
+            );
+
+            await waitFor(() => {
+              expect(result.current.loading).toBe(false);
+            }, { timeout: 3000 });
+
+            const collectionId = mockGetCollection.mock.calls[0]?.[0];
+            // Account for trimming behavior in the implementation
+            const textStr = text.trim();
+            const expectedCollectionId = `content-${textStr || 'default'}`;
+
+            expect(collectionId).toBe(expectedCollectionId);
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+
+    it('should prioritize tags over text when both are provided', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          tagsArb,
+          searchTextArb,
+          async (tags, text) => {
+            mockGetCollection.mockClear();
+            mockStoreCollection.mockClear();
+
+            const { result } = renderHook(() => 
+              useContent({ tags, text, enableMemoryManagement: true })
+            );
+
+            await waitFor(() => {
+              expect(result.current.loading).toBe(false);
+            }, { timeout: 3000 });
+
+            const collectionId = mockGetCollection.mock.calls[0]?.[0];
+            // Account for trimming behavior in the implementation
+            const tagsStr = tags.join('-').trim();
+            const expectedCollectionId = `content-${tagsStr || 'default'}`;
+
+            // When both tags and text are provided, tags should be used for collectionId
+            expect(collectionId).toBe(expectedCollectionId);
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+  });
+});

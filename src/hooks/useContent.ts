@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { ContentItem, ApiError, UseContentReturn } from '../types';
 import { fetchChannelClaims, fetchByTag, fetchByTags, searchContent } from '../lib/api';
 import { useOffline } from './useOffline';
@@ -18,16 +18,81 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
   const { isOnline } = useOffline();
   
   const [content, setContent] = useState<ContentItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [error, setError] = useState<ApiError | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  
+  // State transition validation
+  const statusRef = useRef<'idle' | 'loading' | 'success' | 'error'>('idle');
+  
+  const setStatusWithValidation = useCallback((newStatus: 'idle' | 'loading' | 'success' | 'error') => {
+    const currentStatus = statusRef.current;
+    
+    // Define valid state transitions
+    const validTransitions: Record<string, string[]> = {
+      idle: ['loading', 'success', 'error'], // Allow direct success (cache hit) and error (offline)
+      loading: ['success', 'error'],
+      success: ['loading'], // Allow refetch
+      error: ['loading'] // Allow retry
+    };
+    
+    // Check if transition is valid
+    if (!validTransitions[currentStatus]?.includes(newStatus)) {
+      if (import.meta.env.DEV) {
+        console.error('[useContent] Invalid state transition:', {
+          from: currentStatus,
+          to: newStatus,
+          validTransitions: validTransitions[currentStatus]
+        });
+      }
+      return;
+    }
+    
+    // Update both ref and state
+    statusRef.current = newStatus;
+    setStatus(newStatus);
+  }, []);
 
-  // Generate a unique collection ID for memory management
-  const collectionId = `content-${tags?.join('-') || text || 'default'}`;
-  const memoryManager = enableMemoryManagement ? getMemoryManager() : null;
+  // FIX 1: Memoize collectionId to prevent reference changes
+  // Serialize tags to create a stable key that only changes when tag values change
+  const tagsKey = useMemo(() => {
+    if (!tags || tags.length === 0) return null;
+    return JSON.stringify(tags);
+  }, [tags ? tags.length : 0, ...(tags || [])]);
+  
+  const collectionId = useMemo(() => {
+    const tagsStr = tags && tags.length > 0 ? tags.join('-') : '';
+    const textStr = text || '';
+    
+    // Use tags if available, otherwise text, otherwise 'default'
+    // Trim to handle whitespace-only strings
+    const key = tagsStr.trim() || textStr.trim() || 'default';
+    return `content-${key}`;
+  }, [tagsKey, text]);
+  
+  // FIX 2: Memoize memoryManager instance
+  const memoryManager = useMemo(() => 
+    enableMemoryManagement ? getMemoryManager() : null, 
+    [enableMemoryManagement]
+  );
+  
+  // FIX 3: Track in-flight requests to prevent duplicate fetches
+  const fetchInProgressRef = useRef(false);
+  
+  // FIX 4: Development mode logging
+  const isDev = import.meta.env.DEV;
 
-  const fetchContent = useCallback(async (pageNum: number = 1, append: boolean = false) => {
+  const fetchContent = useCallback(async (pageNum: number = 1, append: boolean = false, force: boolean = false) => {
+    // Prevent duplicate fetches
+    if (fetchInProgressRef.current) {
+      if (isDev) console.log('[useContent] Fetch already in progress, skipping');
+      return;
+    }
+    
+    fetchInProgressRef.current = true;
+    const startTime = isDev ? performance.now() : 0;
+    
     // If offline and not in offline-only mode, show error
     if (!isOnline && !offlineOnly) {
       const apiError: ApiError = {
@@ -35,24 +100,55 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
         details: 'offline',
       };
       setError(apiError);
-      setLoading(false);
+      setStatusWithValidation('error');
+      if (isDev) {
+        console.log('[useContent] State transition: idle → error (offline)', {
+          collectionId,
+          pageNum,
+          append,
+          reason: 'offline'
+        });
+      }
+      fetchInProgressRef.current = false;
       return;
     }
 
-    // Check memory cache first if not appending
-    if (!append && memoryManager) {
+    // Check memory cache first if not appending and not forcing a refetch
+    if (!append && !force && memoryManager) {
       const cachedContent = memoryManager.getCollection(collectionId);
       if (cachedContent && cachedContent.length > 0) {
         setContent(cachedContent);
         setHasMore(cachedContent.length === limit);
         setPage(pageNum);
+        setStatusWithValidation('success');
+        if (isDev) {
+          const duration = performance.now() - startTime;
+          console.log('[useContent] Cache hit', {
+            collectionId,
+            pageNum,
+            append,
+            itemCount: cachedContent.length,
+            duration: `${duration.toFixed(2)}ms`
+          });
+        }
+        fetchInProgressRef.current = false;
         return;
       }
     }
 
     try {
-      setLoading(true);
+      setStatusWithValidation('loading');
       setError(null);
+      if (isDev) {
+        console.log('[useContent] State transition: idle → loading', {
+          collectionId,
+          pageNum,
+          append,
+          tags: tags || null,
+          text: text || null,
+          limit
+        });
+      }
 
       let results: ContentItem[];
       
@@ -86,6 +182,19 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
       // Check if there are more results
       setHasMore(results.length === limit);
       setPage(pageNum);
+      
+      setStatusWithValidation('success');
+      if (isDev) {
+        const duration = performance.now() - startTime;
+        console.log('[useContent] State transition: loading → success', {
+          collectionId,
+          pageNum,
+          append,
+          itemCount: results.length,
+          duration: `${duration.toFixed(2)}ms`,
+          hasMore: results.length === limit
+        });
+      }
 
     } catch (err) {
       const apiError: ApiError = {
@@ -93,24 +202,35 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
         details: err,
       };
       setError(apiError);
+      setStatusWithValidation('error');
+      if (isDev) {
+        const duration = performance.now() - startTime;
+        console.error('[useContent] State transition: loading → error', {
+          collectionId,
+          pageNum,
+          append,
+          duration: `${duration.toFixed(2)}ms`,
+          error: err instanceof Error ? err.message : String(err)
+        });
+      }
       
       if (!append) {
         setContent([]);
       }
     } finally {
-      setLoading(false);
+      fetchInProgressRef.current = false;
     }
-  }, [tags, text, limit, isOnline, offlineOnly, collectionId, memoryManager]);
+  }, [tags, text, limit, isOnline, offlineOnly, collectionId, memoryManager, isDev]);
 
   const refetch = useCallback(async () => {
-    await fetchContent(1, false);
+    await fetchContent(1, false, true); // Force refetch, skip cache
   }, [fetchContent]);
 
   const loadMore = useCallback(async () => {
-    if (!loading && hasMore) {
+    if (!fetchInProgressRef.current && hasMore) {
       await fetchContent(page + 1, true);
     }
-  }, [fetchContent, loading, hasMore, page]);
+  }, [fetchContent, hasMore, page]);
 
   // Auto-fetch on mount or when dependencies change
   useEffect(() => {
@@ -119,10 +239,14 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
     }
   }, [fetchContent, autoFetch]);
 
+  // Derive loading from status for backward compatibility
+  const loading = status === 'loading';
+
   return {
     content,
     loading,
     error,
+    status,
     refetch,
     loadMore,
     hasMore,

@@ -355,7 +355,8 @@ describe('DownloadsPage', () => {
       const offlineTab = screen.getByRole('button', { name: /Offline Content/i });
       await user.click(offlineTab);
 
-      const playButton = screen.getByRole('button', { name: /Play/i });
+      // Use more specific selector to get the Play button (not the Delete button)
+      const playButton = screen.getByRole('button', { name: /Play play-claim offline/i });
       await user.click(playButton);
 
       await waitFor(() => {
