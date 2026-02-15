@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hero API Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #4a9eff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #3a8eef;
+        }
+        pre {
+            background: #0a0a0a;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .error {
+            color: #ff4444;
+        }
+        .success {
+            color: #44ff44;
+        }
+        .warning {
+            color: #ffaa44;
+        }
+    </style>
+</head>
+<body>
+    <h1>Kiyya Hero API Diagnostic Tool</h1>
+    
+    <div class="section">
+        <h2>Test Configuration</h2>
+        <p><strong>Channel ID:</strong> @kiyyamovies:b</p>
+        <p><strong>Tag:</strong> hero_trailer</p>
+        <p><strong>API Endpoint:</strong> https://api.na-backend.odysee.com/api/v1/proxy</p>
+    </div>
+
+    <div class="section">
+        <h2>Test 1: Fetch All Channel Content</h2>
+        <button onclick="testAllContent()">Fetch All Content</button>
+        <div id="allContentResult"></div>
+    </div>
+
+    <div class="section">
+        <h2>Test 2: Fetch Hero Tagged Content</h2>
+        <button onclick="testHeroContent()">Fetch Hero Content</button>
+        <div id="heroContentResult"></div>
+    </div>
+
+    <div class="section">
+        <h2>Test 3: Check Tags on All Videos</h2>
+        <button onclick="checkAllTags()">Check All Tags</button>
+        <div id="tagsResult"></div>
+    </div>
+
+    <script>
+        async function callOdyseeAPI(params) {
+            const response = await fetch('https://api.na-backend.odysee.com/api/v1/proxy', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    method: 'claim_search',
+                    params: params
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            return await response.json();
+        }
+
+        async function testAllContent() {
+            const resultDiv = document.getElementById('allContentResult');
+            resultDiv.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                const data = await callOdyseeAPI({
+                    channel: '@kiyyamovies:b',
+                    page_size: 50,
+                    page: 1,
+                    order_by: ['release_time']
+                });
+                
+                const items = data.result?.items || [];
+                
+                resultDiv.innerHTML = `
+                    <p class="success">✓ Success! Found ${items.length} items</p>
+                    <pre>${JSON.stringify({
+                        total_items: items.length,
+                        items: items.map(item => ({
+                            claim_id: item.claim_id,
+                            name: item.name,
+                            title: item.value?.title,
+                            tags: item.value?.tags || []
+                        }))
+                    }, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">✗ Error: ${error.message}</p>`;
+            }
+        }
+
+        async function testHeroContent() {
+            const resultDiv = document.getElementById('heroContentResult');
+            resultDiv.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                const data = await callOdyseeAPI({
+                    channel: '@kiyyamovies:b',
+                    any_tags: ['hero_trailer'],
+                    page_size: 20,
+                    page: 1,
+                    order_by: ['release_time']
+                });
+                
+                const items = data.result?.items || [];
+                
+                if (items.length === 0) {
+                    resultDiv.innerHTML = `
+                        <p class="warning">⚠ No items found with 'hero_trailer' tag!</p>
+                        <p>This means:</p>
+                        <ul>
+                            <li>No videos on the channel have the exact tag "hero_trailer"</li>
+                            <li>The tag might be misspelled or have different casing</li>
+                            <li>The videos might not be published yet</li>
+                        </ul>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="success">✓ Success! Found ${items.length} hero item(s)</p>
+                        <pre>${JSON.stringify({
+                            total_items: items.length,
+                            items: items.map(item => ({
+                                claim_id: item.claim_id,
+                                name: item.name,
+                                title: item.value?.title,
+                                tags: item.value?.tags || [],
+                                has_hero_tag: (item.value?.tags || []).includes('hero_trailer'),
+                                thumbnail: item.value?.thumbnail?.url,
+                                stream_url: item.value?.source?.sd_hash ? 'Available' : 'Missing'
+                            }))
+                        }, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">✗ Error: ${error.message}</p>`;
+            }
+        }
+
+        async function checkAllTags() {
+            const resultDiv = document.getElementById('tagsResult');
+            resultDiv.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                const data = await callOdyseeAPI({
+                    channel: '@kiyyamovies:b',
+                    page_size: 50,
+                    page: 1,
+                    order_by: ['release_time']
+                });
+                
+                const items = data.result?.items || [];
+                const tagAnalysis = {};
+                
+                items.forEach(item => {
+                    const tags = item.value?.tags || [];
+                    tags.forEach(tag => {
+                        if (!tagAnalysis[tag]) {
+                            tagAnalysis[tag] = {
+                                count: 0,
+                                videos: []
+                            };
+                        }
+                        tagAnalysis[tag].count++;
+                        tagAnalysis[tag].videos.push({
+                            claim_id: item.claim_id,
+                            title: item.value?.title || item.name
+                        });
+                    });
+                });
+                
+                const hasHeroTag = tagAnalysis['hero_trailer'];
+                
+                resultDiv.innerHTML = `
+                    <p class="${hasHeroTag ? 'success' : 'warning'}">
+                        ${hasHeroTag ? '✓' : '⚠'} Hero tag status: ${hasHeroTag ? `Found on ${hasHeroTag.count} video(s)` : 'NOT FOUND'}
+                    </p>
+                    <h3>All Tags Found:</h3>
+                    <pre>${JSON.stringify(tagAnalysis, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">✗ Error: ${error.message}</p>`;
+            }
+        }
+
+        // Auto-run tests on load
+        window.addEventListener('load', () => {
+            console.log('Hero API Diagnostic Tool loaded');
+            console.log('Click buttons to test the Odysee API');
+        });
+    </script>
+</body>
+</html>

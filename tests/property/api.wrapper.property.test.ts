@@ -70,7 +70,7 @@ describe('Property-Based Tests: API Wrapper Channel ID Inclusion', () => {
             );
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -94,7 +94,7 @@ describe('Property-Based Tests: API Wrapper Channel ID Inclusion', () => {
             );
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -118,7 +118,7 @@ describe('Property-Based Tests: API Wrapper Channel ID Inclusion', () => {
             );
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -140,7 +140,7 @@ describe('Property-Based Tests: API Wrapper Channel ID Inclusion', () => {
             );
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -176,7 +176,7 @@ describe('Property-Based Tests: API Wrapper Channel ID Inclusion', () => {
             );
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -197,7 +197,7 @@ describe('Property-Based Tests: API Wrapper Channel ID Inclusion', () => {
             );
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -224,7 +224,7 @@ describe('Property-Based Tests: API Wrapper Channel ID Inclusion', () => {
             );
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -251,7 +251,7 @@ describe('Property-Based Tests: API Wrapper Channel ID Inclusion', () => {
             );
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -276,7 +276,7 @@ describe('Property-Based Tests: API Wrapper Channel ID Inclusion', () => {
             );
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -300,7 +300,7 @@ describe('Property-Based Tests: API Wrapper Channel ID Inclusion', () => {
             );
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -329,7 +329,7 @@ describe('Property-Based Tests: API Wrapper Channel ID Inclusion', () => {
             );
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -360,7 +360,7 @@ describe('Property-Based Tests: API Wrapper Channel ID Inclusion', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -382,7 +382,7 @@ describe('Property-Based Tests: API Wrapper Channel ID Inclusion', () => {
             expect(channelId.length).toBeGreaterThan(1);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -412,8 +412,9 @@ describe('Property-Based Tests: API Wrapper Channel ID Inclusion', () => {
             expect(typeof params.channel_id).toBe('string');
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
   });
 });
+

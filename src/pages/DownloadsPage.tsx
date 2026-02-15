@@ -3,8 +3,11 @@ import { Download, Play, Trash2, Pause, WifiOff, HardDrive } from 'lucide-react'
 import { useDownloadManager } from '../hooks/useDownloadManager';
 import { formatFileSize, formatTimestamp } from '../lib/api';
 import { OfflineMetadata, DownloadProgress } from '../types';
+import { useRenderCount } from '../hooks/useRenderCount';
 
 export default function DownloadsPage() {
+  useRenderCount('DownloadsPage');
+  
   const {
     downloads: activeDownloads,
     offlineContent,

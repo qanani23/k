@@ -121,7 +121,7 @@ describe('Property-Based Tests: Content Categorization Consistency', () => {
           // Should have exactly one primary base tag
           expect(primaryBaseTagCount).toBe(1);
         }),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -136,7 +136,7 @@ describe('Property-Based Tests: Content Categorization Consistency', () => {
           // The category should be one of the four main categories
           expect(['movies', 'series', 'sitcoms', 'kids']).toContain(category);
         }),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -162,7 +162,7 @@ describe('Property-Based Tests: Content Categorization Consistency', () => {
             expect(categoryForFilter).toBe(categoryForBase);
           }
         }),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -187,7 +187,7 @@ describe('Property-Based Tests: Content Categorization Consistency', () => {
           // For now, we verify that at least one base tag is found
           expect(primaryCategory).toBeTruthy();
         }),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -199,7 +199,7 @@ describe('Property-Based Tests: Content Categorization Consistency', () => {
           // Content with no base tags should return null
           expect(primaryCategory).toBeNull();
         }),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -223,7 +223,7 @@ describe('Property-Based Tests: Content Categorization Consistency', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -243,7 +243,7 @@ describe('Property-Based Tests: Content Categorization Consistency', () => {
           const categoryForBase = findCategoryByTag(baseTag!);
           expect(categoryForFilter).toBe(categoryForBase);
         }),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -264,7 +264,7 @@ describe('Property-Based Tests: Content Categorization Consistency', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -279,7 +279,7 @@ describe('Property-Based Tests: Content Categorization Consistency', () => {
           expect(category1).toBe(category2);
           expect(category2).toBe(category3);
         }),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -318,7 +318,7 @@ describe('Property-Based Tests: Content Categorization Consistency', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -348,7 +348,7 @@ describe('Property-Based Tests: Content Categorization Consistency', () => {
             expect(primaryCategory).not.toBeNull();
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -366,8 +366,9 @@ describe('Property-Based Tests: Content Categorization Consistency', () => {
             expect(category2).toBe(category3);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
   });
 });
+

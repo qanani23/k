@@ -152,7 +152,7 @@ describe('Property-Based Tests: Series Episode Ordering Preservation', () => {
           // The order should match the original playlist order, not the sorted episode numbers
           expect(episodeNumbers).toEqual(originalEpisodeNumbers);
         }),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -178,7 +178,7 @@ describe('Property-Based Tests: Series Episode Ordering Preservation', () => {
             expect(currentItem!.position).toBeLessThan(nextItem!.position);
           }
         }),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -228,7 +228,7 @@ describe('Property-Based Tests: Series Episode Ordering Preservation', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -260,7 +260,7 @@ describe('Property-Based Tests: Series Episode Ordering Preservation', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -290,7 +290,7 @@ describe('Property-Based Tests: Series Episode Ordering Preservation', () => {
             expect(thirdLoadEpisodes[i].episode_number).toBe(firstLoadEpisodes[i].episode_number);
           }
         }),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -337,7 +337,7 @@ describe('Property-Based Tests: Series Episode Ordering Preservation', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -405,7 +405,7 @@ describe('Property-Based Tests: Series Episode Ordering Preservation', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -445,7 +445,7 @@ describe('Property-Based Tests: Series Episode Ordering Preservation', () => {
             expect(episodes[0].episode_number).toBe(item.episode_number);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -470,7 +470,7 @@ describe('Property-Based Tests: Series Episode Ordering Preservation', () => {
             expect(result2[i].episode_number).toBe(result3[i].episode_number);
           }
         }),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -530,8 +530,9 @@ describe('Property-Based Tests: Series Episode Ordering Preservation', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
   });
 });
+

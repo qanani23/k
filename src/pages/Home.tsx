@@ -8,17 +8,20 @@ import { useMovies, useSeriesGrouped, useSitcoms, useKidsContent } from '../hook
 import { useDownloadManager } from '../hooks/useDownloadManager';
 import { useOffline } from '../hooks/useOffline';
 import { getFavorites, saveFavorite, removeFavorite } from '../lib/api';
+import { useRenderCount } from '../hooks/useRenderCount';
 
 export default function Home() {
+  useRenderCount('Home');
+  
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState<string[]>([]);
   const { isOffline } = useOffline();
   
-  // Content hooks for different categories
-  const { content: movies, loading: moviesLoading, error: moviesError } = useMovies();
-  const { content: series, seriesMap, loading: seriesLoading, error: seriesError } = useSeriesGrouped();
-  const { content: sitcoms, loading: sitcomsLoading, error: sitcomsError } = useSitcoms();
-  const { content: kidsContent, loading: kidsLoading, error: kidsError } = useKidsContent();
+  // Content hooks for different categories - each with independent state and retry
+  const { content: movies, loading: moviesLoading, error: moviesError, refetch: refetchMovies } = useMovies();
+  const { content: series, seriesMap, loading: seriesLoading, error: seriesError, refetch: refetchSeries } = useSeriesGrouped();
+  const { content: sitcoms, loading: sitcomsLoading, error: sitcomsError, refetch: refetchSitcoms } = useSitcoms();
+  const { content: kidsContent, loading: kidsLoading, error: kidsError, refetch: refetchKids } = useKidsContent();
   
   const { downloadContent } = useDownloadManager();
 
@@ -135,6 +138,7 @@ export default function Home() {
             content={movies.slice(0, 20)}
             loading={moviesLoading}
             error={moviesError?.message}
+            onRetry={refetchMovies}
             onPlayContent={handlePlayContent}
             onDownloadContent={handleDownloadContent}
             onFavoriteContent={handleFavoriteContent}
@@ -149,6 +153,7 @@ export default function Home() {
             content={series.slice(0, 20)}
             loading={seriesLoading}
             error={seriesError?.message}
+            onRetry={refetchSeries}
             onPlayContent={handlePlayContent}
             onDownloadContent={handleDownloadContent}
             onFavoriteContent={handleFavoriteContent}
@@ -163,6 +168,7 @@ export default function Home() {
             content={sitcoms.slice(0, 20)}
             loading={sitcomsLoading}
             error={sitcomsError?.message}
+            onRetry={refetchSitcoms}
             onPlayContent={handlePlayContent}
             onDownloadContent={handleDownloadContent}
             onFavoriteContent={handleFavoriteContent}
@@ -177,6 +183,7 @@ export default function Home() {
             content={kidsContent.slice(0, 20)}
             loading={kidsLoading}
             error={kidsError?.message}
+            onRetry={refetchKids}
             onPlayContent={handlePlayContent}
             onDownloadContent={handleDownloadContent}
             onFavoriteContent={handleFavoriteContent}

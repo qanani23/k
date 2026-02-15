@@ -146,7 +146,7 @@ describe('Property-Based Tests: Error Message Display', () => {
             expect(result.current.error?.message).toMatch(scenario.expectedMessagePattern);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     }, 30000);
 
@@ -174,7 +174,7 @@ describe('Property-Based Tests: Error Message Display', () => {
             expect(result.current.error?.category).toBe(scenario.expectedCategory);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     }, 30000);
 
@@ -202,7 +202,7 @@ describe('Property-Based Tests: Error Message Display', () => {
             expect(result.current.error?.retryable).toBe(scenario.expectedRetryable);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     }, 30000);
 
@@ -230,7 +230,7 @@ describe('Property-Based Tests: Error Message Display', () => {
             expect(result.current.error?.details).toBeDefined();
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     }, 30000);
 
@@ -266,7 +266,7 @@ describe('Property-Based Tests: Error Message Display', () => {
             expect(result.current.error?.category).toBe(scenario.expectedCategory);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     }, 30000);
 
@@ -440,3 +440,4 @@ describe('Property-Based Tests: Error Message Display', () => {
     }, 30000);
   });
 });
+

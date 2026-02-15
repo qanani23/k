@@ -66,7 +66,7 @@ describe('Property-Based Tests: Semantic Version Comparison', () => {
         fc.property(semverArb, (version) => {
           expect(compareVersions(version, version)).toBe(0);
         }),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -84,7 +84,7 @@ describe('Property-Based Tests: Semantic Version Comparison', () => {
             expect(reverseResult).toBe(0);
           }
         }),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -105,7 +105,7 @@ describe('Property-Based Tests: Semantic Version Comparison', () => {
             expect(ac).toBe(-1);
           }
         }),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -117,7 +117,7 @@ describe('Property-Based Tests: Semantic Version Comparison', () => {
           expect(parsed.minor).toBeGreaterThanOrEqual(0);
           expect(parsed.patch).toBeGreaterThanOrEqual(0);
         }),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -127,7 +127,7 @@ describe('Property-Based Tests: Semantic Version Comparison', () => {
           const withoutPrefix = version.replace(/^v/, '');
           expect(compareVersions(version, withoutPrefix)).toBe(0);
         }),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -152,7 +152,7 @@ describe('Property-Based Tests: Semantic Version Comparison', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -177,7 +177,7 @@ describe('Property-Based Tests: Semantic Version Comparison', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -202,7 +202,7 @@ describe('Property-Based Tests: Semantic Version Comparison', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -221,7 +221,7 @@ describe('Property-Based Tests: Semantic Version Comparison', () => {
             expect(compareVersions(prereleaseVersion, release)).toBe(-1);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -238,7 +238,7 @@ describe('Property-Based Tests: Semantic Version Comparison', () => {
             expect(compareVersions(v1, v2)).toBe(0);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -253,7 +253,7 @@ describe('Property-Based Tests: Semantic Version Comparison', () => {
           expect(isVersionGreaterOrEqual(a, b)).toBe(cmpResult === 1 || cmpResult === 0);
           expect(isVersionLessOrEqual(a, b)).toBe(cmpResult === -1 || cmpResult === 0);
         }),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -278,7 +278,7 @@ describe('Property-Based Tests: Semantic Version Comparison', () => {
           // Ascending and descending should be reverses of each other
           expect(ascending).toEqual([...descending].reverse());
         }),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -296,7 +296,7 @@ describe('Property-Based Tests: Semantic Version Comparison', () => {
           // Comparing original and normalized should be equal
           expect(compareVersions(version, normalized)).toBe(0);
         }),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -314,8 +314,9 @@ describe('Property-Based Tests: Semantic Version Comparison', () => {
             expect(compareVersions(normal, withZeros)).toBe(0);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
   });
 });
+

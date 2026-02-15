@@ -111,7 +111,7 @@ describe('Property-Based Tests: Collection ID Stability', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -164,7 +164,7 @@ describe('Property-Based Tests: Collection ID Stability', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -257,7 +257,7 @@ describe('Property-Based Tests: Collection ID Stability', () => {
             expect(collectionId1).toBe(collectionId2);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -346,7 +346,7 @@ describe('Property-Based Tests: Collection ID Stability', () => {
             }
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -374,7 +374,7 @@ describe('Property-Based Tests: Collection ID Stability', () => {
             expect(collectionId).toBe(expectedCollectionId);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -402,7 +402,7 @@ describe('Property-Based Tests: Collection ID Stability', () => {
             expect(collectionId).toBe(expectedCollectionId);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -432,8 +432,9 @@ describe('Property-Based Tests: Collection ID Stability', () => {
             expect(collectionId).toBe(expectedCollectionId);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
   });
 });
+

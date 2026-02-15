@@ -14,6 +14,7 @@ import SkeletonCard from '../components/SkeletonCard';
 import { AppConfig, DiagnosticsData } from '../types';
 import { getAppConfig, updateSettings, getDiagnostics, openExternal } from '../lib/api';
 import { formatFileSize } from '../lib/api';
+import { useRenderCount } from '../hooks/useRenderCount';
 
 interface SettingsForm {
   theme: 'dark' | 'light';
@@ -24,6 +25,8 @@ interface SettingsForm {
 }
 
 export default function SettingsPage() {
+  useRenderCount('SettingsPage');
+  
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [diagnostics, setDiagnostics] = useState<DiagnosticsData | null>(null);
   const [settings, setSettings] = useState<SettingsForm>({

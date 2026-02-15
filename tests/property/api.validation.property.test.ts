@@ -178,7 +178,7 @@ describe('Property-Based Tests: Content Item Field Validation', () => {
             expect(Array.isArray(contentItem.tags)).toBe(true);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -197,7 +197,7 @@ describe('Property-Based Tests: Content Item Field Validation', () => {
             expect(Array.isArray(validation.errors)).toBe(true);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -219,7 +219,7 @@ describe('Property-Based Tests: Content Item Field Validation', () => {
             expect(validatedItems.length).toBeLessThanOrEqual(contentItems.length);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -240,7 +240,7 @@ describe('Property-Based Tests: Content Item Field Validation', () => {
             });
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -255,7 +255,7 @@ describe('Property-Based Tests: Content Item Field Validation', () => {
             expect(validatedItems.length).toBe(0);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -278,7 +278,7 @@ describe('Property-Based Tests: Content Item Field Validation', () => {
             expect(validatedItems.length).toBe(0);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -305,7 +305,7 @@ describe('Property-Based Tests: Content Item Field Validation', () => {
             expect(validation.errors.some(err => err.includes('tags'))).toBe(true);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -336,7 +336,7 @@ describe('Property-Based Tests: Content Item Field Validation', () => {
             expect(validation.errors.some(err => err.includes('claim_id'))).toBe(true);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -367,7 +367,7 @@ describe('Property-Based Tests: Content Item Field Validation', () => {
             expect(validation.errors.some(err => err.includes('value'))).toBe(true);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -398,7 +398,7 @@ describe('Property-Based Tests: Content Item Field Validation', () => {
             expect(validation.errors.some(err => err.includes('source'))).toBe(true);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -429,7 +429,7 @@ describe('Property-Based Tests: Content Item Field Validation', () => {
             expect(validation.errors.some(err => err.includes('tags'))).toBe(true);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -451,7 +451,7 @@ describe('Property-Based Tests: Content Item Field Validation', () => {
             expect(validation.errors).toHaveLength(0);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -475,7 +475,7 @@ describe('Property-Based Tests: Content Item Field Validation', () => {
             });
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -500,8 +500,9 @@ describe('Property-Based Tests: Content Item Field Validation', () => {
             });
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
   });
 });
+

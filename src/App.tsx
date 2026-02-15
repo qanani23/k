@@ -285,7 +285,7 @@ function App() {
               <MovieDetail />
             </ErrorBoundary>
           } />
-          <Route path="/series/:seriesKey" element={
+          <Route path="/series/:claimId" element={
             <ErrorBoundary>
               <SeriesDetail />
             </ErrorBoundary>

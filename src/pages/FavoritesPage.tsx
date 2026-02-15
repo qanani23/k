@@ -5,8 +5,11 @@ import MovieCard from '../components/MovieCard';
 import SkeletonCard from '../components/SkeletonCard';
 import { FavoriteItem, ContentItem } from '../types';
 import { getFavorites, removeFavorite, resolveClaim } from '../lib/api';
+import { useRenderCount } from '../hooks/useRenderCount';
 
 export default function FavoritesPage() {
+  useRenderCount('FavoritesPage');
+  
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [favoriteContent, setFavoriteContent] = useState<ContentItem[]>([]);
@@ -15,57 +18,57 @@ export default function FavoritesPage() {
   const [resolvingIds, setResolvingIds] = useState<Set<string>>(new Set());
 
   // Load favorites from SQLite
-  useEffect(() => {
-    const loadFavorites = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  const loadFavorites = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        // Get favorites list from SQLite (single source of truth)
-        const favs = await getFavorites();
-        setFavorites(favs);
+      // Get favorites list from SQLite (single source of truth)
+      const favs = await getFavorites();
+      setFavorites(favs);
 
-        if (favs.length > 0) {
-          // Resolve full content details for each favorite
-          const contentPromises = favs.map(async (fav) => {
-            try {
-              // Resolve claim to get full content metadata
-              const content = await resolveClaim(fav.claim_id);
-              return content;
-            } catch (err) {
-              console.error(`Failed to resolve favorite ${fav.claim_id}:`, err);
-              // Return minimal content item if resolution fails
-              return {
-                claim_id: fav.claim_id,
-                title: fav.title,
-                description: undefined,
-                tags: [],
-                thumbnail_url: fav.thumbnail_url,
-                duration: undefined,
-                release_time: fav.inserted_at,
-                video_urls: {},
-                compatibility: {
-                  compatible: true,
-                  fallback_available: false,
-                },
-              } as ContentItem;
-            }
-          });
+      if (favs.length > 0) {
+        // Resolve full content details for each favorite
+        const contentPromises = favs.map(async (fav) => {
+          try {
+            // Resolve claim to get full content metadata
+            const content = await resolveClaim(fav.claim_id);
+            return content;
+          } catch (err) {
+            console.error(`Failed to resolve favorite ${fav.claim_id}:`, err);
+            // Return minimal content item if resolution fails
+            return {
+              claim_id: fav.claim_id,
+              title: fav.title,
+              description: undefined,
+              tags: [],
+              thumbnail_url: fav.thumbnail_url,
+              duration: undefined,
+              release_time: fav.inserted_at,
+              video_urls: {},
+              compatibility: {
+                compatible: true,
+                fallback_available: false,
+              },
+            } as ContentItem;
+          }
+        });
 
-          const resolvedContent = await Promise.all(contentPromises);
-          setFavoriteContent(resolvedContent);
-        } else {
-          setFavoriteContent([]);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load favorites');
-        setFavorites([]);
+        const resolvedContent = await Promise.all(contentPromises);
+        setFavoriteContent(resolvedContent);
+      } else {
         setFavoriteContent([]);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load favorites');
+      setFavorites([]);
+      setFavoriteContent([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadFavorites();
   }, []);
 
@@ -177,7 +180,7 @@ export default function FavoritesPage() {
         <div className="glass rounded-xl p-6 text-center mb-8">
           <p className="text-text-secondary mb-4">{error}</p>
           <button 
-            onClick={() => window.location.reload()}
+            onClick={loadFavorites}
             className="btn-secondary"
             aria-label="Retry loading favorites"
           >

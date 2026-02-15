@@ -9,8 +9,11 @@ import { useDebouncedSearch, useSearchHistory } from '../hooks/useDebouncedSearc
 import { useDownloadManager } from '../hooks/useDownloadManager';
 import { useOffline } from '../hooks/useOffline';
 import { getFavorites, saveFavorite, removeFavorite } from '../lib/api';
+import { useRenderCount } from '../hooks/useRenderCount';
 
 export default function Search() {
+  useRenderCount('Search');
+  
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -29,7 +32,8 @@ export default function Search() {
     setQuery,
     clearSearch,
     suggestions,
-    statusMessage
+    statusMessage,
+    retrySearch
   } = useDebouncedSearch({ delay: 300, minLength: 2, fallbackToRecent: true });
 
   const { history, addToHistory, removeFromHistory, clearHistory } = useSearchHistory();
@@ -313,7 +317,7 @@ export default function Search() {
         <div className="glass rounded-xl p-6 text-center">
           <p className="text-text-secondary mb-4">{error.message}</p>
           <button 
-            onClick={() => window.location.reload()}
+            onClick={retrySearch}
             className="btn-secondary"
           >
             Try Again

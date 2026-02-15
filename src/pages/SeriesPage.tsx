@@ -1,91 +1,51 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Play, Download, Heart, ChevronDown, ChevronUp } from 'lucide-react';
-import { SeriesInfo, Episode, ContentItem, Playlist } from '../types';
-import { fetchPlaylists, fetchByTag, resolveClaim, saveFavorite, removeFavorite, getFavorites } from '../lib/api';
-import { getSeriesForClaim, mergeSeriesData } from '../lib/series';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Play, Download, Heart, Grid, List } from 'lucide-react';
+import { ContentItem } from '../types';
+import { useSeriesGrouped } from '../hooks/useContent';
 import { useDownloadManager } from '../hooks/useDownloadManager';
+import { useOffline } from '../hooks/useOffline';
+import { saveFavorite, removeFavorite, getFavorites } from '../lib/api';
+import SkeletonCard from '../components/SkeletonCard';
+import OfflineEmptyState from '../components/OfflineEmptyState';
+import { useRenderCount } from '../hooks/useRenderCount';
+
+type ViewMode = 'grid' | 'list';
 
 const SeriesPage = () => {
-  const { claimId } = useParams<{ claimId: string }>();
+  useRenderCount('SeriesPage');
+  
   const navigate = useNavigate();
-  const [series, setSeries] = useState<SeriesInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [expandedSeasons, setExpandedSeasons] = useState<Set<number>>(new Set([1]));
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  const { downloadContent } = useDownloadManager();
+  const [searchParams] = useSearchParams();
+  const filterTag = searchParams.get('filter');
+  
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const { isOffline } = useOffline();
+  
+  const { content: series, seriesMap, loading, error, loadMore, hasMore, refetch } = useSeriesGrouped(filterTag || undefined);
+  const { downloadContent, isDownloading, isOfflineAvailable } = useDownloadManager();
 
+  // Load favorites on mount
   useEffect(() => {
-    if (!claimId) return;
-
-    const loadSeries = async () => {
+    const loadFavorites = async () => {
       try {
-        setLoading(true);
-        setError(null);
-
-        // Fetch playlists and series content
-        const [playlists, seriesContent, favoritesData] = await Promise.all([
-          fetchPlaylists(),
-          fetchByTag('series', 200), // Fetch more to ensure we get all episodes
-          getFavorites()
-        ]);
-
-        // Build favorites set
-        const favSet = new Set(favoritesData.map(f => f.claim_id));
-        setFavorites(favSet);
-
-        // Get series info for this claim
-        const seriesInfo = getSeriesForClaim(claimId, playlists, seriesContent);
-
-        if (!seriesInfo) {
-          // If not found in series, try sitcoms
-          const sitcomContent = await fetchByTag('sitcom', 200);
-          const sitcomInfo = getSeriesForClaim(claimId, playlists, sitcomContent);
-          
-          if (sitcomInfo) {
-            setSeries(sitcomInfo);
-          } else {
-            setError('Series not found');
-          }
-        } else {
-          setSeries(seriesInfo);
-        }
+        const favs = await getFavorites();
+        setFavorites(favs.map(f => f.claim_id));
       } catch (err) {
-        console.error('Failed to load series:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load series');
-      } finally {
-        setLoading(false);
+        console.error('Failed to load favorites:', err);
       }
     };
+    loadFavorites();
+  }, []);
 
-    loadSeries();
-  }, [claimId]);
-
-  const toggleSeason = (seasonNumber: number) => {
-    setExpandedSeasons(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(seasonNumber)) {
-        newSet.delete(seasonNumber);
-      } else {
-        newSet.add(seasonNumber);
-      }
-      return newSet;
-    });
+  const handlePlay = (seriesKey: string) => {
+    navigate(`/series/${seriesKey}`);
   };
 
-  const handlePlay = (episode: Episode) => {
-    // Navigate to episode detail page
-    navigate(`/series/${episode.claim_id}`);
-  };
-
-  const handleDownload = async (episode: Episode) => {
+  const handleDownload = async (content: ContentItem) => {
     try {
-      // Resolve claim to get video URLs
-      const claim = await resolveClaim(episode.claim_id);
-      
-      // Get best quality URL (prefer 720p)
-      const qualities = Object.keys(claim.video_urls);
+      const qualities = Object.keys(content.video_urls);
       const preferredQuality = qualities.includes('720p') ? '720p' : qualities[0];
       
       if (!preferredQuality) {
@@ -93,10 +53,10 @@ const SeriesPage = () => {
         return;
       }
 
-      const videoUrl = claim.video_urls[preferredQuality];
+      const videoUrl = content.video_urls[preferredQuality];
       
       await downloadContent({
-        claim_id: episode.claim_id,
+        claim_id: content.claim_id,
         quality: preferredQuality,
         url: videoUrl.url
       });
@@ -105,217 +65,255 @@ const SeriesPage = () => {
     }
   };
 
-  const handleToggleFavorite = async (episode: Episode) => {
+  const handleToggleFavorite = async (content: ContentItem) => {
     try {
-      const isFavorite = favorites.has(episode.claim_id);
+      const isFavorite = favorites.includes(content.claim_id);
       
       if (isFavorite) {
-        await removeFavorite(episode.claim_id);
-        setFavorites(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(episode.claim_id);
-          return newSet;
-        });
+        await removeFavorite(content.claim_id);
+        setFavorites(prev => prev.filter(id => id !== content.claim_id));
       } else {
         await saveFavorite({
-          claim_id: episode.claim_id,
-          title: episode.title,
-          thumbnail_url: episode.thumbnail_url
+          claim_id: content.claim_id,
+          title: content.title,
+          thumbnail_url: content.thumbnail_url
         });
-        setFavorites(prev => new Set(prev).add(episode.claim_id));
+        setFavorites(prev => [...prev, content.claim_id]);
       }
     } catch (err) {
       console.error('Failed to toggle favorite:', err);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
-        <div className="max-w-6xl mx-auto">
-          <div 
-            className="animate-pulse"
-            role="status"
-            aria-live="polite"
-            aria-busy="true"
-          >
-            <span className="sr-only">Loading series...</span>
-            <div className="h-8 bg-slate-700 rounded w-1/3 mb-4" aria-hidden="true"></div>
-            <div className="h-4 bg-slate-700 rounded w-2/3 mb-8" aria-hidden="true"></div>
-            <div className="space-y-4" aria-hidden="true">
-              <div className="h-32 bg-slate-700 rounded"></div>
-              <div className="h-32 bg-slate-700 rounded"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  // Offline state
+  if (isOffline && series.length === 0) {
+    return <OfflineEmptyState />;
   }
 
-  if (error || !series) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
-        <div className="max-w-6xl mx-auto">
-          <div 
-            className="text-center py-12"
-            role="alert"
-            aria-live="assertive"
-          >
-            <h1 className="text-2xl font-bold text-red-400 mb-4">Error Loading Series</h1>
-            <p className="text-slate-300 mb-6">{error || 'Series not found'}</p>
-            <button
-              onClick={() => navigate(-1)}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-            >
-              Go Back
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Get series list from seriesMap
+  const seriesList = Array.from(seriesMap.entries()).map(([key, info]) => ({
+    key,
+    ...info
+  }));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Series Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">{series.title}</h1>
-          <p className="text-slate-400">
-            {series.seasons.length} season{series.seasons.length !== 1 ? 's' : ''} • {series.total_episodes} episode{series.total_episodes !== 1 ? 's' : ''}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Breadcrumb */}
+      <div className="breadcrumb">
+        <span>Home</span>
+        <span className="breadcrumb-separator">/</span>
+        <span>Series</span>
+        {filterTag && (
+          <>
+            <span className="breadcrumb-separator">/</span>
+            <span className="capitalize">{filterTag.replace('_series', '').replace('_', ' ')}</span>
+          </>
+        )}
+      </div>
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-text-primary">
+            {filterTag 
+              ? `${filterTag.replace('_series', '').replace('_', ' ')} Series`.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+              : 'Series'}
+          </h1>
+          <p className="text-text-secondary mt-2">
+            {seriesList.length} series available
           </p>
         </div>
 
-        {/* Seasons List */}
-        {series.seasons.length === 0 ? (
-          <div 
-            className="text-center py-12"
-            role="status"
-            aria-live="polite"
+        {/* View Mode Toggle */}
+        <div className="flex items-center space-x-2 bg-bg-secondary rounded-lg p-1">
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`p-2 rounded transition-colors ${
+              viewMode === 'grid' 
+                ? 'bg-accent-cyan text-white' 
+                : 'text-text-secondary hover:text-text-primary'
+            }`}
+            aria-label="Grid view"
+            aria-pressed={viewMode === 'grid'}
           >
-            <p className="text-slate-400">No episodes available</p>
+            <Grid className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`p-2 rounded transition-colors ${
+              viewMode === 'list' 
+                ? 'bg-accent-cyan text-white' 
+                : 'text-text-secondary hover:text-text-primary'
+            }`}
+            aria-label="List view"
+            aria-pressed={viewMode === 'list'}
+          >
+            <List className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Error State */}
+      {error && (
+        <div 
+          className="text-center py-12"
+          role="alert"
+          aria-live="assertive"
+        >
+          <p className="text-red-400 mb-4">{error.message || 'Failed to load series'}</p>
+          <button
+            onClick={refetch}
+            className="px-6 py-2 bg-accent-cyan hover:bg-accent-cyan/80 text-white rounded-lg transition-colors"
+            aria-label="Retry loading series"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && series.length === 0 && (
+        <div 
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <span className="sr-only">Loading series...</span>
+          <div className={viewMode === 'grid' ? 'content-grid' : 'space-y-4'}>
+            <SkeletonCard count={6} size="large" />
           </div>
-        ) : (
-          <div className="space-y-4">
-            {series.seasons.map((season) => {
-              const isExpanded = expandedSeasons.has(season.number);
-              
+        </div>
+      )}
+
+      {/* Content Grid/List */}
+      {!loading && seriesList.length === 0 ? (
+        <div 
+          className="text-center py-12"
+          role="status"
+          aria-live="polite"
+        >
+          <p className="text-text-secondary">No series found</p>
+        </div>
+      ) : (
+        <>
+          <div className={viewMode === 'grid' ? 'content-grid' : 'space-y-4'}>
+            {seriesList.map(({ key, title, totalEpisodes, seasons }) => {
+              // Get the first episode for thumbnail
+              const firstEpisode = seasons[0]?.episodes[0];
+              const isFavorite = firstEpisode && favorites.includes(firstEpisode.claim_id);
+              const isDownloaded = firstEpisode && isOfflineAvailable(firstEpisode.claim_id, '720p');
+              const downloading = firstEpisode && isDownloading(firstEpisode.claim_id, '720p');
+
               return (
-                <div key={season.number} className="bg-slate-800/50 backdrop-blur-sm rounded-lg overflow-hidden">
-                  {/* Season Header */}
-                  <button
-                    onClick={() => toggleSeason(season.number)}
-                    className="w-full flex items-center justify-between p-6 hover:bg-slate-700/30 transition-colors"
-                    aria-expanded={isExpanded}
-                    aria-controls={`season-${season.number}-episodes`}
-                  >
-                    <div className="flex items-center space-x-4">
-                      <h2 className="text-xl font-semibold text-white">
-                        Season {season.number}
-                      </h2>
-                      {season.inferred && (
-                        <span className="text-sm text-yellow-400 bg-yellow-400/10 px-3 py-1 rounded-full">
-                          Seasons inferred automatically
-                        </span>
-                      )}
-                      <span className="text-sm text-slate-400">
-                        {season.episodes.length} episode{season.episodes.length !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-                    {isExpanded ? (
-                      <ChevronUp className="w-5 h-5 text-slate-400" />
+                <div
+                  key={key}
+                  className="content-card group"
+                  role="article"
+                  aria-label={`${title} - ${seasons.length} season${seasons.length !== 1 ? 's' : ''}, ${totalEpisodes} episode${totalEpisodes !== 1 ? 's' : ''}`}
+                >
+                  {/* Thumbnail */}
+                  <div className="relative aspect-video rounded-lg overflow-hidden bg-bg-secondary">
+                    {firstEpisode?.thumbnail_url ? (
+                      <img
+                        src={firstEpisode.thumbnail_url}
+                        alt={title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
                     ) : (
-                      <ChevronDown className="w-5 h-5 text-slate-400" />
+                      <div className="w-full h-full flex items-center justify-center text-text-secondary">
+                        No thumbnail
+                      </div>
                     )}
-                  </button>
 
-                  {/* Episodes List */}
-                  {isExpanded && (
-                    <div 
-                      id={`season-${season.number}-episodes`}
-                      className="border-t border-slate-700/50"
-                    >
-                      <div className="p-4 space-y-3">
-                        {season.episodes.map((episode, index) => {
-                          const isFavorite = favorites.has(episode.claim_id);
-                          
-                          return (
-                            <div 
-                              key={episode.claim_id} 
-                              className="flex items-center justify-between bg-slate-700/30 hover:bg-slate-700/50 rounded-lg p-4 transition-colors group"
-                              role="article"
-                              aria-label={`${episode.title} - Episode ${episode.episode_number}${episode.duration ? ` - ${Math.floor(episode.duration / 60)} minutes` : ''}`}
-                            >
-                              {/* Episode Info */}
-                              <div className="flex items-start space-x-4 flex-1">
-                                {/* Episode Number Badge */}
-                                <div className="flex-shrink-0 w-10 h-10 bg-slate-600/50 rounded-lg flex items-center justify-center">
-                                  <span className="text-sm font-semibold text-white">
-                                    {episode.episode_number}
-                                  </span>
-                                </div>
+                    {/* Overlay with actions */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                        <button
+                          onClick={() => handlePlay(key)}
+                          className="flex items-center space-x-2 px-4 py-2 bg-accent-cyan hover:bg-accent-cyan/80 rounded-lg transition-colors"
+                          aria-label={`Play ${title}`}
+                        >
+                          <Play className="w-4 h-4" aria-hidden="true" />
+                          <span className="text-sm font-medium">Play</span>
+                        </button>
 
-                                {/* Episode Details */}
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="font-medium text-white mb-1 truncate">
-                                    {episode.title}
-                                  </h3>
-                                  <p className="text-sm text-slate-400">
-                                    Episode {episode.episode_number}
-                                    {episode.duration && (
-                                      <> • {Math.floor(episode.duration / 60)}m</>
-                                    )}
-                                  </p>
-                                </div>
-                              </div>
+                        <div className="flex items-center space-x-2">
+                          {firstEpisode && (
+                            <>
+                              <button
+                                onClick={() => handleDownload(firstEpisode)}
+                                disabled={downloading || isDownloaded}
+                                className={`p-2 rounded-lg transition-colors ${
+                                  isDownloaded
+                                    ? 'bg-green-600 text-white'
+                                    : downloading
+                                    ? 'bg-gray-600 text-white cursor-not-allowed'
+                                    : 'bg-white/20 hover:bg-white/30 text-white'
+                                }`}
+                                aria-label={`Download ${title}`}
+                                title={isDownloaded ? 'Downloaded' : downloading ? 'Downloading...' : 'Download'}
+                              >
+                                <Download className="w-4 h-4" aria-hidden="true" />
+                              </button>
 
-                              {/* Action Buttons */}
-                              <div className="flex items-center space-x-2 ml-4">
-                                <button
-                                  onClick={() => handlePlay(episode)}
-                                  className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-                                  aria-label={`Play ${episode.title}`}
-                                  title="Play episode"
-                                >
-                                  <Play className="w-4 h-4 text-white" aria-hidden="true" />
-                                </button>
-                                <button
-                                  onClick={() => handleDownload(episode)}
-                                  className="p-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
-                                  aria-label={`Download ${episode.title}`}
-                                  title="Download episode"
-                                >
-                                  <Download className="w-4 h-4 text-white" aria-hidden="true" />
-                                </button>
-                                <button
-                                  onClick={() => handleToggleFavorite(episode)}
-                                  className={`p-2 rounded-lg transition-colors ${
-                                    isFavorite 
-                                      ? 'bg-red-600 hover:bg-red-700' 
-                                      : 'bg-slate-600 hover:bg-slate-700'
-                                  }`}
-                                  aria-label={isFavorite ? `Remove ${episode.title} from favorites` : `Add ${episode.title} to favorites`}
-                                  aria-pressed={isFavorite}
-                                  title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                                >
-                                  <Heart 
-                                    className={`w-4 h-4 ${isFavorite ? 'fill-white' : ''} text-white`}
-                                    aria-hidden="true"
-                                  />
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })}
+                              <button
+                                onClick={() => handleToggleFavorite(firstEpisode)}
+                                className={`p-2 rounded-lg transition-colors ${
+                                  isFavorite
+                                    ? 'bg-red-600 text-white'
+                                    : 'bg-white/20 hover:bg-white/30 text-white'
+                                }`}
+                                aria-label={isFavorite ? `Remove ${title} from favorites` : `Add ${title} to favorites`}
+                                aria-pressed={isFavorite}
+                              >
+                                <Heart 
+                                  className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`}
+                                  aria-hidden="true"
+                                />
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  )}
+
+                    {/* Downloaded badge */}
+                    {isDownloaded && (
+                      <div className="absolute top-2 right-2 px-2 py-1 bg-green-600 text-white text-xs rounded">
+                        Downloaded
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <div className="mt-3">
+                    <h3 className="font-semibold text-text-primary truncate">
+                      {title}
+                    </h3>
+                    <p className="text-sm text-text-secondary mt-1">
+                      {seasons.length} season{seasons.length !== 1 ? 's' : ''} • {totalEpisodes} episode{totalEpisodes !== 1 ? 's' : ''}
+                    </p>
+                  </div>
                 </div>
               );
             })}
           </div>
-        )}
-      </div>
+
+          {/* Load More Button */}
+          {hasMore && (
+            <div className="mt-8 text-center">
+              <button
+                onClick={loadMore}
+                disabled={loading}
+                className="px-6 py-3 bg-accent-cyan hover:bg-accent-cyan/80 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+              >
+                {loading ? 'Loading...' : 'Load More'}
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };

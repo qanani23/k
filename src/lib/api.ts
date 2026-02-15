@@ -58,6 +58,8 @@ interface ValidationResult {
 /**
  * Validate content item structure
  * Ensures required fields exist for proper rendering and tag filtering
+ * 
+ * NOTE: Backend returns ContentItem structs, not raw Odysee API responses
  */
 function validateContentItem(item: any): ValidationResult {
   const errors: string[] = [];
@@ -71,22 +73,25 @@ function validateContentItem(item: any): ValidationResult {
     };
   }
   
-  // Check required fields
+  // Check required fields for ContentItem struct from backend
   if (!item.claim_id || typeof item.claim_id !== 'string') {
     errors.push('Missing or invalid claim_id');
   }
   
-  if (!item.value || typeof item.value !== 'object' || Array.isArray(item.value)) {
-    errors.push('Missing or invalid value object');
-  } else {
-    // Check nested required fields in value
-    if (!item.value.source || typeof item.value.source !== 'object' || Array.isArray(item.value.source)) {
-      errors.push('Missing or invalid value.source');
-    }
+  if (!item.title || typeof item.title !== 'string') {
+    errors.push('Missing or invalid title');
   }
   
   if (!item.tags || !Array.isArray(item.tags)) {
     errors.push('Missing or invalid tags array');
+  }
+  
+  if (typeof item.release_time !== 'number') {
+    errors.push('Missing or invalid release_time');
+  }
+  
+  if (!item.video_urls || typeof item.video_urls !== 'object') {
+    errors.push('Missing or invalid video_urls');
   }
   
   return {
@@ -256,12 +261,21 @@ export const fetchByTag = async (tag: string, limit: number = 50, forceRefresh: 
 
 export const fetchByTags = async (tags: string[], limit: number = 50, forceRefresh: boolean = false): Promise<ContentItem[]> => {
   try {
+    if (isDev) {
+      console.log('[API] fetchByTags called:', { tags, limit, forceRefresh });
+    }
+    
     const response = await fetchChannelClaims({ any_tags: tags, limit, force_refresh: forceRefresh });
     
     if (isDev) {
       console.log('[API] fetchByTags response:', {
         tags,
-        count: response.length
+        count: response.length,
+        items: response.map(item => ({
+          claim_id: item.claim_id,
+          title: item.title,
+          tags: item.tags
+        }))
       });
     }
     

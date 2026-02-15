@@ -6,8 +6,11 @@ import { resolveClaim, fetchRelatedContent, saveFavorite, removeFavorite, isFavo
 import { useDownloadManager } from '../hooks/useDownloadManager';
 import RowCarousel from '../components/RowCarousel';
 import { getPrimaryCategory } from '../types';
+import { useRenderCount } from '../hooks/useRenderCount';
 
 const SeriesDetail = () => {
+  useRenderCount('SeriesDetail');
+  
   const { claimId } = useParams<{ claimId: string }>();
   const [series, setSeries] = useState<SeriesInfo | null>(null);
   const [relatedContent, setRelatedContent] = useState<ContentItem[]>([]);

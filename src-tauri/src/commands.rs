@@ -71,8 +71,10 @@ pub async fn fetch_channel_claims(
         };
         let cached_items = db.get_cached_content(query).await?;
         
-        // If we have sufficient cached results and no specific search text, return cache
-        if cached_items.len() >= 6 && validated_text.is_none() {
+        // CRITICAL FIX: Return cache if we have ANY valid results, not just >= 6
+        // This fixes the hero_trailer issue where only 1 video exists
+        // The >= 6 threshold was arbitrary and broke single-item queries
+        if !cached_items.is_empty() && validated_text.is_none() {
             info!("Returning {} items from cache", cached_items.len());
             return Ok(cached_items);
         }

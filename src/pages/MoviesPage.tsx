@@ -10,10 +10,13 @@ import { useDownloadManager } from '../hooks/useDownloadManager';
 import { useOffline } from '../hooks/useOffline';
 import { getFavorites, saveFavorite, removeFavorite } from '../lib/api';
 import { CATEGORIES } from '../config/categories';
+import { useRenderCount } from '../hooks/useRenderCount';
 
 type ViewMode = 'grid' | 'list';
 
 export default function MoviesPage() {
+  useRenderCount('MoviesPage');
+  
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState<string[]>([]);

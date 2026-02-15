@@ -10,6 +10,7 @@ interface RowCarouselProps {
   content: ContentItem[];
   loading?: boolean;
   error?: string;
+  onRetry?: () => void;
   onPlayContent?: (content: ContentItem) => void;
   onDownloadContent?: (content: ContentItem, quality: string) => void;
   onFavoriteContent?: (content: ContentItem) => void;
@@ -25,6 +26,7 @@ export default function RowCarousel({
   content,
   loading = false,
   error,
+  onRetry,
   onPlayContent,
   onDownloadContent,
   onFavoriteContent,
@@ -241,13 +243,15 @@ export default function RowCarousel({
           aria-live="assertive"
         >
           <p className="text-text-secondary mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="btn-secondary"
-            aria-label="Reload page"
-          >
-            Try Again
-          </button>
+          {onRetry && (
+            <button 
+              onClick={onRetry}
+              className="btn-secondary"
+              aria-label={`Retry loading ${title}`}
+            >
+              Try Again
+            </button>
+          )}
         </div>
       </div>
     );

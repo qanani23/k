@@ -9,10 +9,13 @@ import { useSitcoms } from '../hooks/useContent';
 import { useDownloadManager } from '../hooks/useDownloadManager';
 import { useOffline } from '../hooks/useOffline';
 import { getFavorites, saveFavorite, removeFavorite } from '../lib/api';
+import { useRenderCount } from '../hooks/useRenderCount';
 
 type ViewMode = 'grid' | 'list';
 
 export default function SitcomsPage() {
+  useRenderCount('SitcomsPage');
+  
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -96,7 +99,6 @@ export default function SitcomsPage() {
         >
           <span className="sr-only">Loading sitcoms...</span>
           <SkeletonCard count={12} size="medium" variant="poster" />
-        </div>
         </div>
       </div>
     );

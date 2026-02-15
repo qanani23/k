@@ -115,6 +115,9 @@ mod migration_clean_run_test;
 #[cfg(test)]
 mod migration_older_db_test;
 
+#[cfg(test)]
+mod hero_single_item_test;
+
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tauri::{Manager, State};

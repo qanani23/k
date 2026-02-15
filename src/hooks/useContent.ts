@@ -27,6 +27,14 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
   // State transition validation
   const statusRef = useRef<'idle' | 'loading' | 'success' | 'error'>('idle');
   
+  // Performance tracking (development mode only)
+  const performanceMetrics = useRef({
+    cacheHits: 0,
+    cacheMisses: 0,
+    totalFetches: 0,
+    slowFetches: 0,
+  });
+  
   const setStatusWithValidation = useCallback((newStatus: 'idle' | 'loading' | 'success' | 'error') => {
     const currentStatus = statusRef.current;
     
@@ -107,10 +115,18 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
           setFromCache(true); // Mark as loaded from cache
           setStatusWithValidation('success');
           fetchInProgressRef.current = false;
+          
+          // Track cache hit
+          performanceMetrics.current.cacheHits++;
+          performanceMetrics.current.totalFetches++;
+          
           if (isDev) {
+            const duration = performance.now() - startTime;
             console.log('[useContent] Offline cache hit', {
               collectionId,
-              itemCount: cachedContent.length
+              itemCount: cachedContent.length,
+              duration: `${duration.toFixed(2)}ms`,
+              cacheHitRate: `${((performanceMetrics.current.cacheHits / performanceMetrics.current.totalFetches) * 100).toFixed(1)}%`
             });
           }
           return;
@@ -150,6 +166,11 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
         setFromCache(true); // Mark as loaded from cache
         setStatusWithValidation('success');
         fetchInProgressRef.current = false; // Reset before returning
+        
+        // Track cache hit
+        performanceMetrics.current.cacheHits++;
+        performanceMetrics.current.totalFetches++;
+        
         if (isDev) {
           const duration = performance.now() - startTime;
           console.log('[useContent] Cache hit', {
@@ -157,7 +178,8 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
             pageNum,
             append,
             itemCount: cachedContent.length,
-            duration: `${duration.toFixed(2)}ms`
+            duration: `${duration.toFixed(2)}ms`,
+            cacheHitRate: `${((performanceMetrics.current.cacheHits / performanceMetrics.current.totalFetches) * 100).toFixed(1)}%`
           });
         }
         return;
@@ -212,16 +234,45 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
       setPage(pageNum);
       setFromCache(false); // Mark as loaded from network
       
+      // Track cache miss (network fetch)
+      performanceMetrics.current.cacheMisses++;
+      performanceMetrics.current.totalFetches++;
+      
       setStatusWithValidation('success');
       if (isDev) {
         const duration = performance.now() - startTime;
+        
+        // Track slow fetches (>3 seconds)
+        if (duration > 3000) {
+          performanceMetrics.current.slowFetches++;
+          console.warn('[Performance] ⚠️ Slow fetch detected', {
+            collectionId,
+            pageNum,
+            append,
+            itemCount: results.length,
+            duration: `${duration.toFixed(2)}ms`,
+            threshold: '3000ms'
+          });
+        }
+        
+        // Log memory usage if available
+        const memoryUsage = (performance as any).memory ? {
+          usedJSHeapSize: `${((performance as any).memory.usedJSHeapSize / 1024 / 1024).toFixed(2)} MB`,
+          totalJSHeapSize: `${((performance as any).memory.totalJSHeapSize / 1024 / 1024).toFixed(2)} MB`,
+          jsHeapSizeLimit: `${((performance as any).memory.jsHeapSizeLimit / 1024 / 1024).toFixed(2)} MB`,
+        } : undefined;
+        
         console.log('[useContent] State transition: loading → success', {
           collectionId,
           pageNum,
           append,
           itemCount: results.length,
           duration: `${duration.toFixed(2)}ms`,
-          hasMore: results.length === limit
+          hasMore: results.length === limit,
+          cacheHitRate: `${((performanceMetrics.current.cacheHits / performanceMetrics.current.totalFetches) * 100).toFixed(1)}%`,
+          cacheMissRate: `${((performanceMetrics.current.cacheMisses / performanceMetrics.current.totalFetches) * 100).toFixed(1)}%`,
+          slowFetches: performanceMetrics.current.slowFetches,
+          ...(memoryUsage && { memoryUsage })
         });
       }
 
@@ -368,7 +419,25 @@ export function useKidsContent(filterTag?: string, options?: Partial<UseContentO
 }
 
 export function useHeroContent(options?: Partial<UseContentOptions>) {
-  return useContent({ tags: ['hero_trailer'], limit: 20, ...options });
+  const result = useContent({ tags: ['hero_trailer'], limit: 20, ...options });
+  
+  // Development logging for hero content
+  if (import.meta.env.DEV) {
+    console.log('[useHeroContent] Hook state:', {
+      contentCount: result.content.length,
+      loading: result.loading,
+      error: result.error,
+      fromCache: result.fromCache,
+      hasMore: result.hasMore,
+      content: result.content.map(item => ({
+        claim_id: item.claim_id,
+        title: item.title,
+        tags: item.tags
+      }))
+    });
+  }
+  
+  return result;
 }
 
 export function useSearch(query: string, options?: Partial<UseContentOptions>) {

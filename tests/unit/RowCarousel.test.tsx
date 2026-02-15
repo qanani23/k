@@ -107,17 +107,26 @@ describe('RowCarousel', () => {
   });
 
   it('renders error state correctly', () => {
+    const mockRetry = vi.fn();
+    
     render(
       <RowCarousel
         title="Test Row"
         content={[]}
         error="Failed to load content"
+        onRetry={mockRetry}
       />
     );
 
     expect(screen.getByText('Test Row')).toBeInTheDocument();
     expect(screen.getByText('Failed to load content')).toBeInTheDocument();
-    expect(screen.getByText('Try Again')).toBeInTheDocument();
+    
+    const retryButton = screen.getByText('Try Again');
+    expect(retryButton).toBeInTheDocument();
+    
+    // Test retry button click
+    retryButton.click();
+    expect(mockRetry).toHaveBeenCalledTimes(1);
   });
 
   it('renders empty state when no content', () => {

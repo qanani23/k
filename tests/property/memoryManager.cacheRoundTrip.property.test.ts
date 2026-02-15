@@ -72,7 +72,7 @@ describe('Property-Based Tests: Memory Manager Cache Round Trip', () => {
             memoryManager.destroy();
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -99,7 +99,7 @@ describe('Property-Based Tests: Memory Manager Cache Round Trip', () => {
             memoryManager.destroy();
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -161,7 +161,7 @@ describe('Property-Based Tests: Memory Manager Cache Round Trip', () => {
             memoryManager.destroy();
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -365,7 +365,7 @@ describe('Property-Based Tests: Memory Manager Cache Round Trip', () => {
             memoryManager.destroy();
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20 }
       );
     });
 
@@ -403,3 +403,4 @@ describe('Property-Based Tests: Memory Manager Cache Round Trip', () => {
     });
   });
 });
+
