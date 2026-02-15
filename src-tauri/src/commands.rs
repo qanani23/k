@@ -1047,11 +1047,12 @@ fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
         }
     }
 
+    // TEMPORARY FIX: Allow videos without URLs (still processing on Odysee)
+    // They will display with thumbnails only until processing completes
     if video_urls.is_empty() {
-        warn!("No video URLs found in item - Raw value: {}", value);
-        return Err(KiyyaError::ContentParsing {
-            message: "No video URLs found".to_string(),
-        });
+        warn!("No video URLs found in item (video may still be processing) - Raw value: {}", value);
+        // Return empty HashMap instead of error - frontend will handle gracefully
+        // Videos will show with thumbnail but won't be playable until URLs are available
     }
 
     Ok(video_urls)

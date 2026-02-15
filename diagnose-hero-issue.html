@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hero Issue Diagnostic Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        h2 {
+            color: #555;
+            margin-bottom: 15px;
+            font-size: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .result-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .result-box pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .metric-value {
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        .video-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .video-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .video-meta {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 5px;
+            margin-top: 5px;
+        }
+
+        .tag.hero {
+            background: #28a745;
+            font-weight: 700;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .diagnosis-result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+
+        .diagnosis-result.pass {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .diagnosis-result.fail {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .diagnosis-title {
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .diagnosis-message {
+            line-height: 1.6;
+        }
+
+        .solution-box {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .solution-title {
+            font-weight: 700;
+            color: #004085;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .solution-steps {
+            list-style-position: inside;
+            color: #004085;
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🔍 Hero Section Diagnostic Tool</h1>
+            <p class="subtitle">Comprehensive diagnostic for Hero section failure</p>
+
+            <div class="button-group">
+                <button onclick="runFullDiagnostic()">🚀 Run Full Diagnostic</button>
+                <button onclick="fetchHeroContent()">📡 Test Hero API</button>
+                <button onclick="fetchAllContent()">📋 Fetch All Content</button>
+                <button onclick="clearResults()">🗑️ Clear Results</button>
+            </div>
+
+            <div id="status"></div>
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        const CHANNEL_ID = '@kiyyamovies:b';
+        const HERO_TAG = 'hero_trailer';
+        const API_ENDPOINT = 'https://api.na-backend.odysee.com/api/v1/proxy';
+
+        function showStatus(message, type = 'loading') {
+            const statusDiv = document.getElementById('status');
+            const spinner = type === 'loading' ? '<div class="spinner"></div>' : '';
+            statusDiv.innerHTML = `<div class="status ${type}">${spinner}${message}</div>`;
+        }
+
+        function showResults(html) {
+            document.getElementById('results').innerHTML = html;
+        }
+
+        function clearResults() {
+            document.getElementById('status').innerHTML = '';
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function callOdyseeAPI(method, params) {
+            const response = await fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    method: method,
+                    params: params
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        }
+
+        async function fetchHeroContent() {
+            try {
+                showStatus('Fetching hero content from Odysee API...', 'loading');
+
+                const response = await callOdyseeAPI('claim_search', {
+                    channel: CHANNEL_ID,
+                    any_tags: [HERO_TAG],
+                    page_size: 20,
+                    page: 1,
+                    order_by: ['release_time']
+                });
+
+                const items = response.result?.items || [];
+                
+                let html = '<h2>Hero Content API Response</h2>';
+                html += '<div class="result-box">';
+                html += '<div class="metric"><span class="metric-label">Total Items Found:</span><span class="metric-value">' + items.length + '</span></div>';
+                html += '<div class="metric"><span class="metric-label">Tag Searched:</span><span class="metric-value">' + HERO_TAG + '</span></div>';
+                html += '<div class="metric"><span class="metric-label">Channel:</span><span class="metric-value">' + CHANNEL_ID + '</span></div>';
+                html += '</div>';
+
+                if (items.length === 0) {
+                    showStatus('❌ NO HERO CONTENT FOUND', 'error');
+                    html += '<div class="diagnosis-result fail">';
+                    html += '<div class="diagnosis-title">🚨 ROOT CAUSE IDENTIFIED</div>';
+                    html += '<div class="diagnosis-message">';
+                    html += '<p><strong>No videos on the channel have the "' + HERO_TAG + '" tag.</strong></p>';
+                    html += '<p>This is why the Hero section is failing to load.</p>';
+                    html += '</div>';
+                    html += '</div>';
+
+                    html += '<div class="solution-box">';
+                    html += '<div class="solution-title">✅ Solution:</div>';
+                    html += '<ol class="solution-steps">';
+                    html += '<li>Go to <a href="https://odysee.com/' + CHANNEL_ID + '" target="_blank">https://odysee.com/' + CHANNEL_ID + '</a></li>';
+                    html += '<li>Select a video you want as the hero</li>';
+                    html += '<li>Click "Edit" on the video</li>';
+                    html += '<li>Add the tag: <strong>' + HERO_TAG + '</strong> (exact spelling, lowercase)</li>';
+                    html += '<li>Save the video</li>';
+                    html += '<li>Wait 2-3 minutes for Odysee to update</li>';
+                    html += '<li>Clear app cache and restart</li>';
+                    html += '</ol>';
+                    html += '</div>';
+                } else {
+                    showStatus('✅ Found ' + items.length + ' hero video(s)', 'success');
+                    html += '<div class="diagnosis-result pass">';
+                    html += '<div class="diagnosis-title">✅ Hero Content Exists</div>';
+                    html += '<div class="diagnosis-message">';
+                    html += '<p>Found ' + items.length + ' video(s) with the "' + HERO_TAG + '" tag.</p>';
+                    html += '<p>If the Hero section is still failing, the issue may be with validation or caching.</p>';
+                    html += '</div>';
+                    html += '</div>';
+
+                    html += '<h2>Hero Videos Found:</h2>';
+                    items.forEach((item, index) => {
+                        html += '<div class="video-item">';
+                        html += '<div class="video-title">' + (index + 1) + '. ' + (item.value?.title || item.name || 'Untitled') + '</div>';
+                        html += '<div class="video-meta"><strong>Claim ID:</strong> ' + item.claim_id + '</div>';
+                        html += '<div class="video-meta"><strong>Tags:</strong> ';
+                        const tags = item.value?.tags || [];
+                        tags.forEach(tag => {
+                            const isHero = tag === HERO_TAG;
+                            html += '<span class="tag' + (isHero ? ' hero' : '') + '">' + tag + '</span>';
+                        });
+                        html += '</div>';
+                        html += '<div class="video-meta"><strong>Has Thumbnail:</strong> ' + (item.value?.thumbnail?.url ? '✅ Yes' : '❌ No') + '</div>';
+                        html += '<div class="video-meta"><strong>Has Video URL:</strong> ' + (item.value?.video?.url || item.value?.hd_url || item.value?.sd_url ? '✅ Yes' : '❌ No') + '</div>';
+                        html += '</div>';
+                    });
+
+                    html += '<div class="result-box">';
+                    html += '<h3>Raw API Response:</h3>';
+                    html += '<pre>' + JSON.stringify(response, null, 2) + '</pre>';
+                    html += '</div>';
+                }
+
+                showResults(html);
+
+            } catch (error) {
+                showStatus('❌ Error: ' + error.message, 'error');
+                showResults('<div class="result-box"><pre>' + error.stack + '</pre></div>');
+            }
+        }
+
+        async function fetchAllContent() {
+            try {
+                showStatus('Fetching all content from channel...', 'loading');
+
+                const response = await callOdyseeAPI('claim_search', {
+                    channel: CHANNEL_ID,
+                    page_size: 50,
+                    page: 1,
+                    order_by: ['release_time']
+                });
+
+                const items = response.result?.items || [];
+                
+                // Find items with hero_trailer tag
+                const heroItems = items.filter(item => {
+                    const tags = item.value?.tags || [];
+                    return tags.includes(HERO_TAG);
+                });
+
+                let html = '<h2>All Channel Content</h2>';
+                html += '<div class="result-box">';
+                html += '<div class="metric"><span class="metric-label">Total Videos:</span><span class="metric-value">' + items.length + '</span></div>';
+                html += '<div class="metric"><span class="metric-label">Videos with "' + HERO_TAG + '" tag:</span><span class="metric-value">' + heroItems.length + '</span></div>';
+                html += '</div>';
+
+                if (heroItems.length === 0) {
+                    showStatus('⚠️ No hero videos found in channel', 'warning');
+                    html += '<div class="diagnosis-result fail">';
+                    html += '<div class="diagnosis-title">🚨 Confirmed: No Hero Videos</div>';
+                    html += '<div class="diagnosis-message">';
+                    html += '<p>Checked all ' + items.length + ' videos on the channel.</p>';
+                    html += '<p><strong>NONE of them have the "' + HERO_TAG + '" tag.</strong></p>';
+                    html += '</div>';
+                    html += '</div>';
+                } else {
+                    showStatus('✅ Found ' + heroItems.length + ' hero video(s) out of ' + items.length + ' total', 'success');
+                }
+
+                // Show all tags used in the channel
+                const allTags = new Set();
+                items.forEach(item => {
+                    const tags = item.value?.tags || [];
+                    tags.forEach(tag => allTags.add(tag));
+                });
+
+                html += '<h2>All Tags Used in Channel (' + allTags.size + ' unique tags):</h2>';
+                html += '<div class="result-box">';
+                Array.from(allTags).sort().forEach(tag => {
+                    const isHero = tag === HERO_TAG;
+                    html += '<span class="tag' + (isHero ? ' hero' : '') + '">' + tag + '</span>';
+                });
+                html += '</div>';
+
+                showResults(html);
+
+            } catch (error) {
+                showStatus('❌ Error: ' + error.message, 'error');
+                showResults('<div class="result-box"><pre>' + error.stack + '</pre></div>');
+            }
+        }
+
+        async function runFullDiagnostic() {
+            try {
+                showStatus('Running full diagnostic...', 'loading');
+
+                // Step 1: Check hero content
+                const heroResponse = await callOdyseeAPI('claim_search', {
+                    channel: CHANNEL_ID,
+                    any_tags: [HERO_TAG],
+                    page_size: 20,
+                    page: 1,
+                    order_by: ['release_time']
+                });
+
+                const heroItems = heroResponse.result?.items || [];
+
+                // Step 2: Check all content
+                const allResponse = await callOdyseeAPI('claim_search', {
+                    channel: CHANNEL_ID,
+                    page_size: 50,
+                    page: 1,
+                    order_by: ['release_time']
+                });
+
+                const allItems = allResponse.result?.items || [];
+
+                // Analyze results
+                let html = '<h2>🔍 Full Diagnostic Report</h2>';
+                
+                // Summary
+                html += '<div class="result-box">';
+                html += '<h3>Summary</h3>';
+                html += '<div class="metric"><span class="metric-label">Total Videos on Channel:</span><span class="metric-value">' + allItems.length + '</span></div>';
+                html += '<div class="metric"><span class="metric-label">Videos with "' + HERO_TAG + '" tag:</span><span class="metric-value">' + heroItems.length + '</span></div>';
+                html += '<div class="metric"><span class="metric-label">Channel ID:</span><span class="metric-value">' + CHANNEL_ID + '</span></div>';
+                html += '<div class="metric"><span class="metric-label">Hero Tag:</span><span class="metric-value">' + HERO_TAG + '</span></div>';
+                html += '</div>';
+
+                // Diagnosis
+                if (heroItems.length === 0) {
+                    showStatus('❌ DIAGNOSIS: No hero videos found', 'error');
+                    
+                    html += '<div class="diagnosis-result fail">';
+                    html += '<div class="diagnosis-title">🚨 ROOT CAUSE IDENTIFIED</div>';
+                    html += '<div class="diagnosis-message">';
+                    html += '<p><strong>The Hero section is failing because NO videos have the "' + HERO_TAG + '" tag.</strong></p>';
+                    html += '<p>The backend and frontend logic are working correctly. The issue is simply that no content exists to display.</p>';
+                    html += '</div>';
+                    html += '</div>';
+
+                    html += '<div class="solution-box">';
+                    html += '<div class="solution-title">✅ Solution:</div>';
+                    html += '<ol class="solution-steps">';
+                    html += '<li>Go to <a href="https://odysee.com/' + CHANNEL_ID + '" target="_blank">https://odysee.com/' + CHANNEL_ID + '</a></li>';
+                    html += '<li>Select a video you want as the hero (preferably a trailer or highlight)</li>';
+                    html += '<li>Click "Edit" on the video</li>';
+                    html += '<li>Add the tag: <strong>' + HERO_TAG + '</strong> (exact spelling, lowercase, with underscore)</li>';
+                    html += '<li>Save the video</li>';
+                    html += '<li>Wait 2-3 minutes for Odysee to propagate the changes</li>';
+                    html += '<li>Clear your app cache (delete kiyya.db)</li>';
+                    html += '<li>Restart the app</li>';
+                    html += '</ol>';
+                    html += '<p style="margin-top: 15px;"><strong>Note:</strong> You can add the tag to multiple videos if you want the Hero section to rotate between them.</p>';
+                    html += '</div>';
+
+                } else {
+                    showStatus('✅ DIAGNOSIS: Hero videos exist but app is failing', 'warning');
+                    
+                    html += '<div class="diagnosis-result pass">';
+                    html += '<div class="diagnosis-title">✅ Hero Content Exists</div>';
+                    html += '<div class="diagnosis-message">';
+                    html += '<p>Found ' + heroItems.length + ' video(s) with the "' + HERO_TAG + '" tag.</p>';
+                    html += '<p><strong>Since hero content exists but the app is still failing, the issue is likely:</strong></p>';
+                    html += '<ul style="margin-left: 20px; margin-top: 10px;">';
+                    html += '<li>Cache corruption (try clearing cache)</li>';
+                    html += '<li>Validation failure (check browser console for errors)</li>';
+                    html += '<li>Missing video URLs or thumbnails (check details below)</li>';
+                    html += '</ul>';
+                    html += '</div>';
+                    html += '</div>';
+
+                    // Validate each hero item
+                    html += '<h2>Hero Video Validation:</h2>';
+                    heroItems.forEach((item, index) => {
+                        const hasTitle = !!(item.value?.title || item.name);
+                        const hasThumbnail = !!(item.value?.thumbnail?.url);
+                        const hasVideoUrl = !!(item.value?.video?.url || item.value?.hd_url || item.value?.sd_url);
+                        const hasTags = !!(item.value?.tags && item.value.tags.length > 0);
+                        
+                        const allValid = hasTitle && hasThumbnail && hasVideoUrl && hasTags;
+                        
+                        html += '<div class="video-item" style="border-left: 4px solid ' + (allValid ? '#28a745' : '#dc3545') + ';">';
+                        html += '<div class="video-title">' + (allValid ? '✅' : '❌') + ' Video ' + (index + 1) + ': ' + (item.value?.title || item.name || 'Untitled') + '</div>';
+                        html += '<div class="video-meta"><strong>Claim ID:</strong> ' + item.claim_id + '</div>';
+                        html += '<div class="video-meta">' + (hasTitle ? '✅' : '❌') + ' <strong>Has Title:</strong> ' + (hasTitle ? 'Yes' : 'No') + '</div>';
+                        html += '<div class="video-meta">' + (hasThumbnail ? '✅' : '❌') + ' <strong>Has Thumbnail:</strong> ' + (hasThumbnail ? 'Yes' : 'No') + '</div>';
+                        html += '<div class="video-meta">' + (hasVideoUrl ? '✅' : '❌') + ' <strong>Has Video URL:</strong> ' + (hasVideoUrl ? 'Yes' : 'No') + '</div>';
+                        html += '<div class="video-meta">' + (hasTags ? '✅' : '❌') + ' <strong>Has Tags:</strong> ' + (hasTags ? 'Yes (' + item.value.tags.length + ')' : 'No') + '</div>';
+                        
+                        if (!allValid) {
+                            html += '<div class="video-meta" style="color: #dc3545; font-weight: 600; margin-top: 10px;">⚠️ This video may fail validation</div>';
+                        }
+                        html += '</div>';
+                    });
+
+                    html += '<div class="solution-box">';
+                    html += '<div class="solution-title">🔧 Troubleshooting Steps:</div>';
+                    html += '<ol class="solution-steps">';
+                    html += '<li>Clear app cache (delete kiyya.db file)</li>';
+                    html += '<li>Restart the app</li>';
+                    html += '<li>Open browser DevTools (F12) and check console for errors</li>';
+                    html += '<li>Look for validation errors or parsing failures</li>';
+                    html += '<li>If videos are missing thumbnails or URLs, they may need to be re-uploaded or re-processed on Odysee</li>';
+                    html += '</ol>';
+                    html += '</div>';
+                }
+
+                showResults(html);
+
+            } catch (error) {
+                showStatus('❌ Error: ' + error.message, 'error');
+                showResults('<div class="result-box"><pre>' + error.stack + '</pre></div>');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Specific Video - Debug URL Extraction</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        h1 { color: #333; margin-bottom: 20px; }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        button:hover { transform: translateY(-2px); }
+        .result-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .result-box pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+        .status.success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+        .status.error { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+        .status.warning { background: #fff3cd; color: #856404; border-left: 4px solid #ffc107; }
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .info-title { font-weight: 700; color: #004085; margin-bottom: 10px; }
+        .info-item { margin: 5px 0; color: #004085; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🔍 Video URL Extraction Debug</h1>
+            <p style="color: #666; margin-bottom: 20px;">Testing why video URLs are not being extracted</p>
+            
+            <button onclick="testHeroVideo()">Test Hero Video</button>
+            <button onclick="testAllVideos()">Test All Videos</button>
+            
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        const CHANNEL_ID = '@kiyyamovies:b';
+        const API_ENDPOINT = 'https://api.na-backend.odysee.com/api/v1/proxy';
+
+        async function callOdyseeAPI(method, params) {
+            const response = await fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ method, params })
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.json();
+        }
+
+        function extractVideoUrls(item) {
+            const value = item.value;
+            const urls = [];
+            
+            // Check all possible locations for video URLs
+            if (value.hd_url) urls.push({ location: 'value.hd_url', url: value.hd_url });
+            if (value.sd_url) urls.push({ location: 'value.sd_url', url: value.sd_url });
+            if (value['720p_url']) urls.push({ location: 'value.720p_url', url: value['720p_url'] });
+            if (value.video?.url) urls.push({ location: 'value.video.url', url: value.video.url });
+            if (value.streams) {
+                value.streams.forEach((stream, i) => {
+                    if (stream.url) urls.push({ location: `value.streams[${i}].url`, url: stream.url, height: stream.height });
+                });
+            }
+            
+            // Check for source object (Odysee sometimes uses this)
+            if (value.source?.url) urls.push({ location: 'value.source.url', url: value.source.url });
+            if (value.source?.sd_hash) urls.push({ location: 'value.source.sd_hash', hash: value.source.sd_hash });
+            
+            return urls;
+        }
+
+        async function testHeroVideo() {
+            try {
+                const resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = '<div class="status warning">Loading hero video...</div>';
+
+                const response = await callOdyseeAPI('claim_search', {
+                    channel: CHANNEL_ID,
+                    any_tags: ['hero_trailer'],
+                    page_size: 1,
+                    page: 1,
+                    order_by: ['release_time']
+                });
+
+                const items = response.result?.items || [];
+                
+                if (items.length === 0) {
+                    resultsDiv.innerHTML = '<div class="status error">❌ No hero video found</div>';
+                    return;
+                }
+
+                const item = items[0];
+                const urls = extractVideoUrls(item);
+
+                let html = '<div class="status success">✅ Found hero video</div>';
+                
+                html += '<div class="info-box">';
+                html += '<div class="info-title">Video Information:</div>';
+                html += `<div class="info-item"><strong>Title:</strong> ${item.value?.title || 'N/A'}</div>`;
+                html += `<div class="info-item"><strong>Claim ID:</strong> ${item.claim_id}</div>`;
+                html += `<div class="info-item"><strong>Name:</strong> ${item.name}</div>`;
+                html += '</div>';
+
+                html += '<div class="info-box">';
+                html += '<div class="info-title">Video URLs Found:</div>';
+                if (urls.length === 0) {
+                    html += '<div class="status error">❌ NO VIDEO URLS FOUND IN ANY LOCATION</div>';
+                    html += '<div class="info-item">This is why the backend is rejecting the video!</div>';
+                } else {
+                    urls.forEach(urlInfo => {
+                        html += `<div class="info-item">✅ <strong>${urlInfo.location}:</strong> ${urlInfo.url || urlInfo.hash}</div>`;
+                        if (urlInfo.height) html += `<div class="info-item" style="margin-left: 20px;">Height: ${urlInfo.height}p</div>`;
+                    });
+                }
+                html += '</div>';
+
+                // Check for streaming URL (Odysee's actual streaming endpoint)
+                html += '<div class="info-box">';
+                html += '<div class="info-title">Odysee Streaming URL:</div>';
+                const streamingUrl = `https://player.odycdn.com/api/v4/streams/free/${item.name}/${item.claim_id}`;
+                html += `<div class="info-item">📺 <strong>Streaming endpoint:</strong><br><a href="${streamingUrl}" target="_blank">${streamingUrl}</a></div>`;
+                html += '<div class="info-item" style="margin-top: 10px;">This is the URL Odysee uses to stream the video. The backend should generate this if no direct URLs are found.</div>';
+                html += '</div>';
+
+                html += '<div class="result-box">';
+                html += '<h3>Full API Response:</h3>';
+                html += '<pre>' + JSON.stringify(item, null, 2) + '</pre>';
+                html += '</div>';
+
+                resultsDiv.innerHTML = html;
+
+            } catch (error) {
+                document.getElementById('results').innerHTML = 
+                    '<div class="status error">❌ Error: ' + error.message + '</div>' +
+                    '<div class="result-box"><pre>' + error.stack + '</pre></div>';
+            }
+        }
+
+        async function testAllVideos() {
+            try {
+                const resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = '<div class="status warning">Loading all videos...</div>';
+
+                const response = await callOdyseeAPI('claim_search', {
+                    channel: CHANNEL_ID,
+                    page_size: 50,
+                    page: 1,
+                    order_by: ['release_time']
+                });
+
+                const items = response.result?.items || [];
+                
+                let html = `<div class="status success">✅ Found ${items.length} videos</div>`;
+
+                items.forEach((item, index) => {
+                    const urls = extractVideoUrls(item);
+                    const tags = item.value?.tags || [];
+                    
+                    html += '<div class="info-box">';
+                    html += `<div class="info-title">${index + 1}. ${item.value?.title || 'Untitled'}</div>`;
+                    html += `<div class="info-item"><strong>Tags:</strong> ${tags.join(', ') || 'None'}</div>`;
+                    html += `<div class="info-item"><strong>Video URLs:</strong> ${urls.length > 0 ? '✅ ' + urls.length + ' found' : '❌ None found'}</div>`;
+                    
+                    if (urls.length > 0) {
+                        urls.forEach(urlInfo => {
+                            html += `<div class="info-item" style="margin-left: 20px;">• ${urlInfo.location}</div>`;
+                        });
+                    } else {
+                        const streamingUrl = `https://player.odycdn.com/api/v4/streams/free/${item.name}/${item.claim_id}`;
+                        html += `<div class="info-item" style="margin-left: 20px;">📺 Fallback: <a href="${streamingUrl}" target="_blank">Streaming URL</a></div>`;
+                    }
+                    html += '</div>';
+                });
+
+                resultsDiv.innerHTML = html;
+
+            } catch (error) {
+                document.getElementById('results').innerHTML = 
+                    '<div class="status error">❌ Error: ' + error.message + '</div>' +
+                    '<div class="result-box"><pre>' + error.stack + '</pre></div>';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -65,7 +65,7 @@ describe('Property-Based Tests: Error State Transition', () => {
     vi.clearAllMocks();
   });
 
-  describe('Property 14: Error State Transition', () => {
+  describe('Property 3: Loading State Resolution', () => {
     it('should transition from loading to error when fetch fails with tags', async () => {
       await fc.assert(
         fc.asyncProperty(

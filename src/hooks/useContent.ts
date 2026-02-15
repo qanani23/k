@@ -419,6 +419,37 @@ export function useKidsContent(filterTag?: string, options?: Partial<UseContentO
 }
 
 export function useHeroContent(options?: Partial<UseContentOptions>) {
+  // TEMPORARY MOCK: Return mock data while debugging backend API issues
+  // TODO: Remove this once backend is fixed
+  if (import.meta.env.DEV) {
+    return {
+      content: [{
+        claim_id: '9ea0a63f48125cf9ea9296886907423963276898',
+        title: 'Tsehay_Ethiopian_Movie_trailer',
+        description: 'Ethiopian Movie Trailer',
+        tags: ['hero_trailer', 'movie'],
+        thumbnail_url: 'https://thumbnails.odycdn.com/optimize/s:390:220/quality:85/plain/https://thumbs.odycdn.com/9ea0a63f48125cf9ea9296886907423963276898',
+        duration: 120,
+        release_time: Math.floor(Date.now() / 1000),
+        video_urls: {
+          '720p': {
+            url: 'https://player.odycdn.com/api/v4/streams/free/Tsehay_Ethiopian_Movie_trailer/9ea0a63f48125cf9ea9296886907423963276898',
+            quality: '720p',
+            type: 'mp4'
+          }
+        },
+        compatibility: { compatible: true, fallback_available: false }
+      }],
+      loading: false,
+      error: null,
+      refetch: () => Promise.resolve(),
+      loadMore: () => Promise.resolve(),
+      hasMore: false,
+      fromCache: false,
+      status: 'success' as const
+    };
+  }
+  
   const result = useContent({ tags: ['hero_trailer'], limit: 20, ...options });
   
   // Development logging for hero content
