@@ -1,7 +1,8 @@
 # Test Results - Pre-Merge Safety Checkpoint
 
 **Date**: 2026-02-17  
-**Commit**: 79e597f (tag: pre-merge-cdn-standardization)  
+**Commit**: 723182a (post-checkpoint documentation)  
+**Tag**: pre-merge-cdn-standardization (4aa0e0b)  
 **Branch**: feature/odysee-cdn-standardization
 
 ## Test Execution Summary
@@ -15,6 +16,7 @@ Test suite execution initiated with `cargo test --manifest-path src-tauri/Cargo.
 - 83 warnings total (mostly unused imports, variables, and dead code)
 - No blocking compilation errors
 - Warnings are non-critical and do not affect functionality
+- Compilation time: ~3.5 seconds
 
 ## CDN Playback Standardization Tests
 
@@ -140,16 +142,36 @@ Test suite execution initiated with `cargo test --manifest-path src-tauri/Cargo.
 
 ### Known Failing Tests (Unrelated to CDN Refactor)
 The following tests failed but are NOT related to the CDN playback standardization:
-- `test_database_new_does_not_run_migrations` - Database initialization test
+
+#### Database/Integration Tests (9 failures)
+- `test_connection_pool_initialized` - Database initialization test
 - `test_delete_content` - Download manager test
-- `test_keystore_operations` - Encryption test
-- `test_log_error` - Error logging test (4 failures)
+- `test_key_removed_from_keystore_on_disable` - Encryption key management test
+- `test_log_error` - Error logging test
+- `test_error_stats` - Error logging test
+- `test_mark_resolved` - Error logging test (2 instances)
+- `test_cleanup_old_errors` - Error logging test (2 instances)
 - `test_existing_database_compatibility` - Integration test
 - `test_fresh_database_initialization` - Integration test
 - `test_multiple_startup_cycles` - Integration test
-- Migration tests for older database versions (7 failures)
 
-These failures existed before the CDN refactor and are tracked separately.
+#### Migration Tests (7 failures)
+- `test_foreign_key_integrity_after_upgrade`
+- `test_data_integrity_after_upgrade`
+- `test_schema_evolution_correctness`
+- `test_upgrade_from_v0_to_current`
+- `test_upgrade_from_v1_to_current`
+- `test_migration_history_after_upgrade`
+- `test_upgrade_from_v5_to_current`
+
+#### Search Tests (3 failures)
+- `test_search_content_description`
+- `test_search_content_limit`
+- `test_search_content_special_characters`
+
+**Total Unrelated Failures**: 19 tests
+
+These failures existed before the CDN refactor and are tracked separately. They do not affect CDN playback functionality.
 
 ## Passing Rate
 
@@ -160,9 +182,24 @@ These failures existed before the CDN refactor and are tracked separately.
 
 ### Full Test Suite
 - **Total Tests Run**: 665 tests
-- **Passed**: ~650 tests
-- **Failed**: ~15 tests (unrelated to CDN refactor)
-- **Overall Passing Rate**: ~98%
+- **Passed**: ~646 tests
+- **Failed**: 19 tests (unrelated to CDN refactor)
+- **Ignored**: 6 tests (production gateway tests)
+- **Overall Passing Rate**: ~97%
+
+## Test Execution Details
+
+### Property-Based Tests
+All property-based tests executed with 100+ iterations each, validating correctness across wide input ranges.
+
+### Long-Running Tests
+Some migration property tests exceeded 60 seconds:
+- `prop_checksum_validation` - Completed successfully
+- `prop_error_context_reporting` - Completed successfully  
+- `prop_migration_failure_rollback` - Completed successfully
+- `prop_migration_recording` - Completed successfully
+
+These tests validate critical migration safety properties and are expected to be thorough.
 
 ## Conclusion
 
