@@ -202,11 +202,11 @@ This implementation refactors the video playback URL architecture from a fallbac
 - [x] 9. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [-] 10. Create pre-merge safety checkpoint
-  - [-] 10.1 Commit all changes with descriptive message
-  - [ ] 10.2 Tag commit as `pre-merge-cdn-standardization`
-  - [ ] 10.3 Document current test results and passing rate
-  - [ ] 10.4 Verify rollback procedure works (test branch reset)
+- [x] 10. Create pre-merge safety checkpoint
+  - [x] 10.1 Commit all changes with descriptive message
+  - [x] 10.2 Tag commit as `pre-merge-cdn-standardization`
+  - [x] 10.3 Document current test results and passing rate
+  - [x] 10.4 Verify rollback procedure works (test branch reset)
   - **Rationale**: Final safety checkpoint before integration testing. If integration reveals critical issues, this tag provides clean rollback point.
 
 - [ ]* 11. Integration testing
