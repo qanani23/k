@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 643020ec4b471ef810ad604efb9b5b5b7381a50a836789ef5b7461e1a6951023 # shrinks to claims = [MissingTitle { claim_id: "A0aa0A0A00aaAAaaA00a" }, ValidStream { claim_id: "0aAA0AAaa0a0AAA0A0a0", title: "aAa00" }]

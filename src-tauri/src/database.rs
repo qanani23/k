@@ -2591,9 +2591,9 @@ pub(crate) mod tests {
 
     fn create_test_content_item() -> ContentItem {
         let mut video_urls = HashMap::new();
-        video_urls.insert("720p".to_string(), VideoUrl {
+        video_urls.insert("master".to_string(), VideoUrl {
             url: "https://example.com/video.mp4".to_string(),
-            quality: "720p".to_string(),
+            quality: "master".to_string(),
             url_type: "mp4".to_string(),
             codec: Some("h264".to_string()),
         });
@@ -2818,7 +2818,7 @@ pub(crate) mod tests {
         let progress = ProgressData {
             claim_id: "test-claim-123".to_string(),
             position_seconds: 1800, // 30 minutes
-            quality: "720p".to_string(),
+            quality: "master".to_string(),
             updated_at: Utc::now().timestamp(),
         };
         
@@ -2830,7 +2830,7 @@ pub(crate) mod tests {
         assert!(retrieved.is_some());
         let retrieved = retrieved.unwrap();
         assert_eq!(retrieved.position_seconds, 1800);
-        assert_eq!(retrieved.quality, "720p");
+        assert_eq!(retrieved.quality, "master");
         
         // Delete progress
         db.delete_progress("test-claim-123").await.unwrap();
@@ -2873,8 +2873,8 @@ pub(crate) mod tests {
         
         let metadata = OfflineMetadata {
             claim_id: "test-claim-123".to_string(),
-            quality: "720p".to_string(),
-            filename: "test-movie-720p.mp4".to_string(),
+            quality: "master".to_string(),
+            filename: "test-movie-master.mp4".to_string(),
             file_size: 1024 * 1024 * 500, // 500MB
             encrypted: false,
             added_at: Utc::now().timestamp(),
@@ -2884,14 +2884,14 @@ pub(crate) mod tests {
         db.save_offline_metadata(metadata.clone()).await.unwrap();
         
         // Check if available offline
-        let is_available = db.is_offline_available("test-claim-123", "720p").await.unwrap();
+        let is_available = db.is_offline_available("test-claim-123", "master").await.unwrap();
         assert!(is_available);
         
         // Get metadata
-        let retrieved = db.get_offline_metadata("test-claim-123", "720p").await.unwrap();
+        let retrieved = db.get_offline_metadata("test-claim-123", "master").await.unwrap();
         assert!(retrieved.is_some());
         let retrieved = retrieved.unwrap();
-        assert_eq!(retrieved.filename, "test-movie-720p.mp4");
+        assert_eq!(retrieved.filename, "test-movie-master.mp4");
         assert_eq!(retrieved.file_size, 1024 * 1024 * 500);
         
         // Get all metadata
@@ -2899,8 +2899,8 @@ pub(crate) mod tests {
         assert_eq!(all_metadata.len(), 1);
         
         // Delete metadata
-        db.delete_offline_metadata("test-claim-123", "720p").await.unwrap();
-        let deleted = db.get_offline_metadata("test-claim-123", "720p").await.unwrap();
+        db.delete_offline_metadata("test-claim-123", "master").await.unwrap();
+        let deleted = db.get_offline_metadata("test-claim-123", "master").await.unwrap();
         assert!(deleted.is_none());
     }
 
@@ -2910,7 +2910,7 @@ pub(crate) mod tests {
         
         // Set a setting
         db.set_setting("theme", "dark").await.unwrap();
-        db.set_setting("quality", "720p").await.unwrap();
+        db.set_setting("quality", "master").await.unwrap();
         
         // Get a setting
         let theme = db.get_setting("theme").await.unwrap();
@@ -2924,7 +2924,7 @@ pub(crate) mod tests {
         let all_settings = db.get_all_settings().await.unwrap();
         assert_eq!(all_settings.len(), 2);
         assert_eq!(all_settings.get("theme"), Some(&"dark".to_string()));
-        assert_eq!(all_settings.get("quality"), Some(&"720p".to_string()));
+        assert_eq!(all_settings.get("quality"), Some(&"master".to_string()));
     }
 
     #[tokio::test]

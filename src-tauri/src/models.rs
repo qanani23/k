@@ -83,17 +83,8 @@ impl ContentItem {
     
     /// Gets the best available quality URL
     pub fn best_quality_url(&self) -> Option<&VideoUrl> {
-        // Priority order: 1080p -> 720p -> 480p -> any other
-        let quality_priority = ["1080p", "720p", "480p"];
-        
-        for quality in quality_priority {
-            if let Some(url) = self.video_urls.get(quality) {
-                return Some(url);
-            }
-        }
-        
-        // Return any available quality if none of the preferred ones exist
-        self.video_urls.values().next()
+        // In CDN-first architecture, we only have "master" quality
+        self.video_urls.get("master")
     }
     
     /// Computes a content hash for detecting changes
@@ -776,31 +767,23 @@ pub mod tags {
 
 // Quality constants and utilities
 pub mod quality {
-    /// Standard quality levels in priority order
-    pub const QUALITY_LEVELS: &[&str] = &["1080p", "720p", "480p", "360p", "240p"];
+    /// Standard quality levels in CDN-first architecture
+    pub const QUALITY_LEVELS: &[&str] = &["master"];
     
     /// Checks if a quality string is valid
     pub fn is_valid_quality(quality: &str) -> bool {
         QUALITY_LEVELS.contains(&quality)
     }
     
-    /// Gets the next lower quality level
-    pub fn next_lower_quality(current: &str) -> Option<&'static str> {
-        if let Some(index) = QUALITY_LEVELS.iter().position(|&q| q == current) {
-            QUALITY_LEVELS.get(index + 1).copied()
-        } else {
-            None
-        }
+    /// Gets the next lower quality level (always None in CDN-first architecture)
+    pub fn next_lower_quality(_current: &str) -> Option<&'static str> {
+        None
     }
     
-    /// Gets the quality priority score (higher is better)
+    /// Gets the quality priority score (always 1 for master)
     pub fn quality_score(quality: &str) -> u32 {
         match quality {
-            "1080p" => 5,
-            "720p" => 4,
-            "480p" => 3,
-            "360p" => 2,
-            "240p" => 1,
+            "master" => 1,
             _ => 0,
         }
     }
@@ -966,7 +949,7 @@ mod tests {
     fn test_video_url_creation() {
         let video_url = VideoUrl::new(
             "https://example.com/video.mp4".to_string(),
-            "720p".to_string(),
+            "master".to_string(),
             "mp4".to_string(),
         ).unwrap();
         
@@ -1009,9 +992,11 @@ mod tests {
     }
     
     #[test]
+    #[test]
     fn test_quality_utilities() {
-        assert!(quality::is_valid_quality("720p"));
-        assert_eq!(quality::next_lower_quality("720p"), Some("480p"));
-        assert!(quality::quality_score("1080p") > quality::quality_score("720p"));
+        assert!(quality::is_valid_quality("master"));
+        assert_eq!(quality::next_lower_quality("master"), None);
+        assert_eq!(quality::quality_score("master"), 1);
     }
+
 }

@@ -441,8 +441,8 @@ mod tests {
 
     #[test]
     fn test_security_boundary_quality_values_restricted() {
-        // Only predefined quality values should be allowed
-        let valid_qualities = vec!["240p", "360p", "480p", "720p", "1080p", "1440p", "2160p", "4k"];
+        // In the new CDN-first architecture, we only use "master" quality for HLS adaptive streaming
+        let valid_qualities = vec!["master"];
 
         for quality in valid_qualities {
             assert!(
@@ -458,6 +458,15 @@ mod tests {
             "ultra",
             "max",
             "'; DROP TABLE--",
+            // Old quality-specific values are no longer valid
+            "240p",
+            "360p", 
+            "480p",
+            "720p",
+            "1080p",
+            "1440p",
+            "2160p",
+            "4k",
         ];
 
         for quality in invalid_qualities {

@@ -699,17 +699,17 @@ mod tests {
         let manager = create_test_manager(vault_path.clone());
         
         // Create test files
-        let test_filename = "test-claim-720p.mp4";
+        let test_filename = "test-claim-master.mp4";
         let test_path = vault_path.join(test_filename);
         write(&test_path, b"test content").await.unwrap();
         
-        let temp_path = vault_path.join("test-claim-720p.tmp");
+        let temp_path = vault_path.join("test-claim-master.tmp");
         write(&temp_path, b"partial content").await.unwrap();
         
-        let lock_path = vault_path.join("test-claim-720p.lock");
+        let lock_path = vault_path.join("test-claim-master.lock");
         write(&lock_path, b"").await.unwrap();
         
-        let etag_path = vault_path.join("test-claim-720p.etag");
+        let etag_path = vault_path.join("test-claim-master.etag");
         write(&etag_path, b"etag123").await.unwrap();
         
         // Verify files exist

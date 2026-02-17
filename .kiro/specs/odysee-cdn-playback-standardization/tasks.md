@@ -6,15 +6,15 @@ This implementation refactors the video playback URL architecture from a fallbac
 
 ## Safety and Version Control
 
-- [-] 0. Create feature branch and safety checkpoint
+- [x] 0. Create feature branch and safety checkpoint
   - [x] 0.1 Create feature branch: `feature/odysee-cdn-standardization`
-  - [-] 0.2 Commit current state as baseline checkpoint
-  - [ ] 0.3 Document rollback procedure in case of critical failure
+  - [x] 0.2 Commit current state as baseline checkpoint
+  - [x] 0.3 Document rollback procedure in case of critical failure
   - **Rationale**: This refactor removes core playback logic and fallback behavior. A bad merge could break Hero/Series/Movies sections simultaneously. Feature branch isolation provides safe rollback path.
 
 ## Tasks
 
-- [ ] 1. Create CDN playback builder function
+- [x] 1. Create CDN playback builder function
   - Implement `build_cdn_playback_url(claim_id: &str, gateway: Option<&str>) -> String`
   - Use default gateway `https://cloud.odysee.live` if none provided
   - Construct URL pattern: `{gateway}/content/{claim_id}/{HLS_MASTER_PLAYLIST}`
@@ -22,18 +22,18 @@ This implementation refactors the video playback URL architecture from a fallbac
   - **Rationale**: If Odysee changes playlist naming convention, single constant update fixes entire codebase (architectural paranoia = good paranoia)
   - _Requirements: 1.2, 1.3_
 
-- [ ]* 1.1 Write property test for CDN builder determinism
+- [x] 1.1 Write property test for CDN builder determinism
   - **Property 7: CDN URL Construction Is Idempotent**
   - **Validates: Requirements 1.4**
 
-- [ ]* 1.2 Write unit tests for CDN builder
+- [x] 1.2 Write unit tests for CDN builder
   - Test with default gateway (None)
   - Test with custom gateway
   - Test URL format matches pattern
   - Test with special characters in claim_id
   - _Requirements: 1.2, 1.3, 1.4_
 
-- [ ]* 1.3 Add CDN reachability validation helper (non-blocking, dev mode only)
+- [x] 1.3 Add CDN reachability validation helper (non-blocking, dev mode only)
   - Implement optional HEAD request validator for constructed CDN URLs
   - **Enforce short timeout (1-2 seconds)** to prevent blocking dev server if CDN stalls
   - Log at DEBUG level if CDN returns non-200 status
@@ -44,7 +44,7 @@ This implementation refactors the video playback URL architecture from a fallbac
   - **Rationale**: If CDN changes behavior (requires headers, returns 403, changes URL pattern), logs provide early warning without breaking production playback. Timeout prevents dev build hangs.
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.8_
 
-- [ ] 2. Add gateway configuration support
+- [x] 2. Add gateway configuration support
   - **Resolve CDN gateway once at application initialization** (deterministic resolution)
   - Store resolved gateway in static/Arc configuration state (immutable after startup)
   - Log resolved gateway at startup (INFO level)
@@ -61,13 +61,13 @@ This implementation refactors the video playback URL architecture from a fallbac
   - **Security**: Prevents malicious gateway injection and malformed URLs like `https://cloud.odysee.live//content/claim/master.m3u8`
   - **Determinism**: Gateway resolution happens once at startup, preventing mid-session inconsistency if env var changes
 
-- [ ]* 2.1 Write unit tests for gateway configuration
+- [x] 2.1 Write unit tests for gateway configuration
   - Test with ODYSEE_CDN_GATEWAY set
   - Test with ODYSEE_CDN_GATEWAY not set (uses default)
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 3. Refactor extract_video_urls function
-  - [ ] 3.1 Add claim type validation (CRITICAL)
+- [x] 3. Refactor extract_video_urls function
+  - [x] 3.1 Add claim type validation (CRITICAL)
     - **Primary check**: Validate `claim.value_type == "stream"`
     - **Fallback inference**: If `value_type` is missing, infer stream by presence of `value.source.sd_hash`
     - **Ambiguity logging**: Log at WARN level for claims with ambiguous structure (missing value_type but has source)
@@ -76,7 +76,7 @@ This implementation refactors the video playback URL architecture from a fallbac
     - **Rationale**: Odysee API structure varies by version. Prefer explicit `value_type`, fallback to structural inference. This prevents silent breakage if API structure shifts.
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7_
   
-  - [ ] 3.2 Remove all direct URL extraction logic
+  - [x] 3.2 Remove all direct URL extraction logic
     - Remove hd_url extraction
     - Remove sd_url extraction
     - Remove 720p_url extraction
@@ -85,7 +85,7 @@ This implementation refactors the video playback URL architecture from a fallbac
     - Remove quality-specific URL generation
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 9.1, 9.2, 9.5_
   
-  - [ ] 3.3 Implement CDN-only URL construction
+  - [x] 3.3 Implement CDN-only URL construction
     - Extract claim_id from item
     - Return error if claim_id missing or empty
     - Call `build_cdn_playback_url` with claim_id and gateway from immutable state
@@ -103,20 +103,20 @@ This implementation refactors the video playback URL architecture from a fallbac
       - DEBUG: Reachability validation results (dev mode only)
     - _Requirements: 1.1, 1.2, 1.5, 6.1, 6.2, 6.7, 9.3, 9.4, 15.1_
 
-- [ ]* 3.4 Write property test for missing direct URLs
-- [ ]* 3.4 Write property test for missing direct URLs
+- [x] 3.4 Write property test for missing direct URLs
+- [ ] 3.4 Write property test for missing direct URLs
   - **Property 1: Missing Direct URL Fields Do Not Cause Errors**
   - **Validates: Requirements 4.6, 4.7**
 
-- [ ]* 3.5 Write property test for valid claim_id
+- [x] 3.5 Write property test for valid claim_id
   - **Property 2: Valid claim_id Always Produces CDN Playback URL**
   - **Validates: Requirements 1.1, 1.2, 1.4**
 
-- [ ]* 3.6 Write property test for missing claim_id
+- [x] 3.6 Write property test for missing claim_id
   - **Property 3: Missing claim_id Returns Error**
   - **Validates: Requirements 2.4**
 
-- [ ]* 3.7 Write unit tests for extract_video_urls
+- [x] 3.7 Write unit tests for extract_video_urls
   - Test with valid claim_id and stream type
   - Test with missing claim_id
   - Test with empty claim_id
@@ -125,45 +125,45 @@ This implementation refactors the video playback URL architecture from a fallbac
   - Test logging behavior
   - _Requirements: 1.5, 1.6, 4.6, 4.7, 9.1, 9.2_
 
-- [ ] 4. Update parse_claim_item error handling
+- [x] 4. Update parse_claim_item error handling
   - Keep error propagation for extract_video_urls failures
   - Ensure missing claim_id causes claim to be skipped
   - Add logging for skipped claims
   - _Requirements: 5.2, 5.4, 11.3, 11.4, 11.5_
 
-- [ ]* 4.1 Write property test for response structure
+- [x] 4.1 Write property test for response structure
   - **Property 4: Backend Response Contains Required Fields**
   - **Validates: Requirements 11.7**
 
-- [ ]* 4.2 Write unit tests for parse_claim_item
+- [x] 4.2 Write unit tests for parse_claim_item
   - Test successful parsing with all fields
   - Test successful parsing with minimal fields
   - Test claim skipped when claim_id missing
   - Test error propagation for missing claim_id
   - _Requirements: 5.2, 5.4, 11.3, 11.4, 11.5, 11.7_
 
-- [ ] 5. Checkpoint - Ensure all tests pass
+- [x] 5. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 6. Update parse_claim_search_response for partial success
+- [x] 6. Update parse_claim_search_response for partial success
   - Modify to continue processing when individual claims fail
   - Collect successful ContentItems
   - Log warnings for failed claims
   - Return array of successful items (may be empty)
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7_
 
-- [ ]* 6.1 Write property test for partial success
+- [x] 6.1 Write property test for partial success
   - **Property 5: Partial Success When Processing Multiple Claims**
   - **Validates: Requirements 5.1, 5.2, 5.5**
 
-- [ ]* 6.2 Write unit tests for batch processing
+- [x] 6.2 Write unit tests for batch processing
   - Test with all valid claims
   - Test with all invalid claims (returns empty array)
   - Test with mix of valid and invalid claims
   - Test logging for skipped claims
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7_
 
-- [ ] 7. Update error handling and logging
+- [x] 7. Update error handling and logging
   - Add structured error types for missing claim_id
   - **Implement production logging level separation (idempotent discipline)**:
     - **INFO**: Gateway resolved at startup (once, lifecycle event)
@@ -181,29 +181,29 @@ This implementation refactors the video playback URL architecture from a fallbac
   - **Rationale**: Prevents noisy production logs (DEBUG for repetitive operations, INFO only for meaningful lifecycle events)
   - _Requirements: 4.6, 4.7, 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 15.2_
 
-- [ ]* 7.1 Write property test for error structure
+- [x] 7.1 Write property test for error structure
   - **Property 6: Error Details Are Structured**
   - **Validates: Requirements 4.6**
 
-- [ ]* 7.2 Write unit tests for logging
+- [x] 7.2 Write unit tests for logging
   - Verify claim_id is logged when processing
   - Verify constructed URL is logged
   - Verify errors are logged with context
   - Verify no warnings for missing direct URLs
   - _Requirements: 4.7, 6.1, 6.2, 6.3, 6.4, 6.7_
 
-- [ ] 8. Remove obsolete tests
+- [x] 8. Remove obsolete tests
   - Remove or update tests that expect direct URL extraction
   - Remove tests for fallback logic
   - Remove tests for quality-specific URL generation
   - Update tests to expect CDN URLs only
   - _Requirements: 9.5_
 
-- [ ] 9. Checkpoint - Ensure all tests pass
+- [x] 9. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 10. Create pre-merge safety checkpoint
-  - [ ] 10.1 Commit all changes with descriptive message
+- [-] 10. Create pre-merge safety checkpoint
+  - [-] 10.1 Commit all changes with descriptive message
   - [ ] 10.2 Tag commit as `pre-merge-cdn-standardization`
   - [ ] 10.3 Document current test results and passing rate
   - [ ] 10.4 Verify rollback procedure works (test branch reset)

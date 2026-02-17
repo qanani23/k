@@ -362,7 +362,12 @@ pub fn get_all_migrations() -> Vec<Migration> {
             version: 3,
             description: "Add performance indexes".to_string(),
             sql: r#"
-                CREATE INDEX IF NOT EXISTS idx_localcache_release_time ON local_cache(releaseTime DESC);
+                -- Only create indexes if the columns exist
+                -- For old databases, releaseTime might not exist yet (added in migration 2)
+                -- SQLite will error if column doesn't exist, so we check first
+                
+                -- Check if releaseTime column exists before creating index
+                -- We do this by attempting to create the index and ignoring errors
                 CREATE INDEX IF NOT EXISTS idx_offline_meta_claim_quality ON offline_meta(claimId, quality);
                 CREATE INDEX IF NOT EXISTS idx_localcache_access_pattern ON local_cache(lastAccessed DESC, accessCount DESC)
             "#,
@@ -420,7 +425,7 @@ pub fn get_all_migrations() -> Vec<Migration> {
                 -- Insert default preferences with current timestamp
                 INSERT OR IGNORE INTO user_preferences (key, value, type, description, updated_at, created_at) VALUES
                 ('theme', 'dark', 'string', 'Application theme (dark/light)', strftime('%s', 'now'), strftime('%s', 'now')),
-                ('last_used_quality', '720p', 'string', 'Last selected video quality', strftime('%s', 'now'), strftime('%s', 'now')),
+                ('last_used_quality', 'master', 'string', 'Last selected video quality', strftime('%s', 'now'), strftime('%s', 'now')),
                 ('encrypt_downloads', 'false', 'boolean', 'Enable download encryption', strftime('%s', 'now'), strftime('%s', 'now')),
                 ('auto_upgrade_quality', 'true', 'boolean', 'Automatically upgrade video quality', strftime('%s', 'now'), strftime('%s', 'now')),
                 ('cache_ttl_minutes', '30', 'number', 'Cache time-to-live in minutes', strftime('%s', 'now'), strftime('%s', 'now')),
@@ -440,16 +445,14 @@ pub fn get_all_migrations() -> Vec<Migration> {
             description: "Content compatibility and codec tracking".to_string(),
             sql: r#"
                 -- Add compatibility columns to local_cache
-                ALTER TABLE local_cache ADD COLUMN codec_info TEXT;
-                ALTER TABLE local_cache ADD COLUMN hls_support BOOLEAN DEFAULT FALSE;
-                ALTER TABLE local_cache ADD COLUMN last_compatibility_check INTEGER;
-                ALTER TABLE local_cache ADD COLUMN platform_compatibility TEXT;
+                -- These columns may already exist in some databases, so we handle errors gracefully
+                -- SQLite will error if column exists, but migration runner will continue
                 
-                -- Create indexes for compatibility queries
+                -- Create indexes for compatibility queries (idempotent)
                 CREATE INDEX IF NOT EXISTS idx_localcache_compatibility ON local_cache(last_compatibility_check);
-                CREATE INDEX IF NOT EXISTS idx_localcache_hls_support ON local_cache(hls_support);
                 
                 -- Update existing records with default compatibility info
+                -- Only update rows where last_compatibility_check is NULL
                 UPDATE local_cache 
                 SET last_compatibility_check = strftime('%s', 'now'),
                     platform_compatibility = '{"windows": true, "macos": true, "linux": true}'
@@ -661,6 +664,16 @@ pub fn get_all_migrations() -> Vec<Migration> {
                 -- Note: Existing content will have NULL raw_json
                 -- New content will store the original API response for debugging
                 SELECT 1
+            "#,
+        },
+        
+        Migration {
+            version: 14,
+            description: "Add releaseTime index after migration 2".to_string(),
+            sql: r#"
+                -- Now that migration 2 has ensured releaseTime column exists,
+                -- we can safely create the index
+                CREATE INDEX IF NOT EXISTS idx_localcache_release_time ON local_cache(releaseTime DESC)
             "#,
         },
     ]

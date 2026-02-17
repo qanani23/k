@@ -20,7 +20,7 @@ serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "1.5.4", features = [ "window-close", "fs-read-file", "fs-copy-file", "window-maximize", "fs-read-dir", "window-show", "window-minimize", "http-request", "fs-write-file", "fs-remove-file", "fs-remove-dir", "fs-create-dir", "window-unminimize", "window-unmaximize", "window-start-dragging", "window-hide", "fs-rename-file", "fs-exists", "notification-all", "shell-open"] }
 tokio = { version = "1.35", features = ["full"] }
 tokio-stream = { version = "0.1", features = ["net"] }
-reqwest = { version = "0.11", features = ["json", "stream"] }
+reqwest = { version = "0.11", features = ["json", "stream", "blocking"] }
 rusqlite = { version = "0.30", features = ["bundled", "chrono"] }
 chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.6", features = ["v4", "serde"] }

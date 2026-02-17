@@ -95,7 +95,7 @@ mod tests {
         let progress = ProgressData {
             claim_id: "test_claim_1".to_string(),
             position_seconds: 120,
-            quality: "720p".to_string(),
+            quality: "master".to_string(),
             updated_at: Utc::now().timestamp(),
         };
         db.save_progress(progress).await?;
@@ -145,13 +145,13 @@ mod tests {
         // Run migrations (simulating the setup hook)
         db.run_migrations().await.expect("Failed to run migrations");
         
-        // Verify all 12 migrations are applied
+        // Verify all 13 migrations are applied
         let migration_count = get_migration_count(&db_path)
             .expect("Failed to get migration count");
         
         assert_eq!(
-            migration_count, 12,
-            "All 12 migrations should be applied. Found: {}",
+            migration_count, 13,
+            "All 13 migrations should be applied. Found: {}",
             migration_count
         );
         
@@ -213,12 +213,12 @@ mod tests {
         // Verify application recognizes existing migrations
         let version_after = get_current_version(&db_path)
             .expect("Failed to get version after");
-        assert_eq!(version_after, 12, "Should be at version 12 after applying remaining migrations");
+        assert_eq!(version_after, 13, "Should be at version 13 after applying remaining migrations");
         
         // Verify only migrations 11-12 were applied
         let migration_count = get_migration_count(&db_path)
             .expect("Failed to get migration count");
-        assert_eq!(migration_count, 12, "Should have all 12 migrations");
+        assert_eq!(migration_count, 13, "Should have all 13 migrations");
         
         // Verify existing data is preserved
         let favorites = db.get_favorites().await.expect("Failed to get favorites");
@@ -375,8 +375,8 @@ mod tests {
             let migration_count = get_migration_count(&db_path)
                 .expect("Failed to get migration count");
             assert_eq!(
-                migration_count, 12,
-                "Should have exactly 12 migrations on cycle {}",
+                migration_count, 13,
+                "Should have exactly 13 migrations on cycle {}",
                 i
             );
             

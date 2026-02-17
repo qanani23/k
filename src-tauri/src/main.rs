@@ -65,7 +65,25 @@ mod gateway_failover_property_test;
 mod http_range_property_test;
 
 #[cfg(test)]
-mod content_parsing_property_test;
+mod cdn_builder_determinism_property_test;
+
+#[cfg(test)]
+mod missing_direct_urls_property_test;
+
+#[cfg(test)]
+mod valid_claim_id_property_test;
+
+#[cfg(test)]
+mod missing_claim_id_property_test;
+
+#[cfg(test)]
+mod response_structure_property_test;
+
+#[cfg(test)]
+mod partial_success_property_test;
+
+#[cfg(test)]
+mod error_structure_property_test;
 
 #[cfg(test)]
 mod migrations_error_handling_test;
@@ -78,6 +96,9 @@ mod channel_id_format_validation_property_test;
 
 #[cfg(test)]
 mod valid_channel_id_acceptance_property_test;
+
+#[cfg(test)]
+mod logging_unit_test;
 
 #[cfg(test)]
 mod database_initialization_test;

@@ -28,22 +28,23 @@ mod tests {
 
     #[test]
     fn test_quality_validation_prevents_invalid_values() {
-        // Valid qualities should pass
-        assert!(validation::validate_quality("720p").is_ok());
-        assert!(validation::validate_quality("1080p").is_ok());
-        assert!(validation::validate_quality("480p").is_ok());
+        // Valid qualities should pass (only "master" in new CDN-first architecture)
+        assert!(validation::validate_quality("master").is_ok());
         
         // Case insensitive
-        assert!(validation::validate_quality("720P").is_ok());
-        assert!(validation::validate_quality("1080P").is_ok());
+        assert!(validation::validate_quality("MASTER").is_ok());
+        assert!(validation::validate_quality("Master").is_ok());
         
-        // Invalid qualities should fail
+        // Invalid qualities should fail (including old quality-specific values)
+        assert!(validation::validate_quality("720p").is_err());
+        assert!(validation::validate_quality("1080p").is_err());
+        assert!(validation::validate_quality("480p").is_err());
         assert!(validation::validate_quality("invalid").is_err());
         assert!(validation::validate_quality("9999p").is_err());
         assert!(validation::validate_quality("").is_err());
         
         // Injection attempts should fail
-        assert!(validation::validate_quality("720p; DROP TABLE").is_err());
+        assert!(validation::validate_quality("master; DROP TABLE").is_err());
     }
 
     #[test]
@@ -185,8 +186,9 @@ mod tests {
         assert!(validation::validate_setting_value("cache_ttl_minutes", "2000").is_err());
         assert!(validation::validate_setting_value("cache_ttl_minutes", "invalid").is_err());
         
-        // Quality values
-        assert!(validation::validate_setting_value("last_used_quality", "720p").is_ok());
+        // Quality values (only "master" in new CDN-first architecture)
+        assert!(validation::validate_setting_value("last_used_quality", "master").is_ok());
+        assert!(validation::validate_setting_value("last_used_quality", "720p").is_err());
         assert!(validation::validate_setting_value("last_used_quality", "invalid").is_err());
     }
 
@@ -366,7 +368,7 @@ mod tests {
         
         // String inputs
         assert!(validation::validate_claim_id("test-claim").is_ok());
-        assert!(validation::validate_quality("720p").is_ok());
+        assert!(validation::validate_quality("master").is_ok());
         assert!(validation::validate_title("Test Title").is_ok());
         assert!(validation::validate_search_text("test search").is_ok());
         
