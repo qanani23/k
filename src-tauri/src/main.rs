@@ -119,6 +119,9 @@ mod database_optimization_test;
 mod integration_test;
 
 #[cfg(test)]
+mod hero_stream_filter_test;
+
+#[cfg(test)]
 mod error_logging_test;
 
 #[cfg(test)]
@@ -159,32 +162,56 @@ pub struct AppState {
 
 #[tokio::main]
 async fn main() {
+    println!("=== MAIN FUNCTION STARTED ===");
+    
     // Initialize logging system with file rotation
+    println!("=== INITIALIZING LOGGING ===");
     if let Err(e) = crate::logging::init_logging() {
         eprintln!("Failed to initialize logging: {}", e);
         // Continue without logging rather than crash
     }
+    println!("=== LOGGING INITIALIZED ===");
     
     // Initialize crash reporting (optional)
+    println!("=== INITIALIZING CRASH REPORTING ===");
     if let Ok(app_data_path) = crate::path_security::get_app_data_dir() {
         crate::crash_reporting::init_crash_reporting(&app_data_path);
     } else {
         eprintln!("Failed to get app data directory for crash reporting");
     }
+    println!("=== CRASH REPORTING INITIALIZED ===");
     
     // CRITICAL: Emergency disable check runs before all other startup logic
+    println!("=== STARTING EMERGENCY DISABLE CHECK ===");
+    tracing::info!("🔍 Starting emergency disable check...");
+    
+    // TEMPORARY: Skip emergency disable check to isolate the hang
+    tracing::info!("⚠️ TEMPORARY: Skipping emergency disable check for debugging");
+    println!("=== SKIPPING EMERGENCY DISABLE CHECK (DEBUG) ===");
+    
+    /*
     if let Err(e) = check_emergency_disable().await {
         tracing::error!("Emergency disable check failed: {}", e);
         // If we can't check emergency disable, proceed with caution
         // This ensures the app doesn't fail to start due to network issues
     }
+    */
+    
+    tracing::info!("✅ Emergency disable check complete");
+    println!("=== EMERGENCY DISABLE CHECK COMPLETE ===");
     
     // Initialize application state
+    println!("=== INITIALIZING APP STATE ===");
+    tracing::info!("🔍 About to initialize app state...");
     let app_state = initialize_app_state().await.expect("Failed to initialize application state");
+    tracing::info!("✅ App state initialized");
+    println!("=== APP STATE INITIALIZED ===");
 
+    println!("=== BUILDING TAURI APP ===");
     tauri::Builder::default()
         .manage(app_state)
         .invoke_handler(tauri::generate_handler![
+            commands::test_connection,
             commands::fetch_channel_claims,
             commands::fetch_playlists,
             commands::resolve_claim,
@@ -213,6 +240,14 @@ async fn main() {
             commands::optimize_database_memory,
         ])
         .setup(|app| {
+            println!("=== TAURI SETUP HOOK STARTED ===");
+            tracing::info!("🔍 Tauri setup hook started");
+            
+            // TEMPORARY: Skip migrations to isolate the hang
+            tracing::info!("⚠️ TEMPORARY: Skipping migrations for debugging");
+            println!("=== SKIPPING MIGRATIONS (DEBUG) ===");
+            
+            /*
             // CRITICAL: Single Migration Execution Point
             // 
             // Database migrations are executed ONLY here in the setup hook, ensuring they
@@ -236,24 +271,42 @@ async fn main() {
                     tracing::error!("Failed to run database migrations: {}", e);
                 }
             });
+            */
+            
+            println!("=== TAURI SETUP HOOK COMPLETE ===");
+            tracing::info!("✅ Tauri setup hook complete");
             Ok(())
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+    
+    println!("=== TAURI APP RUNNING ===");
 }
 
 async fn initialize_app_state() -> Result<AppState, Box<dyn std::error::Error>> {
+    tracing::info!("🚀 Starting app state initialization...");
+    
     // Initialize database
+    tracing::info!("🔍 Initializing database...");
     let db = Database::new().await?;
+    tracing::info!("✅ Database initialized");
     
     // Initialize gateway client
+    tracing::info!("🔍 Initializing gateway client...");
     let gateway = GatewayClient::new();
+    tracing::info!("✅ Gateway client initialized");
     
     // Initialize download manager
+    tracing::info!("🔍 Initializing download manager...");
     let download_manager = DownloadManager::new().await?;
+    tracing::info!("✅ Download manager initialized");
     
     // Initialize local server
+    tracing::info!("🔍 Initializing local server...");
     let local_server = LocalServer::new().await?;
+    tracing::info!("✅ Local server initialized");
+    
+    tracing::info!("🎉 App state initialization complete!");
     
     Ok(AppState {
         db: Arc::new(Mutex::new(db)),
@@ -295,6 +348,8 @@ async fn run_startup_migrations(app_handle: &tauri::AppHandle) -> Result<(), Box
 /// This function runs before all other startup logic to ensure
 /// the application can be remotely disabled if necessary
 async fn check_emergency_disable() -> Result<(), Box<dyn std::error::Error>> {
+    tracing::info!("🔍 check_emergency_disable: Reading environment variable...");
+    
     // Get the update manifest URL from environment variable
     let manifest_url = std::env::var("VITE_UPDATE_MANIFEST_URL")
         .unwrap_or_else(|_| {
@@ -309,14 +364,17 @@ async fn check_emergency_disable() -> Result<(), Box<dyn std::error::Error>> {
     
     tracing::info!("Checking emergency disable status from: {}", manifest_url);
     
+    tracing::info!("🔍 check_emergency_disable: Creating HTTP client...");
     // Create HTTP client with timeout
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(10))
         .build()?;
     
+    tracing::info!("🔍 check_emergency_disable: Sending HTTP request...");
     // Fetch the version manifest
     match client.get(&manifest_url).send().await {
         Ok(response) => {
+            tracing::info!("🔍 check_emergency_disable: Received response, status: {}", response.status());
             if response.status().is_success() {
                 match response.json::<VersionManifest>().await {
                     Ok(manifest) => {
@@ -344,6 +402,7 @@ async fn check_emergency_disable() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
     
+    tracing::info!("🔍 check_emergency_disable: Function complete");
     Ok(())
 }
 

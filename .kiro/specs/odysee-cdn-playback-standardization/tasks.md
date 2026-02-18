@@ -210,7 +210,7 @@ This implementation refactors the video playback URL architecture from a fallbac
   - **Rationale**: Final safety checkpoint before integration testing. If integration reveals critical issues, this tag provides clean rollback point.
 
 - [ ]* 11. Integration testing
-  - [ ] 11.1 Validate hero_trailer search enforces stream-only filter
+  - [x] 11.1 Validate hero_trailer search enforces stream-only filter
     - Verify Hero query filters by: `tag = hero_trailer` AND `value_type = stream`
     - Verify limit = 1
     - If filtering is frontend-side, verify implementation
@@ -218,7 +218,7 @@ This implementation refactors the video playback URL architecture from a fallbac
     - **Rationale**: Prevents Hero from loading non-stream claims (channels, collections) that happen to be tagged `hero_trailer`
     - _Requirements: 7.1, 7.2, 7.3_
   
-  - [ ] 11.2 Audit frontend player assumptions (CRITICAL)
+  - [x] 11.2 Audit frontend player assumptions (CRITICAL)
     - Verify frontend player uses only "master" quality key
     - Remove or update quality selector logic if dependent on multiple stream URLs
     - Verify no code accesses removed URL keys (hd_url, sd_url, 720p, 480p, etc.)
@@ -227,25 +227,25 @@ This implementation refactors the video playback URL architecture from a fallbac
     - **Rationale**: Frontend may still expect multi-quality URLs. This causes runtime UI bugs if quality selector tries to access removed keys.
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7_
   
-  - [ ] 11.3 Test Hero section with valid hero_trailer claim
+  - [x] 11.3 Test Hero section with valid hero_trailer claim
     - _Requirements: 7.2, 7.4, 12.1_
-  - [ ] 11.4 Test Hero section with missing direct URLs (should succeed)
+  - [x] 11.4 Test Hero section with missing direct URLs (should succeed)
     - _Requirements: 4.6, 4.7, 13.2, 13.3_
-  - [ ] 11.5 Test Series section with partial success
+  - [x] 11.5 Test Series section with partial success
     - _Requirements: 5.1, 5.7, 12.2_
-  - [ ] 11.6 Test Movies section with all claims missing claim_id (empty state)
+  - [x] 11.6 Test Movies section with all claims missing claim_id (empty state)
     - _Requirements: 5.6, 13.1, 13.4_
-  - [ ] 11.7 Test section independence (Hero failure doesn't affect Series)
+  - [x] 11.7 Test section independence (Hero failure doesn't affect Series)
     - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, 12.6_
-  - [ ] 11.8 Test that existing tag-based content discovery still works
+  - [x] 11.8 Test that existing tag-based content discovery still works
     - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.7, 14.8_
-  - [ ] 11.9 Add note about CDN cache control behavior
+  - [x] 11.9 Add note about CDN cache control behavior
     - Document that HLS CDN may cache aggressively
     - Note potential cache invalidation considerations for future
     - Not critical for MVP, but important for architecture awareness
     - _Requirements: 15.5_
 
-- [ ] 12. Final checkpoint - Verify all requirements met
+- [x] 12. Final checkpoint - Verify all requirements met
   - Ensure all tests pass, ask the user if questions arise.
   - Document what was removed, what was simplified, and why this is correct
   - Prepare merge request with comprehensive description

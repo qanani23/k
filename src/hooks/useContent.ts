@@ -202,19 +202,32 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
 
       let results: ContentItem[];
       
+      if (isDev) console.log('🔍 [FRONTEND] About to fetch content:', { text, tags, limit, pageNum });
+      
       if (text) {
+        if (isDev) console.log('🔍 [FRONTEND] Calling searchContent');
         results = await searchContent(text, limit);
+        if (isDev) console.log('✅ [FRONTEND] searchContent returned:', results.length, 'items');
       } else if (tags && tags.length > 0) {
+        if (isDev) console.log('🔍 [FRONTEND] Calling fetchByTags with tags:', tags);
         results = await fetchByTags(tags, limit);
+        if (isDev) console.log('✅ [FRONTEND] fetchByTags returned:', results.length, 'items');
       } else {
+        if (isDev) console.log('🔍 [FRONTEND] Calling fetchChannelClaims');
         results = await fetchChannelClaims({ limit, page: pageNum });
+        if (isDev) console.log('✅ [FRONTEND] fetchChannelClaims returned:', results.length, 'items');
       }
+
+      if (isDev) console.log('🔍 [FRONTEND] Fetch completed, storing in memory manager');
 
       // Store in memory manager
       if (memoryManager && !append) {
+        if (isDev) console.log('🔍 [FRONTEND] Storing', results.length, 'items in memory manager');
         memoryManager.storeCollection(collectionId, results);
+        if (isDev) console.log('✅ [FRONTEND] Stored in memory manager');
       }
 
+      if (isDev) console.log('🔍 [FRONTEND] Updating content state');
       if (append) {
         setContent(prev => {
           const combined = [...prev, ...results];
@@ -228,6 +241,7 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
       } else {
         setContent(results);
       }
+      if (isDev) console.log('✅ [FRONTEND] Content state updated');
 
       // Check if there are more results
       setHasMore(results.length === limit);
@@ -238,7 +252,9 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
       performanceMetrics.current.cacheMisses++;
       performanceMetrics.current.totalFetches++;
       
+      if (isDev) console.log('🔍 [FRONTEND] Setting status to success');
       setStatusWithValidation('success');
+      if (isDev) console.log('✅ [FRONTEND] Status set to success');
       if (isDev) {
         const duration = performance.now() - startTime;
         
@@ -342,14 +358,15 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
       setStatusWithValidation('error');
       if (isDev) {
         const duration = performance.now() - startTime;
-        console.error('[useContent] State transition: loading → error', {
+        console.error('❌ [FRONTEND] State transition: loading → error', {
           collectionId,
           pageNum,
           append,
           duration: `${duration.toFixed(2)}ms`,
           error: err instanceof Error ? err.message : String(err),
           category: apiError.category,
-          retryable: apiError.retryable
+          retryable: apiError.retryable,
+          stack: err instanceof Error ? err.stack : undefined
         });
       }
       
@@ -357,7 +374,9 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
         setContent([]);
       }
     } finally {
+      if (isDev) console.log('🔍 [FRONTEND] Finally block - resetting fetchInProgressRef');
       fetchInProgressRef.current = false;
+      if (isDev) console.log('✅ [FRONTEND] fetchInProgressRef reset to false');
     }
   }, [tags, text, limit, isOnline, offlineOnly, collectionId, memoryManager, isDev]);
 
@@ -400,13 +419,37 @@ export function useContent(options: UseContentOptions = {}): UseContentReturn {
 // Specialized hooks for common use cases
 
 export function useMovies(filterTag?: string, options?: Partial<UseContentOptions>) {
+  console.log('🎥 [FRONTEND DIAGNOSTIC] useMovies called, filterTag:', filterTag);
   const tags = filterTag ? ['movie', filterTag] : ['movie'];
-  return useContent({ tags, ...options });
+  const result = useContent({ tags, ...options });
+  console.log('🎥 [FRONTEND DIAGNOSTIC] useMovies result:', {
+    contentCount: result.content.length,
+    loading: result.loading,
+    error: result.error,
+    firstItem: result.content[0] ? {
+      claim_id: result.content[0].claim_id,
+      title: result.content[0].title,
+      video_urls: Object.keys(result.content[0].video_urls)
+    } : null
+  });
+  return result;
 }
 
 export function useSeries(filterTag?: string, options?: Partial<UseContentOptions>) {
+  console.log('📺 [FRONTEND DIAGNOSTIC] useSeries called, filterTag:', filterTag);
   const tags = filterTag ? ['series', filterTag] : ['series'];
-  return useContent({ tags, ...options });
+  const result = useContent({ tags, ...options });
+  console.log('📺 [FRONTEND DIAGNOSTIC] useSeries result:', {
+    contentCount: result.content.length,
+    loading: result.loading,
+    error: result.error,
+    firstItem: result.content[0] ? {
+      claim_id: result.content[0].claim_id,
+      title: result.content[0].title,
+      video_urls: Object.keys(result.content[0].video_urls)
+    } : null
+  });
+  return result;
 }
 
 export function useSitcoms(options?: Partial<UseContentOptions>) {
@@ -419,54 +462,26 @@ export function useKidsContent(filterTag?: string, options?: Partial<UseContentO
 }
 
 export function useHeroContent(options?: Partial<UseContentOptions>) {
-  // TEMPORARY MOCK: Return mock data while debugging backend API issues
-  // TODO: Remove this once backend is fixed
-  if (import.meta.env.DEV) {
-    return {
-      content: [{
-        claim_id: '9ea0a63f48125cf9ea9296886907423963276898',
-        title: 'Tsehay_Ethiopian_Movie_trailer',
-        description: 'Ethiopian Movie Trailer',
-        tags: ['hero_trailer', 'movie'],
-        thumbnail_url: 'https://thumbnails.odycdn.com/optimize/s:390:220/quality:85/plain/https://thumbs.odycdn.com/9ea0a63f48125cf9ea9296886907423963276898',
-        duration: 120,
-        release_time: Math.floor(Date.now() / 1000),
-        video_urls: {
-          '720p': {
-            url: 'https://player.odycdn.com/api/v4/streams/free/Tsehay_Ethiopian_Movie_trailer/9ea0a63f48125cf9ea9296886907423963276898',
-            quality: '720p',
-            type: 'mp4'
-          }
-        },
-        compatibility: { compatible: true, fallback_available: false }
-      }],
-      loading: false,
-      error: null,
-      refetch: () => Promise.resolve(),
-      loadMore: () => Promise.resolve(),
-      hasMore: false,
-      fromCache: false,
-      status: 'success' as const
-    };
-  }
+  console.log('🎬 [FRONTEND DIAGNOSTIC] useHeroContent called');
   
   const result = useContent({ tags: ['hero_trailer'], limit: 20, ...options });
   
-  // Development logging for hero content
-  if (import.meta.env.DEV) {
-    console.log('[useHeroContent] Hook state:', {
-      contentCount: result.content.length,
-      loading: result.loading,
-      error: result.error,
-      fromCache: result.fromCache,
-      hasMore: result.hasMore,
-      content: result.content.map(item => ({
-        claim_id: item.claim_id,
-        title: item.title,
-        tags: item.tags
-      }))
-    });
-  }
+  // DIAGNOSTIC: Log what we receive from backend
+  console.log('🎬 [FRONTEND DIAGNOSTIC] useHeroContent result:', {
+    contentCount: result.content.length,
+    loading: result.loading,
+    error: result.error,
+    fromCache: result.fromCache,
+    hasMore: result.hasMore,
+    status: result.status,
+    content: result.content.map(item => ({
+      claim_id: item.claim_id,
+      title: item.title,
+      tags: item.tags,
+      video_urls: Object.keys(item.video_urls),
+      master_url: item.video_urls['master']?.url
+    }))
+  });
   
   return result;
 }

@@ -757,6 +757,53 @@ Both approaches are complementary and necessary. Unit tests catch concrete bugs 
 - Error logging includes claim_id context for future failover implementation
 - Architecture does not preclude future enhancements
 
+### CDN Cache Control Behavior
+
+**Cache Characteristics**:
+- HLS CDN (cloud.odysee.live) may cache master playlists and segments aggressively
+- Cache TTL (Time To Live) is controlled by CDN infrastructure, not application
+- Cached responses may persist for minutes to hours depending on CDN configuration
+
+**Implications for Current Architecture**:
+- CDN URL construction is deterministic: same claim_id → same URL
+- If content is updated at source, cached CDN responses may serve stale playlists
+- HLS.js player handles segment-level caching and refresh automatically
+- No cache invalidation mechanism in current MVP
+
+**Future Considerations** (Not Implemented in MVP):
+1. **Cache Busting Strategy**:
+   - Add query parameter with timestamp or version: `master.m3u8?v={timestamp}`
+   - Requires coordination with Odysee CDN cache policy
+   - May impact CDN hit rate and performance
+
+2. **Cache-Control Headers**:
+   - Monitor CDN response headers for cache directives
+   - Log cache-related headers in development mode for visibility
+   - Consider ETags for conditional requests
+
+3. **Content Freshness Validation**:
+   - Implement periodic background refresh for active content
+   - Use HEAD requests to check Last-Modified headers
+   - Balance freshness vs. CDN efficiency
+
+4. **Regional CDN Considerations**:
+   - Different CDN edge nodes may have different cache states
+   - Multi-gateway fallback strategy should account for cache inconsistency
+   - Geographic routing may affect cache hit rates
+
+**Operational Notes**:
+- Current implementation prioritizes simplicity and CDN efficiency
+- Aggressive caching is generally beneficial for video content (reduces latency, improves playback)
+- Cache staleness is acceptable for most use cases (content rarely changes after publication)
+- If cache invalidation becomes critical, coordinate with Odysee CDN team for cache purge API
+
+**Monitoring Recommendations**:
+- Log CDN response times in development mode
+- Track playback failures that may indicate cache issues
+- Monitor for reports of stale content from users
+
+This documentation ensures future maintainers understand CDN caching behavior and have a roadmap for cache management enhancements if needed.
+
 ### Frontend Assumptions
 - Single HLS master playlist URL (no quality selector)
 - Frontend player handles adaptive streaming

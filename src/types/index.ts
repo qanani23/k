@@ -321,7 +321,7 @@ export type Breakpoint = 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 export type Theme = 'dark' | 'light';
 
 // Quality types
-export type Quality = '1080p' | '720p' | '480p' | '360p' | '240p';
+export type Quality = '1080p' | '720p' | '480p' | '360p' | '240p' | 'master';
 
 // Content categories (hard-coded tags)
 export type BaseTag = 'series' | 'movie' | 'sitcom' | 'kids' | 'hero_trailer';
@@ -440,7 +440,7 @@ export const FILTER_TAGS = [
 ] as const;
 
 // Quality constants
-export const QUALITY_LEVELS = ['1080p', '720p', '480p', '360p', '240p'] as const;
+export const QUALITY_LEVELS = ['1080p', '720p', '480p', '360p', '240p', 'master'] as const;
 
 // Type guards
 export function isBaseTag(tag: string): tag is BaseTag {
@@ -465,6 +465,9 @@ export function baseTagForFilter(filterTag: CategoryTag): BaseTag | null {
 
 // Utility functions for quality
 export function nextLowerQuality(current: Quality): Quality | null {
+  // CDN Playback: "master" quality has no lower quality (HLS adaptive)
+  if (current === 'master') return null;
+  
   const index = QUALITY_LEVELS.indexOf(current);
   if (index === -1 || index === QUALITY_LEVELS.length - 1) return null;
   return QUALITY_LEVELS[index + 1];
@@ -472,6 +475,7 @@ export function nextLowerQuality(current: Quality): Quality | null {
 
 export function qualityScore(quality: Quality): number {
   const scores: Record<Quality, number> = {
+    'master': 6,  // CDN Playback: Highest priority for HLS adaptive
     '1080p': 5,
     '720p': 4,
     '480p': 3,

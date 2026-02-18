@@ -4,7 +4,7 @@
     "beforeBuildCommand": "npm run build",
     "devPath": "http://localhost:1420",
     "distDir": "../dist",
-    "withGlobalTauri": false
+    "withGlobalTauri": true
   },
   "package": {
     "productName": "Kiyya",
@@ -105,18 +105,15 @@
     },
     "windows": [
       {
-        "fullscreen": false,
-        "resizable": true,
         "title": "Kiyya",
         "width": 1200,
         "height": 800,
-        "minWidth": 800,
-        "minHeight": 600,
-        "center": true,
+        "resizable": true,
+        "fullscreen": false,
         "decorations": true,
         "transparent": false,
         "alwaysOnTop": false,
-        "skipTaskbar": false
+        "center": true
       }
     ]
   }

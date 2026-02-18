@@ -234,7 +234,13 @@ fn validate_cdn_reachability(url: &str) {
 
 // Content discovery commands
 
-#[command]
+#[tauri::command]
+pub async fn test_connection() -> Result<String> {
+    info!("🧪 TEST: test_connection called");
+    Ok("Backend is working!".to_string())
+}
+
+#[tauri::command]
 pub async fn fetch_channel_claims(
     channel_id: String,
     any_tags: Option<Vec<String>>,
@@ -242,33 +248,40 @@ pub async fn fetch_channel_claims(
     limit: Option<u32>,
     page: Option<u32>,
     force_refresh: Option<bool>,
+    stream_types: Option<Vec<String>>,
     state: State<'_, AppState>,
 ) -> Result<Vec<ContentItem>> {
-    info!("Fetching channel claims: channel_id={}, tags={:?}, text={:?}, limit={:?}, force_refresh={:?}", 
-          channel_id, any_tags, text, limit, force_refresh);
+    info!("🚀 DIAGNOSTIC: fetch_channel_claims called");
+    info!("   channel_id={}, tags={:?}, text={:?}, limit={:?}, stream_types={:?}, force_refresh={:?}",
+          channel_id, any_tags, text, limit, stream_types, force_refresh);
 
-    // Validate channel_id
-    let validated_channel_id = validation::validate_channel_id(&channel_id)?;
+    // Wrap entire function in error logging
+    let result = async {
+        // Validate channel_id
+        info!("🔍 DIAGNOSTIC: Validating channel_id");
+        let validated_channel_id = validation::validate_channel_id(&channel_id)?;
+        info!("✅ DIAGNOSTIC: Channel ID validated: {}", validated_channel_id);
 
     // Validate inputs
+    info!("🔍 DIAGNOSTIC: Validating inputs");
     let validated_tags = if let Some(tags) = any_tags.as_ref() {
         Some(validation::validate_tags(tags)?)
     } else {
         None
     };
-    
+
     let validated_text = if let Some(t) = text.as_ref() {
         Some(validation::validate_search_text(t)?)
     } else {
         None
     };
-    
+
     let validated_limit = if let Some(l) = limit {
         Some(sanitization::sanitize_limit(l)?)
     } else {
         None
     };
-    
+
     let validated_page = if let Some(p) = page {
         Some(sanitization::sanitize_offset(p)?)
     } else {
@@ -276,9 +289,11 @@ pub async fn fetch_channel_claims(
     };
 
     let should_force_refresh = force_refresh.unwrap_or(false);
+    info!("✅ DIAGNOSTIC: All inputs validated");
 
     // Skip cache if force_refresh is true
     if !should_force_refresh {
+        info!("🔍 DIAGNOSTIC: Checking cache");
         // First, try to get from local cache
         let db = state.db.lock().await;
         let query = CacheQuery {
@@ -288,23 +303,29 @@ pub async fn fetch_channel_claims(
             offset: validated_page.map(|p| p * validated_limit.unwrap_or(50)),
             order_by: Some("releaseTime DESC".to_string()),
         };
+        info!("🔍 DIAGNOSTIC: Calling db.get_cached_content");
         let cached_items = db.get_cached_content(query).await?;
-        
+        info!("🔍 DIAGNOSTIC: Cache returned {} items", cached_items.len());
+
         // CRITICAL FIX: Return cache if we have ANY valid results, not just >= 6
         // This fixes the hero_trailer issue where only 1 video exists
         // The >= 6 threshold was arbitrary and broke single-item queries
         if !cached_items.is_empty() && validated_text.is_none() {
-            info!("Returning {} items from cache", cached_items.len());
+            info!("✅ DIAGNOSTIC: Returning {} items from cache", cached_items.len());
+            drop(db);
             return Ok(cached_items);
         }
+        info!("🔍 DIAGNOSTIC: Cache miss or text search, fetching from remote");
         drop(db);
     } else {
-        info!("Force refresh enabled, skipping cache");
+        info!("🔍 DIAGNOSTIC: Force refresh enabled, skipping cache");
     }
 
     // Otherwise, fetch from remote
+    info!("🔍 DIAGNOSTIC: Acquiring gateway lock");
     let mut gateway = state.gateway.lock().await;
-    
+    info!("✅ DIAGNOSTIC: Gateway lock acquired");
+
     let request = OdyseeRequest {
         method: "claim_search".to_string(),
         params: json!({
@@ -313,23 +334,48 @@ pub async fn fetch_channel_claims(
             "text": validated_text,
             "page_size": validated_limit.unwrap_or(50),
             "page": validated_page.unwrap_or(1),
-            "order_by": ["release_time"]
+            "order_by": ["release_time"],
+            "stream_types": stream_types
         }),
     };
 
+    info!("🌐 DIAGNOSTIC: Sending API request: {:?}", request);
+    info!("🔍 DIAGNOSTIC: Calling gateway.fetch_with_failover");
     let response = gateway.fetch_with_failover(request).await?;
+    info!("📥 DIAGNOSTIC: Received API response: success={}, has_data={}", 
+          response.success, response.data.is_some());
+    info!("🔍 DIAGNOSTIC: Dropping gateway lock");
     drop(gateway);
 
     // Parse response and extract content items
+    info!("🔍 DIAGNOSTIC: Calling parse_claim_search_response");
     let items = parse_claim_search_response(response)?;
-    
+    info!("✅ DIAGNOSTIC: Parsed {} items", items.len());
+
     // Store in cache
+    info!("🔍 DIAGNOSTIC: Acquiring database lock for caching");
     let db = state.db.lock().await;
+    info!("🔍 DIAGNOSTIC: Storing items in cache");
     db.store_content_items(items.clone()).await?;
-    
-    info!("Fetched and cached {} items from remote", items.len());
+    info!("💾 DIAGNOSTIC: Stored {} items in cache", items.len());
+    drop(db);
+
+    info!("🎯 DIAGNOSTIC: About to return {} items to frontend", items.len());
     Ok(items)
+    }.await;
+
+    match &result {
+        Ok(items) => {
+            info!("✅ DIAGNOSTIC: fetch_channel_claims returning SUCCESS with {} items", items.len());
+        }
+        Err(e) => {
+            error!("❌ DIAGNOSTIC: fetch_channel_claims returning ERROR: {}", e);
+        }
+    }
+
+    result
 }
+
 
 #[command]
 pub async fn fetch_playlists(
@@ -858,29 +904,59 @@ pub async fn open_external(url: String) -> Result<()> {
 // Helper functions for parsing Odysee responses
 
 pub fn parse_claim_search_response(response: OdyseeResponse) -> Result<Vec<ContentItem>> {
-    let data = response.data.ok_or_else(|| KiyyaError::ContentParsing {
-        message: "No data in response".to_string(),
+    // 🔍 STEP 1: Verify response has data
+    let data = response.data.ok_or_else(|| {
+        error!("❌ DIAGNOSTIC: No data in response");
+        KiyyaError::ContentParsing {
+            message: "No data in response".to_string(),
+        }
     })?;
+    info!("✅ DIAGNOSTIC: Response has data field");
 
-    let items = data.get("items").and_then(|v| v.as_array()).ok_or_else(|| KiyyaError::ContentParsing {
-        message: "No items array in response".to_string(),
+    // 🔍 STEP 2: Verify items array exists
+    let items = data.get("items").and_then(|v| v.as_array()).ok_or_else(|| {
+        error!("❌ DIAGNOSTIC: No items array in response. Data keys: {:?}", data.as_object().map(|o| o.keys().collect::<Vec<_>>()));
+        KiyyaError::ContentParsing {
+            message: "No items array in response".to_string(),
+        }
     })?;
+    info!("✅ DIAGNOSTIC: Found items array with {} claims", items.len());
+
+    // 🔍 STEP 3: Log raw claims for inspection
+    for (idx, item) in items.iter().enumerate() {
+        let claim_id = item.get("claim_id").and_then(|v| v.as_str()).unwrap_or("missing");
+        let value_type = item.get("value_type").and_then(|v| v.as_str()).unwrap_or("missing");
+        let tags = item.get("value")
+            .and_then(|v| v.get("tags"))
+            .and_then(|t| t.as_array())
+            .map(|arr| arr.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>())
+            .unwrap_or_default();
+        info!("  📦 DIAGNOSTIC: Claim[{}]: id={}, type={}, tags={:?}", idx, claim_id, value_type, tags);
+    }
 
     let mut content_items = Vec::new();
+    let mut skipped_count = 0;
     
-    for item in items {
+    // 🔍 STEP 4: Parse each claim and track results
+    for (idx, item) in items.iter().enumerate() {
         match parse_claim_item(item) {
-            Ok(content_item) => content_items.push(content_item),
+            Ok(content_item) => {
+                info!("  ✅ DIAGNOSTIC: Claim[{}] parsed successfully: id={}", idx, content_item.claim_id);
+                content_items.push(content_item);
+            },
             Err(e) => {
-                // Extract claim_id for better logging context if available
+                skipped_count += 1;
                 let claim_id = item.get("claim_id")
                     .and_then(|v| v.as_str())
                     .unwrap_or("unknown");
-                warn!("Skipping claim {}: {} - Continuing with remaining items", claim_id, e);
+                warn!("  ⚠️ DIAGNOSTIC: Claim[{}] SKIPPED: id={}, reason={}", idx, claim_id, e);
                 // Continue processing other items (partial success)
             }
         }
     }
+
+    info!("📊 DIAGNOSTIC: Parsing complete - Valid: {}, Skipped: {}, Total: {}", 
+          content_items.len(), skipped_count, items.len());
 
     Ok(content_items)
 }
@@ -1163,18 +1239,22 @@ fn extract_release_time(item: &Value) -> i64 {
 /// Future: Support multi-gateway fallback strategy for regional CDN failures.
 /// Error structure includes claim_id context to enable future CDN failover implementation.
 fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
+    let claim_id_for_logging = item.get("claim_id")
+        .and_then(|v| v.as_str())
+        .unwrap_or("unknown");
+
+    // 🔍 STEP 1: Validate claim type
     // Task 3.1: Add claim type validation (CRITICAL)
     // Primary check: Validate claim.value_type == "stream"
     if let Some(value_type) = item.get("value_type").and_then(|v| v.as_str()) {
+        info!("    🔍 DIAGNOSTIC: Claim {} has value_type={}", claim_id_for_logging, value_type);
         if value_type != "stream" {
-            let claim_id = item.get("claim_id")
-                .and_then(|v| v.as_str())
-                .unwrap_or("unknown");
-            warn!("Skipping non-stream claim {}: type={}", claim_id, value_type);
+            warn!("    ❌ DIAGNOSTIC: Rejecting non-stream claim {}: type={}", claim_id_for_logging, value_type);
             return Err(KiyyaError::ContentParsing {
-                message: format!("Non-stream claim {} type: {}", claim_id, value_type),
+                message: format!("Non-stream claim {} type: {}", claim_id_for_logging, value_type),
             });
         }
+        info!("    ✅ DIAGNOSTIC: Claim {} is stream type", claim_id_for_logging);
     } else {
         // Fallback inference: If value_type is missing, infer stream by presence of value.source.sd_hash
         let has_source = item.get("value")
@@ -1183,21 +1263,16 @@ fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
             .is_some();
 
         if has_source {
-            let claim_id = item.get("claim_id")
-                .and_then(|v| v.as_str())
-                .unwrap_or("unknown");
-            warn!("Ambiguous claim structure for {}: missing value_type but has source.sd_hash, inferring stream", claim_id);
+            warn!("    ⚠️ DIAGNOSTIC: Claim {} missing value_type but has source.sd_hash, inferring stream", claim_id_for_logging);
         } else {
-            let claim_id = item.get("claim_id")
-                .and_then(|v| v.as_str())
-                .unwrap_or("unknown");
-            warn!("Skipping claim {}: missing value_type and no source.sd_hash", claim_id);
+            warn!("    ❌ DIAGNOSTIC: Claim {} missing value_type and no source.sd_hash", claim_id_for_logging);
             return Err(KiyyaError::ContentParsing {
-                message: format!("Cannot determine if claim {} is stream type", claim_id),
+                message: format!("Cannot determine if claim {} is stream type", claim_id_for_logging),
             });
         }
     }
 
+    // 🔍 STEP 2: Extract and validate claim_id
     // Task 3.3: Implement CDN-only URL construction
     // Extract claim_id from item
     let claim_id = item.get("claim_id")
@@ -1205,22 +1280,24 @@ fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
         .map(|s| s.trim())
         .filter(|s| !s.is_empty())
         .ok_or_else(|| {
-            warn!("Missing or empty claim_id in item");
+            warn!("    ❌ DIAGNOSTIC: Missing or empty claim_id in item");
             KiyyaError::ContentParsing {
                 message: "Missing or empty claim_id".to_string(),
             }
         })?;
+    info!("    ✅ DIAGNOSTIC: Extracted claim_id={}", claim_id);
 
+    // 🔍 STEP 3: Construct CDN URL
     // Call build_cdn_playback_url with claim_id and gateway from immutable state
     let gateway = get_cdn_gateway();
     let cdn_url = build_cdn_playback_url(claim_id, gateway);
 
-    // Log constructed URL at DEBUG level (per-request, prevents spam)
-    debug!("Constructed CDN URL for claim {}: {}", claim_id, cdn_url);
+    // Log constructed URL at INFO level for diagnostics
+    info!("    🎬 DIAGNOSTIC: Constructed CDN URL: {}", cdn_url);
 
     // Create VideoUrl struct with url_type="hls", quality="master"
     let video_url = VideoUrl {
-        url: cdn_url,
+        url: cdn_url.clone(),
         quality: "master".to_string(),
         url_type: "hls".to_string(),
         codec: None,
@@ -1229,6 +1306,8 @@ fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
     // Insert into HashMap with key "master"
     let mut video_urls = HashMap::new();
     video_urls.insert("master".to_string(), video_url);
+
+    info!("    ✅ DIAGNOSTIC: Created video_urls map with master entry");
 
     Ok(video_urls)
 }
