@@ -278,7 +278,7 @@ describe('Season Inference Marking - UI Integration', () => {
       
       // Should not accept other types
       // @ts-expect-error - inferred must be boolean
-      const invalidSeason: Season = {
+      const _invalidSeason: Season = {
         number: 1,
         episodes: [],
         inferred: 'true' // This should cause a type error
@@ -295,9 +295,8 @@ describe('Season Inference Marking - UI Integration', () => {
 
       expect(validSeason).toHaveProperty('inferred');
 
-      // This should NOT compile - inferred is missing
       // @ts-expect-error - inferred is required
-      const invalidSeason: Season = {
+      const _invalidSeason: Season = {
         number: 1,
         episodes: []
         // Missing inferred property

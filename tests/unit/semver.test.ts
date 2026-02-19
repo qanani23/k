@@ -230,7 +230,7 @@ describe('Edge Cases', () => {
   });
 
   it('should handle versions with multiple v prefixes', () => {
-    const version = parseVersion('vv1.2.3');
+    parseVersion('vv1.2.3');
     // Should handle gracefully even if malformed
     expect(() => parseVersion('vv1.2.3')).not.toThrow();
   });

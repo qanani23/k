@@ -1,9 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import NavBar from '../../src/components/NavBar';
-import Hero from '../../src/components/Hero';
 import MovieCard from '../../src/components/MovieCard';
 import Toast from '../../src/components/Toast';
 import ForcedUpdateScreen from '../../src/components/ForcedUpdateScreen';
@@ -292,8 +290,6 @@ describe('Keyboard Navigation', () => {
 
   describe('Hero Component', () => {
     it('should handle keyboard navigation for action buttons', () => {
-      const onPlayClick = vi.fn();
-      
       // Mock the useHeroContent hook
       vi.mock('../../src/hooks/useContent', () => ({
         useHeroContent: () => ({

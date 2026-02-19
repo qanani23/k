@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { getTheme, setTheme } from '../../src/lib/storage';
 
 describe('Theme Management', () => {

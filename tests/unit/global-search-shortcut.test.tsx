@@ -102,9 +102,6 @@ describe('Global Search Shortcut', () => {
     document.body.appendChild(input);
     input.focus();
 
-    // Get current location before event
-    const initialPath = window.location.pathname;
-
     // Simulate pressing "/" key while focused on input
     const event = new KeyboardEvent('keydown', {
       key: '/',

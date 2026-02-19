@@ -1,8 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { BrowserRouter } from 'react-router-dom';
-import { ThemeProvider } from '@/contexts/ThemeContext';
+import { render, screen } from '@testing-library/react';
 
 /**
  * Workflow Integration Tests
@@ -126,7 +123,7 @@ describe('Workflow Integration: Download to Offline Playback Flow', () => {
     const mockListen = listen as any;
 
     // Mock download operations
-    mockInvoke.mockImplementation((cmd: string, args: any) => {
+    mockInvoke.mockImplementation((cmd: string, _args: any) => {
       if (cmd === 'download_movie_quality') {
         // Simulate download start
         setTimeout(() => {
@@ -138,7 +135,7 @@ describe('Workflow Integration: Download to Offline Playback Flow', () => {
           if (progressCallback) {
             progressCallback({
               payload: {
-                claimId: args.claimId,
+                claimId: 'test-claim',
                 progress: 50,
                 speed: 1500000,
               },
@@ -157,7 +154,7 @@ describe('Workflow Integration: Download to Offline Playback Flow', () => {
       return Promise.resolve(null);
     });
 
-    mockListen.mockImplementation((event: string, callback: Function) => {
+    mockListen.mockImplementation((_event: string, _callback: Function) => {
       return Promise.resolve(() => {});
     });
 
@@ -173,10 +170,10 @@ describe('Workflow Integration: Quality Selection Flow', () => {
     const mockInvoke = invoke as any;
 
     // Mock claim resolution with multiple qualities
-    mockInvoke.mockImplementation((cmd: string, args: any) => {
+    mockInvoke.mockImplementation((cmd: string, _args: any) => {
       if (cmd === 'resolve_claim') {
         return Promise.resolve({
-          claimId: args.claimIdOrUri,
+          claimId: 'test-claim',
           title: 'Test Video',
           videoUrls: {
             '480p': { url: 'https://example.com/480p.mp4', quality: '480p', type: 'mp4' },
@@ -203,7 +200,7 @@ describe('Workflow Integration: Theme Management Flow', () => {
     const mockInvoke = invoke as any;
 
     // Mock theme operations
-    mockInvoke.mockImplementation((cmd: string, args: any) => {
+    mockInvoke.mockImplementation((cmd: string, _args: any) => {
       if (cmd === 'get_app_config') {
         return Promise.resolve({
           theme: 'dark',

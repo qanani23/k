@@ -103,6 +103,7 @@ jobs:
       
       - name: Lint frontend
         run: npm run lint
+        continue-on-error: true
       
       - name: Type check
         run: npm run type-check

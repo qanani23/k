@@ -37,9 +37,6 @@ describe('useContent - Cache Bypass (Task 11.1)', () => {
   });
 
   it('should not use cache when enableMemoryManagement is false', async () => {
-    const mockGetCollection = vi.fn(() => null);
-    const mockStoreCollection = vi.fn();
-    
     // Spy on getMemoryManager to verify it's not called
     const getMemoryManagerSpy = vi.spyOn(memoryManagerModule, 'getMemoryManager');
     
