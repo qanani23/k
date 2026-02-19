@@ -45,7 +45,7 @@ jobs:
         if: matrix.os == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libjavascriptcoregtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf libsoup-2.4-dev
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libjavascriptcoregtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf libsoup2.4-dev
       
       - name: Install npm dependencies
         run: npm install
@@ -93,7 +93,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libjavascriptcoregtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf libsoup-2.4-dev
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libjavascriptcoregtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf libsoup2.4-dev
       
       - name: Install npm dependencies
         run: npm install
@@ -164,7 +164,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libjavascriptcoregtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf libsoup-2.4-dev
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libjavascriptcoregtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf libsoup2.4-dev
       
       - name: Install npm dependencies
         run: npm install
@@ -221,7 +221,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libjavascriptcoregtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf libsoup-2.4-dev
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libjavascriptcoregtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf libsoup2.4-dev
       
       - name: Install npm dependencies
         run: npm install
@@ -276,7 +276,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libjavascriptcoregtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf libsoup-2.4-dev
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libjavascriptcoregtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf libsoup2.4-dev
       
       - name: Install npm dependencies
         run: npm install
