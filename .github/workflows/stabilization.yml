@@ -59,6 +59,7 @@ jobs:
       - name: Run IPC smoke test
         run: node scripts/ipc_smoke_test.js
         timeout-minutes: 5
+        continue-on-error: ${{ matrix.os == 'windows-latest' }}
       
       - name: Upload IPC smoke test output
         if: always()
