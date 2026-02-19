@@ -227,8 +227,8 @@ export default function Hero({ onPlayClick }: HeroProps) {
     );
   }
 
-  const bestVideoUrl = selectedHero.video_urls['1080p']?.url || 
-                      selectedHero.video_urls['720p']?.url || 
+  // CDN Playback: Always use "master" quality key for HLS adaptive streaming
+  const bestVideoUrl = selectedHero.video_urls['master']?.url || 
                       Object.values(selectedHero.video_urls)[0]?.url;
 
   return (
@@ -321,8 +321,9 @@ export default function Hero({ onPlayClick }: HeroProps) {
             {selectedHero.tags.includes('series') && <span>Series</span>}
             {selectedHero.tags.includes('sitcom') && <span>Sitcom</span>}
             {selectedHero.tags.includes('kids') && <span>Kids</span>}
-            {Object.keys(selectedHero.video_urls).includes('1080p') && (
-              <span className="quality-badge">HD</span>
+            {/* CDN Playback: HLS master playlist provides adaptive quality */}
+            {Object.keys(selectedHero.video_urls).includes('master') && (
+              <span className="quality-badge">HLS</span>
             )}
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   extractThumbnailUrl,
   getPlaylistThumbnail,
@@ -247,7 +247,7 @@ describe('Image Utilities', () => {
         }
       } as any;
 
-      const promise = preloadImage('https://example.com/test.jpg');
+      preloadImage('https://example.com/test.jpg');
       
       expect(mockImage.src).toBe('https://example.com/test.jpg');
       expect(mockImage.onload).not.toBeNull();

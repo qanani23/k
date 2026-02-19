@@ -142,6 +142,12 @@ VITE_MAX_CACHE_ITEMS=200
 # Gateway Configuration (comma-separated fallback gateways)
 VITE_GATEWAY_FALLBACKS=https://api.lbry.tv/api/v1/proxy,https://api.odysee.com/api/v1/proxy
 
+# CDN Gateway Configuration (Backend)
+ODYSEE_CDN_GATEWAY=https://cloud.odysee.live  # CDN gateway for video playback URLs
+                                               # Must use HTTPS protocol
+                                               # Trailing slashes are automatically removed
+                                               # Falls back to default if invalid
+
 # Security Settings
 VITE_DEFAULT_ENCRYPT_DOWNLOADS=false   # Enable encryption by default
 VITE_NETWORK_TIMEOUT_MS=10000          # 10 seconds

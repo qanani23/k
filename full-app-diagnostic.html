@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full App Diagnostic - All Content Missing</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        h1 { color: #333; margin-bottom: 10px; font-size: 28px; }
+        h2 { color: #555; margin: 20px 0 15px; font-size: 20px; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+        .subtitle { color: #666; margin-bottom: 30px; font-size: 14px; }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover { transform: translateY(-2px); }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        .status.loading { background: #fff3cd; color: #856404; border-left: 4px solid #ffc107; }
+        .status.success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+        .status.error { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+        .result-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .result-box pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .test-result {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        .test-result.pass { background: #d4edda; border-color: #28a745; color: #155724; }
+        .test-result.fail { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+        .test-title { font-weight: 700; margin-bottom: 5px; }
+        .test-message { font-size: 14px; line-height: 1.6; }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🔍 Full App Diagnostic</h1>
+            <p class="subtitle">Comprehensive test for all content not showing in app</p>
+            <button onclick="runFullDiagnostic()">🚀 Run Full Diagnostic</button>
+            <button onclick="testHeroContent()">🎬 Test Hero Content</button>
+            <button onclick="testMovies()">🎥 Test Movies</button>
+            <button onclick="testSeries()">📺 Test Series</button>
+            <button onclick="clearResults()">🗑️ Clear</button>
+            <div id="status"></div>
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        const CHANNEL_ID = '@kiyyamovies:b';
+        const API_ENDPOINT = 'https://api.na-backend.odysee.com/api/v1/proxy';
+
+        function showStatus(message, type = 'loading') {
+            const statusDiv = document.getElementById('status');
+            const spinner = type === 'loading' ? '<div class="spinner"></div>' : '';
+            statusDiv.innerHTML = `<div class="status ${type}">${spinner}${message}</div>`;
+        }
+
+        function showResults(html) {
+            document.getElementById('results').innerHTML = html;
+        }
+
+        function clearResults() {
+            document.getElementById('status').innerHTML = '';
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function callOdyseeAPI(method, params) {
+            const response = await fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ method, params })
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.json();
+        }
+
+        async function testHeroContent() {
+            try {
+                showStatus('Testing hero content...', 'loading');
+                const response = await callOdyseeAPI('claim_search', {
+                    channel: CHANNEL_ID,
+                    any_tags: ['hero_trailer'],
+                    page_size: 20,
+                    page: 1,
+                    order_by: ['release_time']
+                });
+                const items = response.result?.items || [];
+                
+                let html = '<h2>Hero Content Test</h2>';
+                if (items.length === 0) {
+                    html += '<div class="test-result fail"><div class="test-title">❌ FAIL: No hero content found</div><div class="test-message">No videos have the "hero_trailer" tag</div></div>';
+                } else {
+                    html += `<div class="test-result pass"><div class="test-title">✅ PASS: Found ${items.length} hero video(s)</div></div>`;
+                    items.forEach((item, i) => {
+                        html += `<div class="test-result pass">
+                            <div class="test-title">Hero Video ${i + 1}: ${item.value?.title || 'Untitled'}</div>
+                            <div class="test-message">
+                                Claim ID: ${item.claim_id}<br>
+                                Tags: ${(item.value?.tags || []).join(', ')}<br>
+                                Has Thumbnail: ${item.value?.thumbnail?.url ? '✅' : '❌'}<br>
+                                Has Video URL: ${item.value?.video?.url || item.value?.hd_url || item.value?.sd_url ? '✅' : '❌'}
+                            </div>
+                        </div>`;
+                    });
+                }
+                html += '<div class="result-box"><h3>Raw Response:</h3><pre>' + JSON.stringify(response, null, 2) + '</pre></div>';
+                showResults(html);
+                showStatus('✅ Hero test complete', 'success');
+            } catch (error) {
+                showStatus('❌ Error: ' + error.message, 'error');
+                showResults('<div class="result-box"><pre>' + error.stack + '</pre></div>');
+            }
+        }
+
+        async function testMovies() {
+            try {
+                showStatus('Testing movies...', 'loading');
+                const response = await callOdyseeAPI('claim_search', {
+                    channel: CHANNEL_ID,
+                    any_tags: ['movie'],
+                    page_size: 50,
+                    page: 1,
+                    order_by: ['release_time']
+                });
+                const items = response.result?.items || [];
+                
+                let html = '<h2>Movies Test</h2>';
+                if (items.length === 0) {
+                    html += '<div class="test-result fail"><div class="test-title">❌ FAIL: No movies found</div><div class="test-message">No videos have the "movie" tag</div></div>';
+                } else {
+                    html += `<div class="test-result pass"><div class="test-title">✅ PASS: Found ${items.length} movie(s)</div></div>`;
+                    items.forEach((item, i) => {
+                        html += `<div class="test-result pass">
+                            <div class="test-title">Movie ${i + 1}: ${item.value?.title || 'Untitled'}</div>
+                            <div class="test-message">
+                                Claim ID: ${item.claim_id}<br>
+                                Tags: ${(item.value?.tags || []).join(', ')}<br>
+                                Has Thumbnail: ${item.value?.thumbnail?.url ? '✅' : '❌'}<br>
+                                Has Video URL: ${item.value?.video?.url || item.value?.hd_url || item.value?.sd_url ? '✅' : '❌'}
+                            </div>
+                        </div>`;
+                    });
+                }
+                html += '<div class="result-box"><h3>Raw Response:</h3><pre>' + JSON.stringify(response, null, 2) + '</pre></div>';
+                showResults(html);
+                showStatus('✅ Movies test complete', 'success');
+            } catch (error) {
+                showStatus('❌ Error: ' + error.message, 'error');
+                showResults('<div class="result-box"><pre>' + error.stack + '</pre></div>');
+            }
+        }
+
+        async function testSeries() {
+            try {
+                showStatus('Testing series...', 'loading');
+                const response = await callOdyseeAPI('claim_search', {
+                    channel: CHANNEL_ID,
+                    any_tags: ['series'],
+                    page_size: 50,
+                    page: 1,
+                    order_by: ['release_time']
+                });
+                const items = response.result?.items || [];
+                
+                let html = '<h2>Series Test</h2>';
+                if (items.length === 0) {
+                    html += '<div class="test-result fail"><div class="test-title">❌ FAIL: No series found</div><div class="test-message">No videos have the "series" tag</div></div>';
+                } else {
+                    html += `<div class="test-result pass"><div class="test-title">✅ PASS: Found ${items.length} series video(s)</div></div>`;
+                    items.forEach((item, i) => {
+                        html += `<div class="test-result pass">
+                            <div class="test-title">Series ${i + 1}: ${item.value?.title || 'Untitled'}</div>
+                            <div class="test-message">
+                                Claim ID: ${item.claim_id}<br>
+                                Tags: ${(item.value?.tags || []).join(', ')}<br>
+                                Has Thumbnail: ${item.value?.thumbnail?.url ? '✅' : '❌'}<br>
+                                Has Video URL: ${item.value?.video?.url || item.value?.hd_url || item.value?.sd_url ? '✅' : '❌'}
+                            </div>
+                        </div>`;
+                    });
+                }
+                html += '<div class="result-box"><h3>Raw Response:</h3><pre>' + JSON.stringify(response, null, 2) + '</pre></div>';
+                showResults(html);
+                showStatus('✅ Series test complete', 'success');
+            } catch (error) {
+                showStatus('❌ Error: ' + error.message, 'error');
+                showResults('<div class="result-box"><pre>' + error.stack + '</pre></div>');
+            }
+        }
+
+        async function runFullDiagnostic() {
+            try {
+                showStatus('Running full diagnostic...', 'loading');
+                
+                let html = '<h2>🔍 Full Diagnostic Report</h2>';
+                
+                // Test 1: Channel exists
+                html += '<h2>Test 1: Channel Verification</h2>';
+                try {
+                    const channelResponse = await callOdyseeAPI('claim_search', {
+                        channel: CHANNEL_ID,
+                        page_size: 1,
+                        page: 1
+                    });
+                    const channelItems = channelResponse.result?.items || [];
+                    if (channelItems.length > 0) {
+                        html += '<div class="test-result pass"><div class="test-title">✅ PASS: Channel exists and is accessible</div></div>';
+                    } else {
+                        html += '<div class="test-result fail"><div class="test-title">❌ FAIL: Channel has no content or is inaccessible</div></div>';
+                    }
+                } catch (error) {
+                    html += `<div class="test-result fail"><div class="test-title">❌ FAIL: Cannot access channel</div><div class="test-message">${error.message}</div></div>`;
+                }
+
+                // Test 2: Hero content
+                html += '<h2>Test 2: Hero Content (hero_trailer tag)</h2>';
+                const heroResponse = await callOdyseeAPI('claim_search', {
+                    channel: CHANNEL_ID,
+                    any_tags: ['hero_trailer'],
+                    page_size: 20,
+                    page: 1,
+                    order_by: ['release_time']
+                });
+                const heroItems = heroResponse.result?.items || [];
+                if (heroItems.length > 0) {
+                    html += `<div class="test-result pass"><div class="test-title">✅ PASS: Found ${heroItems.length} hero video(s)</div></div>`;
+                } else {
+                    html += '<div class="test-result fail"><div class="test-title">❌ FAIL: No hero content found</div><div class="test-message">Add "hero_trailer" tag to at least one video</div></div>';
+                }
+
+                // Test 3: Movies
+                html += '<h2>Test 3: Movies (movie tag)</h2>';
+                const movieResponse = await callOdyseeAPI('claim_search', {
+                    channel: CHANNEL_ID,
+                    any_tags: ['movie'],
+                    page_size: 50,
+                    page: 1,
+                    order_by: ['release_time']
+                });
+                const movieItems = movieResponse.result?.items || [];
+                if (movieItems.length > 0) {
+                    html += `<div class="test-result pass"><div class="test-title">✅ PASS: Found ${movieItems.length} movie(s)</div></div>`;
+                } else {
+                    html += '<div class="test-result fail"><div class="test-title">❌ FAIL: No movies found</div><div class="test-message">Add "movie" tag to your movie videos</div></div>';
+                }
+
+                // Test 4: Series
+                html += '<h2>Test 4: Series (series tag)</h2>';
+                const seriesResponse = await callOdyseeAPI('claim_search', {
+                    channel: CHANNEL_ID,
+                    any_tags: ['series'],
+                    page_size: 50,
+                    page: 1,
+                    order_by: ['release_time']
+                });
+                const seriesItems = seriesResponse.result?.items || [];
+                if (seriesItems.length > 0) {
+                    html += `<div class="test-result pass"><div class="test-title">✅ PASS: Found ${seriesItems.length} series video(s)</div></div>`;
+                } else {
+                    html += '<div class="test-result fail"><div class="test-title">❌ FAIL: No series found</div><div class="test-message">Add "series" tag to your series videos</div></div>';
+                }
+
+                // Test 5: All content (no tag filter)
+                html += '<h2>Test 5: All Channel Content (no tag filter)</h2>';
+                const allResponse = await callOdyseeAPI('claim_search', {
+                    channel: CHANNEL_ID,
+                    page_size: 50,
+                    page: 1,
+                    order_by: ['release_time']
+                });
+                const allItems = allResponse.result?.items || [];
+                html += `<div class="test-result ${allItems.length > 0 ? 'pass' : 'fail'}">
+                    <div class="test-title">${allItems.length > 0 ? '✅' : '❌'} Found ${allItems.length} total video(s) on channel</div>
+                </div>`;
+
+                // Summary
+                html += '<h2>📊 Summary</h2>';
+                html += '<div class="result-box">';
+                html += `<strong>Channel:</strong> ${CHANNEL_ID}<br>`;
+                html += `<strong>Total Videos:</strong> ${allItems.length}<br>`;
+                html += `<strong>Hero Trailers:</strong> ${heroItems.length}<br>`;
+                html += `<strong>Movies:</strong> ${movieItems.length}<br>`;
+                html += `<strong>Series:</strong> ${seriesItems.length}<br><br>`;
+                
+                // Collect all tags
+                const allTags = new Set();
+                allItems.forEach(item => {
+                    const tags = item.value?.tags || [];
+                    tags.forEach(tag => allTags.add(tag));
+                });
+                html += `<strong>All Tags Used:</strong><br>${Array.from(allTags).sort().join(', ') || 'None'}<br><br>`;
+                
+                // Root cause analysis
+                html += '<strong>🔍 Root Cause Analysis:</strong><br>';
+                if (allItems.length === 0) {
+                    html += '❌ <strong>CRITICAL:</strong> Channel has NO videos at all!<br>';
+                } else if (heroItems.length === 0 && movieItems.length === 0 && seriesItems.length === 0) {
+                    html += '❌ <strong>ISSUE:</strong> Videos exist but have NO category tags (hero_trailer, movie, series)<br>';
+                    html += '💡 <strong>Solution:</strong> Add appropriate tags to your videos on Odysee<br>';
+                } else {
+                    const missing = [];
+                    if (heroItems.length === 0) missing.push('hero_trailer');
+                    if (movieItems.length === 0) missing.push('movie');
+                    if (seriesItems.length === 0) missing.push('series');
+                    if (missing.length > 0) {
+                        html += `⚠️ <strong>PARTIAL ISSUE:</strong> Missing tags: ${missing.join(', ')}<br>`;
+                    } else {
+                        html += '✅ <strong>ALL GOOD:</strong> Content exists with proper tags<br>';
+                        html += '💡 If app still not showing content, check:<br>';
+                        html += '&nbsp;&nbsp;1. Clear app cache (delete kiyya.db)<br>';
+                        html += '&nbsp;&nbsp;2. Check browser console for errors<br>';
+                        html += '&nbsp;&nbsp;3. Check backend logs for parsing errors<br>';
+                    }
+                }
+                html += '</div>';
+
+                // Show sample videos
+                if (allItems.length > 0) {
+                    html += '<h2>📹 Sample Videos from Channel</h2>';
+                    allItems.slice(0, 5).forEach((item, i) => {
+                        const tags = item.value?.tags || [];
+                        html += `<div class="test-result ${tags.length > 0 ? 'pass' : 'fail'}">
+                            <div class="test-title">${i + 1}. ${item.value?.title || 'Untitled'}</div>
+                            <div class="test-message">
+                                <strong>Claim ID:</strong> ${item.claim_id}<br>
+                                <strong>Tags:</strong> ${tags.length > 0 ? tags.join(', ') : '❌ NO TAGS'}<br>
+                                <strong>Has Thumbnail:</strong> ${item.value?.thumbnail?.url ? '✅ Yes' : '❌ No'}<br>
+                                <strong>Has Video URL:</strong> ${item.value?.video?.url || item.value?.hd_url || item.value?.sd_url ? '✅ Yes' : '❌ No'}
+                            </div>
+                        </div>`;
+                    });
+                }
+
+                showResults(html);
+                showStatus('✅ Full diagnostic complete', 'success');
+
+            } catch (error) {
+                showStatus('❌ Error: ' + error.message, 'error');
+                showResults('<div class="result-box"><pre>' + error.stack + '</pre></div>');
+            }
+        }
+    </script>
+</body>
+</html>

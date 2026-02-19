@@ -103,8 +103,9 @@ pub fn validate_channel_id(channel_id: &str) -> Result<String> {
 /// Validates a quality string
 ///
 /// Quality should be one of the predefined values
+/// In the new CDN-first architecture, we only use "master" quality for HLS adaptive streaming
 pub fn validate_quality(quality: &str) -> Result<String> {
-    const VALID_QUALITIES: &[&str] = &["240p", "360p", "480p", "720p", "1080p", "1440p", "2160p", "4k"];
+    const VALID_QUALITIES: &[&str] = &["master"];
     
     // Check for null bytes
     if quality.contains('\0') {
@@ -491,14 +492,16 @@ mod tests {
 
     #[test]
     fn test_validate_quality() {
-        // Valid qualities
-        assert_eq!(validate_quality("720p").unwrap(), "720p");
-        assert_eq!(validate_quality("1080P").unwrap(), "1080p");
+        // Valid qualities (only "master" in new CDN-first architecture)
+        assert_eq!(validate_quality("master").unwrap(), "master");
+        assert_eq!(validate_quality("MASTER").unwrap(), "master");
         
-        // Invalid qualities
+        // Invalid qualities (including old quality-specific values)
         assert!(validate_quality("").is_err());
         assert!(validate_quality("invalid").is_err());
-        assert!(validate_quality("720\0p").is_err());
+        assert!(validate_quality("720p").is_err());
+        assert!(validate_quality("1080p").is_err());
+        assert!(validate_quality("master\0").is_err());
     }
 
     #[test]

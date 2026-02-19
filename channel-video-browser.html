@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Channel Video Browser - @kiyyamovies:b</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .stats {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .video-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .video-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .video-thumbnail {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .video-content {
+            padding: 15px;
+        }
+
+        .video-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .video-meta {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .video-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #e0e7ff;
+            color: #4c51bf;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tag.hero {
+            background: #d4edda;
+            color: #155724;
+            font-weight: 700;
+        }
+
+        .tag.movie { background: #fce7f3; color: #9f1239; }
+        .tag.series { background: #dbeafe; color: #1e40af; }
+        .tag.sitcom { background: #fef3c7; color: #92400e; }
+        .tag.kids { background: #fce7f3; color: #831843; }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            background: white;
+        }
+
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .empty-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .empty-message {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .video-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-small:hover {
+            background: #5568d3;
+        }
+
+        .filter-info {
+            background: #e7f3ff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #004085;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>📺 Channel Video Browser</h1>
+            <p class="subtitle">Browse all videos on @kiyyamovies:b channel</p>
+            
+            <div class="controls">
+                <button onclick="loadAllVideos()">🔄 Load All Videos</button>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search videos by title..." oninput="filterVideos()">
+                </div>
+                <select id="tagFilter" onchange="filterVideos()">
+                    <option value="">All Tags</option>
+                </select>
+                <select id="sortBy" onchange="sortVideos()">
+                    <option value="date-desc">Newest First</option>
+                    <option value="date-asc">Oldest First</option>
+                    <option value="title-asc">Title A-Z</option>
+                    <option value="title-desc">Title Z-A</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="stats" class="stats" style="display: none;"></div>
+        <div id="filterInfo" class="filter-info" style="display: none;"></div>
+        <div id="status"></div>
+        <div id="videoGrid" class="video-grid"></div>
+    </div>
+
+    <script>
+        const CHANNEL_ID = '@kiyyamovies:b';
+        const API_ENDPOINT = 'https://api.na-backend.odysee.com/api/v1/proxy';
+        
+        let allVideos = [];
+        let filteredVideos = [];
+        let allTags = new Set();
+
+        function showStatus(message, type = 'loading') {
+            const statusDiv = document.getElementById('status');
+            const spinner = type === 'loading' ? '<div class="spinner"></div>' : '';
+            statusDiv.innerHTML = `<div class="status ${type}">${spinner}${message}</div>`;
+        }
+
+        async function callOdyseeAPI(method, params) {
+            const response = await fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ method, params })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        }
+
+        async function loadAllVideos() {
+            try {
+                showStatus('Loading all videos from channel...', 'loading');
+                document.getElementById('stats').style.display = 'none';
+                document.getElementById('videoGrid').innerHTML = '';
+
+                let page = 1;
+                let hasMore = true;
+                allVideos = [];
+
+                while (hasMore) {
+                    const response = await callOdyseeAPI('claim_search', {
+                        channel: CHANNEL_ID,
+                        page_size: 50,
+                        page: page,
+                        order_by: ['release_time']
+                    });
+
+                    const items = response.result?.items || [];
+                    
+                    if (items.length === 0) {
+                        hasMore = false;
+                    } else {
+                        allVideos = allVideos.concat(items);
+                        
+                        // Collect all tags
+                        items.forEach(item => {
+                            const tags = item.value?.tags || [];
+                            tags.forEach(tag => allTags.add(tag));
+                        });
+
+                        showStatus(`Loading videos... Found ${allVideos.length} so far`, 'loading');
+                        page++;
+                    }
+                }
+
+                // Populate tag filter
+                const tagFilter = document.getElementById('tagFilter');
+                tagFilter.innerHTML = '<option value="">All Tags</option>';
+                Array.from(allTags).sort().forEach(tag => {
+                    const option = document.createElement('option');
+                    option.value = tag;
+                    option.textContent = tag;
+                    tagFilter.appendChild(option);
+                });
+
+                filteredVideos = [...allVideos];
+                displayStats();
+                displayVideos();
+                
+                showStatus(`✅ Loaded ${allVideos.length} videos successfully`, 'success');
+
+            } catch (error) {
+                showStatus('❌ Error: ' + error.message, 'error');
+                console.error('Error loading videos:', error);
+            }
+        }
+
+        function displayStats() {
+            const statsDiv = document.getElementById('stats');
+            statsDiv.style.display = 'grid';
+
+            // Count videos by category
+            const heroCount = allVideos.filter(v => (v.value?.tags || []).includes('hero_trailer')).length;
+            const movieCount = allVideos.filter(v => (v.value?.tags || []).includes('movie')).length;
+            const seriesCount = allVideos.filter(v => (v.value?.tags || []).includes('series')).length;
+            const sitcomCount = allVideos.filter(v => (v.value?.tags || []).includes('sitcom')).length;
+            const kidsCount = allVideos.filter(v => (v.value?.tags || []).includes('kids')).length;
+
+            statsDiv.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${allVideos.length}</div>
+                    <div class="stat-label">Total Videos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${heroCount}</div>
+                    <div class="stat-label">Hero Trailers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${movieCount}</div>
+                    <div class="stat-label">Movies</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-value">${seriesCount}</div>
+                    <div class="stat-label">Series</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${sitcomCount}</div>
+                    <div class="stat-label">Sitcoms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${kidsCount}</div>
+                    <div class="stat-label">Kids Content</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${allTags.size}</div>
+                    <div class="stat-label">Unique Tags</div>
+                </div>
+            `;
+        }
+
+        function filterVideos() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const selectedTag = document.getElementById('tagFilter').value;
+
+            filteredVideos = allVideos.filter(video => {
+                const title = (video.value?.title || video.name || '').toLowerCase();
+                const tags = video.value?.tags || [];
+
+                const matchesSearch = !searchTerm || title.includes(searchTerm);
+                const matchesTag = !selectedTag || tags.includes(selectedTag);
+
+                return matchesSearch && matchesTag;
+            });
+
+            updateFilterInfo();
+            sortVideos();
+        }
+
+        function updateFilterInfo() {
+            const filterInfo = document.getElementById('filterInfo');
+            const searchTerm = document.getElementById('searchInput').value;
+            const selectedTag = document.getElementById('tagFilter').value;
+
+            if (searchTerm || selectedTag) {
+                filterInfo.style.display = 'block';
+                let info = `Showing ${filteredVideos.length} of ${allVideos.length} videos`;
+                if (searchTerm) info += ` matching "${searchTerm}"`;
+                if (selectedTag) info += ` with tag "${selectedTag}"`;
+                filterInfo.textContent = info;
+            } else {
+                filterInfo.style.display = 'none';
+            }
+        }
+
+        function sortVideos() {
+            const sortBy = document.getElementById('sortBy').value;
+
+            filteredVideos.sort((a, b) => {
+                switch (sortBy) {
+                    case 'date-desc':
+                        return (b.timestamp || 0) - (a.timestamp || 0);
+                    case 'date-asc':
+                        return (a.timestamp || 0) - (b.timestamp || 0);
+                    case 'title-asc':
+                        return (a.value?.title || a.name || '').localeCompare(b.value?.title || b.name || '');
+                    case 'title-desc':
+                        return (b.value?.title || b.name || '').localeCompare(a.value?.title || a.name || '');
+                    default:
+                        return 0;
+                }
+            });
+
+            displayVideos();
+        }
+
+        function displayVideos() {
+            const gridDiv = document.getElementById('videoGrid');
+
+            if (filteredVideos.length === 0) {
+                gridDiv.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <div class="empty-title">No Videos Found</div>
+                        <div class="empty-message">Try adjusting your filters or search terms</div>
+                    </div>
+                `;
+                return;
+            }
+
+            gridDiv.innerHTML = filteredVideos.map(video => {
+                const title = video.value?.title || video.name || 'Untitled';
+                const thumbnail = video.value?.thumbnail?.url || '';
+                const tags = video.value?.tags || [];
+                const claimId = video.claim_id;
+                const duration = video.value?.video?.duration || 0;
+                const timestamp = video.timestamp || 0;
+                const date = new Date(timestamp * 1000).toLocaleDateString();
+
+                const hasHeroTag = tags.includes('hero_trailer');
+                const hasVideoUrl = !!(video.value?.video?.url || video.value?.hd_url || video.value?.sd_url);
+                const hasThumbnail = !!thumbnail;
+
+                const durationStr = duration > 0 ? `${Math.floor(duration / 60)} min` : 'Unknown';
+
+                return `
+                    <div class="video-card" onclick="openVideo('${claimId}')">
+                        ${thumbnail ? 
+                            `<img src="${thumbnail}" alt="${title}" class="video-thumbnail" onerror="this.style.display='none'">` :
+                            `<div class="video-thumbnail"></div>`
+                        }
+                        <div class="video-content">
+                            <div class="video-title">${title}</div>
+                            <div class="video-meta">📅 ${date}</div>
+                            <div class="video-meta">⏱️ ${durationStr}</div>
+                            <div class="video-meta">🆔 ${claimId}</div>
+                            <div class="video-meta">
+                                ${hasVideoUrl ? '✅' : '❌'} Video URL | 
+                                ${hasThumbnail ? '✅' : '❌'} Thumbnail
+                            </div>
+                            <div class="video-tags">
+                                ${tags.map(tag => {
+                                    let tagClass = 'tag';
+                                    if (tag === 'hero_trailer') tagClass += ' hero';
+                                    else if (tag === 'movie') tagClass += ' movie';
+                                    else if (tag === 'series') tagClass += ' series';
+                                    else if (tag === 'sitcom') tagClass += ' sitcom';
+                                    else if (tag === 'kids') tagClass += ' kids';
+                                    return `<span class="${tagClass}">${tag}</span>`;
+                                }).join('')}
+                            </div>
+                            <div class="video-actions">
+                                <a href="https://odysee.com/@kiyyamovies:b/${video.name}:${claimId.substring(0, 1)}" 
+                                   target="_blank" 
+                                   class="btn-small"
+                                   onclick="event.stopPropagation()">
+                                    🔗 View on Odysee
+                                </a>
+                                ${hasHeroTag ? '<span class="btn-small" style="background: #28a745;">⭐ Hero Video</span>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openVideo(claimId) {
+            const video = allVideos.find(v => v.claim_id === claimId);
+            if (video) {
+                const url = `https://odysee.com/@kiyyamovies:b/${video.name}:${claimId.substring(0, 1)}`;
+                window.open(url, '_blank');
+            }
+        }
+
+        // Auto-load on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            showStatus('Click "Load All Videos" to browse your channel content', 'success');
+        });
+    </script>
+</body>
+</html>

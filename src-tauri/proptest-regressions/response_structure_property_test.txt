@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 9f95c7a56794c4d394388ff79d31be2da0d436e54601fa1ef1ed08867260d7df # shrinks to claim_id = "aaa0aa00A0aaa00aAAAA", title = "aaA a", tags = ["movie", "movie"]

@@ -324,10 +324,8 @@ describe('Quality Selection with Simulated Network Conditions', () => {
       // Should recommend downgrade
       expect(manager.shouldDowngradeQuality()).toBe(true);
       
-      // Downgrade quality
       const nextQuality = getNextLowerQuality(currentQuality, availableQualities);
       expect(nextQuality).toBe('720p');
-      currentQuality = nextQuality!;
       
       // Reset after quality change
       manager.reset();

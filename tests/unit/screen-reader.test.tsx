@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import NavBar from '../../src/components/NavBar';
-import Hero from '../../src/components/Hero';
 import MovieCard from '../../src/components/MovieCard';
 import PlayerModal from '../../src/components/PlayerModal';
 import ForcedUpdateScreen from '../../src/components/ForcedUpdateScreen';

@@ -173,12 +173,18 @@ export function checkContentCompatibility(
 
 /**
  * Get the best compatible video URL for a given quality
+ * CDN Playback: Prioritize "master" quality for HLS adaptive streaming
  * Prioritizes MP4 over HLS when both are available and compatible
  */
 export function getBestCompatibleUrl(
   videoUrls: Record<string, VideoUrl>,
   quality: string
 ): VideoUrl | null {
+  // CDN Playback: Prefer "master" quality if available (HLS adaptive)
+  if (videoUrls['master']) {
+    return videoUrls['master'];
+  }
+  
   const url = videoUrls[quality];
   
   if (!url) {

@@ -194,29 +194,62 @@ export const fetchChannelClaims = async (params: {
   limit?: number;
   page?: number;
   force_refresh?: boolean;
+  stream_types?: string[];
 }): Promise<ContentItem[]> => {
   return await fetchWithRetry(async () => {
     try {
-      const response = await invoke('fetch_channel_claims', {
-        channel_id: CHANNEL_ID,
-        ...params
+      if (isDev) {
+        console.log('🔍 [API] About to invoke fetch_channel_claims with params:', {
+          channelId: CHANNEL_ID,
+          anyTags: params.any_tags,
+          text: params.text,
+          limit: params.limit,
+          page: params.page,
+          forceRefresh: params.force_refresh,
+          streamTypes: params.stream_types
+        });
+      }
+      
+      // Add timeout to prevent infinite hang
+      const invokePromise = invoke('fetch_channel_claims', {
+        channelId: CHANNEL_ID,  // Tauri converts snake_case to camelCase
+        anyTags: params.any_tags,
+        text: params.text,
+        limit: params.limit,
+        page: params.page,
+        forceRefresh: params.force_refresh,
+        streamTypes: params.stream_types
       });
       
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Tauri invoke timeout after 30s')), 30000)
+      );
+      
+      const response = await Promise.race([invokePromise, timeoutPromise]);
+      
       if (isDev) {
+        console.log('✅ [API] invoke returned, response type:', typeof response, 'is array:', Array.isArray(response));
         console.log('[API] fetchChannelClaims response:', {
           tags: params.any_tags,
           text: params.text,
+          stream_types: params.stream_types,
           count: Array.isArray(response) ? response.length : 0
         });
       }
       
       // Validate and filter response
-      return validateAndFilterContent(response as any[]);
+      if (isDev) console.log('🔍 [API] Calling validateAndFilterContent');
+      const validated = validateAndFilterContent(response as any[]);
+      if (isDev) console.log('✅ [API] validateAndFilterContent returned', validated.length, 'items');
+      return validated;
     } catch (error) {
       if (isDev) {
-        console.error('[API] fetchChannelClaims error:', {
+        console.error('❌ [API] fetchChannelClaims error:', {
           params,
-          error
+          error,
+          errorType: typeof error,
+          errorMessage: error instanceof Error ? error.message : String(error),
+          errorStack: error instanceof Error ? error.stack : undefined
         });
       }
       throw error;
@@ -227,14 +260,14 @@ export const fetchChannelClaims = async (params: {
 export const fetchPlaylists = async (): Promise<Playlist[]> => {
   return await fetchWithRetry(async () => {
     return await invoke('fetch_playlists', {
-      channel_id: CHANNEL_ID
+      channelId: CHANNEL_ID  // Tauri converts snake_case to camelCase
     });
   }, RETRY_CONFIGS.category);
 };
 
 export const resolveClaim = async (claimIdOrUri: string): Promise<ContentItem> => {
   return await fetchWithRetry(async () => {
-    return await invoke('resolve_claim', { claim_id_or_uri: claimIdOrUri });
+    return await invoke('resolve_claim', { claimIdOrUri });  // Tauri converts snake_case to camelCase
   }, RETRY_CONFIGS.category);
 };
 
@@ -265,11 +298,21 @@ export const fetchByTags = async (tags: string[], limit: number = 50, forceRefre
       console.log('[API] fetchByTags called:', { tags, limit, forceRefresh });
     }
     
-    const response = await fetchChannelClaims({ any_tags: tags, limit, force_refresh: forceRefresh });
+    // CRITICAL: Enforce stream-only filter for hero_trailer to prevent non-stream claims
+    // Requirement 7.1, 7.2, 7.3: Hero query must filter by tag=hero_trailer AND value_type=stream
+    const stream_types = tags.includes('hero_trailer') ? ['stream'] : undefined;
+    
+    const response = await fetchChannelClaims({ 
+      any_tags: tags, 
+      limit, 
+      force_refresh: forceRefresh,
+      stream_types
+    });
     
     if (isDev) {
       console.log('[API] fetchByTags response:', {
         tags,
+        stream_types,
         count: response.length,
         items: response.map(item => ({
           claim_id: item.claim_id,
@@ -301,21 +344,34 @@ export const fetchHeroContent = async (limit: number = 20): Promise<ContentItem[
 
 // Download management
 export const downloadMovieQuality = async (params: DownloadRequest): Promise<void> => {
-  return await invoke('download_movie_quality', { ...params });
+  // Tauri converts snake_case to camelCase
+  return await invoke('download_movie_quality', {
+    claimId: params.claim_id,
+    quality: params.quality,
+    url: params.url
+  });
 };
 
 export const streamOffline = async (params: {
   claim_id: string;
   quality: string;
 }): Promise<StreamOfflineResponse> => {
-  return await invoke('stream_offline', params);
+  // Tauri converts snake_case to camelCase
+  return await invoke('stream_offline', {
+    claimId: params.claim_id,
+    quality: params.quality
+  });
 };
 
 export const deleteOffline = async (params: {
   claim_id: string;
   quality: string;
 }): Promise<void> => {
-  return await invoke('delete_offline', params);
+  // Tauri converts snake_case to camelCase
+  return await invoke('delete_offline', {
+    claimId: params.claim_id,
+    quality: params.quality
+  });
 };
 
 // Progress tracking
@@ -324,11 +380,16 @@ export const saveProgress = async (params: {
   position_seconds: number;
   quality: string;
 }): Promise<void> => {
-  return await invoke('save_progress', params);
+  // Tauri converts snake_case to camelCase
+  return await invoke('save_progress', {
+    claimId: params.claim_id,
+    positionSeconds: params.position_seconds,
+    quality: params.quality
+  });
 };
 
 export const getProgress = async (claimId: string): Promise<ProgressData | null> => {
-  return await invoke('get_progress', { claim_id: claimId });
+  return await invoke('get_progress', { claimId });  // Tauri converts snake_case to camelCase
 };
 
 // Favorites management
@@ -337,11 +398,16 @@ export const saveFavorite = async (params: {
   title: string;
   thumbnail_url?: string;
 }): Promise<void> => {
-  return await invoke('save_favorite', params);
+  // Tauri converts snake_case to camelCase
+  return await invoke('save_favorite', {
+    claimId: params.claim_id,
+    title: params.title,
+    thumbnailUrl: params.thumbnail_url
+  });
 };
 
 export const removeFavorite = async (claimId: string): Promise<void> => {
-  return await invoke('remove_favorite', { claim_id: claimId });
+  return await invoke('remove_favorite', { claimId });  // Tauri converts snake_case to camelCase
 };
 
 export const getFavorites = async (): Promise<FavoriteItem[]> => {
@@ -349,7 +415,7 @@ export const getFavorites = async (): Promise<FavoriteItem[]> => {
 };
 
 export const isFavorite = async (claimId: string): Promise<boolean> => {
-  return await invoke('is_favorite', { claim_id: claimId });
+  return await invoke('is_favorite', { claimId });  // Tauri converts snake_case to camelCase
 };
 
 // Configuration and settings
@@ -380,11 +446,11 @@ export const optimizeDatabaseMemory = async (): Promise<void> => {
 };
 
 export const invalidateCacheItem = async (claimId: string): Promise<void> => {
-  return await invoke('invalidate_cache_item', { claim_id: claimId });
+  return await invoke('invalidate_cache_item', { claimId });  // Tauri converts snake_case to camelCase
 };
 
 export const invalidateCacheByTags = async (tags: string[]): Promise<void> => {
-  return await invoke('invalidate_cache_by_tags', { tags });
+  return await invoke('invalidate_cache_by_tags', { tags });  // Already camelCase
 };
 
 export const clearAllCache = async (): Promise<void> => {
@@ -457,8 +523,14 @@ export const getAvailableQualities = (content: ContentItem): string[] => {
 
 /**
  * Get best quality URL for content
+ * CDN Playback: Prioritize "master" quality for HLS adaptive streaming
  */
 export const getBestQualityUrl = (content: ContentItem, preferredQuality?: string): string | null => {
+  // CDN Playback: Prefer "master" quality if available
+  if (content.video_urls['master']) {
+    return content.video_urls['master'].url;
+  }
+  
   const qualities = getAvailableQualities(content);
   
   if (preferredQuality && content.video_urls[preferredQuality]) {

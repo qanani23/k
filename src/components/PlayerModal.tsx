@@ -37,7 +37,8 @@ export default function PlayerModal({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
   
-  const [currentQuality, setCurrentQuality] = useState<string>(initialQuality || '720p');
+  // CDN Playback: Default to "master" quality for HLS adaptive streaming
+  const [currentQuality, setCurrentQuality] = useState<string>(initialQuality || 'master');
   const [availableQualities, setAvailableQualities] = useState<string[]>([]);
   const [isBuffering, setIsBuffering] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,15 +101,21 @@ export default function PlayerModal({
   // Get available qualities
   useEffect(() => {
     const qualities = Object.keys(content.video_urls)
-      .filter(q => QUALITY_LEVELS.includes(q as Quality))
-      .sort((a, b) => qualityScore(b as Quality) - qualityScore(a as Quality));
+      .filter(q => QUALITY_LEVELS.includes(q as Quality) || q === 'master')
+      .sort((a, b) => {
+        // Prioritize 'master' quality for HLS adaptive streaming
+        if (a === 'master') return -1;
+        if (b === 'master') return 1;
+        return qualityScore(b as Quality) - qualityScore(a as Quality);
+      });
     
     setAvailableQualities(qualities);
     
     // Set initial quality if not provided
     if (!initialQuality && qualities.length > 0) {
-      // Default to 720p if available, otherwise highest quality
-      const defaultQuality = qualities.includes('720p') ? '720p' : qualities[0];
+      // CDN Playback: Default to 'master' if available, otherwise highest quality
+      const defaultQuality = qualities.includes('master') ? 'master' : 
+                            qualities.includes('720p') ? '720p' : qualities[0];
       setCurrentQuality(defaultQuality);
     }
   }, [content, initialQuality]);
@@ -552,43 +559,46 @@ export default function PlayerModal({
         </div>
 
         {/* Quality Selector */}
+        {/* CDN Playback: Hide quality selector if only "master" quality available (HLS adaptive) */}
         <div className="mt-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <button
-                onClick={() => setShowQualityMenu(!showQualityMenu)}
-                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors"
-                aria-label="Select video quality"
-                aria-expanded={showQualityMenu}
-                aria-haspopup="menu"
-              >
-                <Settings className="w-4 h-4" />
-                <span>Quality: {currentQuality}</span>
-              </button>
+            {availableQualities.length > 1 && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowQualityMenu(!showQualityMenu)}
+                  className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors"
+                  aria-label="Select video quality"
+                  aria-expanded={showQualityMenu}
+                  aria-haspopup="menu"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Quality: {currentQuality}</span>
+                </button>
 
-              {/* Quality Menu */}
-              {showQualityMenu && (
-                <div className="absolute bottom-full mb-2 left-0 bg-gray-900 border border-gray-700 rounded-lg overflow-hidden min-w-[150px]" role="menu">
-                  {availableQualities.map((quality) => (
-                    <button
-                      key={quality}
-                      data-quality={quality}
-                      onClick={() => handleQualityChange(quality)}
-                      onKeyDown={(e) => handleQualityMenuKeyDown(e, quality)}
-                      className={`w-full text-left px-4 py-2 hover:bg-white/10 transition-colors ${
-                        quality === currentQuality ? 'bg-white/20 text-white' : 'text-gray-300'
-                      }`}
-                      role="menuitem"
-                      aria-label={`Select ${quality} quality`}
-                      aria-current={quality === currentQuality}
-                    >
-                      {quality}
-                      {quality === currentQuality && ' ✓'}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                {/* Quality Menu */}
+                {showQualityMenu && (
+                  <div className="absolute bottom-full mb-2 left-0 bg-gray-900 border border-gray-700 rounded-lg overflow-hidden min-w-[150px]" role="menu">
+                    {availableQualities.map((quality) => (
+                      <button
+                        key={quality}
+                        data-quality={quality}
+                        onClick={() => handleQualityChange(quality)}
+                        onKeyDown={(e) => handleQualityMenuKeyDown(e, quality)}
+                        className={`w-full text-left px-4 py-2 hover:bg-white/10 transition-colors ${
+                          quality === currentQuality ? 'bg-white/20 text-white' : 'text-gray-300'
+                        }`}
+                        role="menuitem"
+                        aria-label={`Select ${quality} quality`}
+                        aria-current={quality === currentQuality}
+                      >
+                        {quality}
+                        {quality === currentQuality && ' ✓'}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {isOffline && (
               <div className="bg-green-500/20 text-green-400 px-3 py-2 rounded-lg text-sm">

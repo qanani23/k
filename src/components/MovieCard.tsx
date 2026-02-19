@@ -27,13 +27,15 @@ export default function MovieCard({
   const [showActionsState, setShowActionsState] = useState(false);
   const { isDownloading, isOfflineAvailable, getDownloadProgress } = useDownloadManager();
 
+  // CDN Playback: Use "master" quality key for HLS adaptive streaming
+  // For downloads, we still use the first available quality (backward compatibility)
   const availableQualities = Object.keys(content.video_urls).sort((a, b) => {
-    const qualityOrder = { '360p': 1, '480p': 2, '720p': 3, '1080p': 4 };
+    const qualityOrder = { 'master': 5, '360p': 1, '480p': 2, '720p': 3, '1080p': 4 };
     return (qualityOrder[b as keyof typeof qualityOrder] || 0) - 
            (qualityOrder[a as keyof typeof qualityOrder] || 0);
   });
 
-  const bestQuality = availableQualities[0] || '720p';
+  const bestQuality = availableQualities[0] || 'master';
   const isCurrentlyDownloading = isDownloading(content.claim_id, bestQuality);
   const isAvailableOffline = isOfflineAvailable(content.claim_id, bestQuality);
   const downloadProgress = getDownloadProgress(content.claim_id, bestQuality);
@@ -119,7 +121,10 @@ export default function MovieCard({
         )}
 
         {/* Quality Badge */}
-        {availableQualities.includes('1080p') && (
+        {/* CDN Playback: Show HLS badge for master playlist */}
+        {availableQualities.includes('master') ? (
+          <div className="quality-badge">HLS</div>
+        ) : availableQualities.includes('1080p') && (
           <div className="quality-badge">HD</div>
         )}
 

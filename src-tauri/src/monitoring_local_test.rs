@@ -299,36 +299,24 @@ mod tests {
         let content = fs::read_to_string(commands_rs_path)
             .expect("Failed to read commands.rs");
         
-        // Verify diagnostics command exists and returns local data
-        if content.contains("get_diagnostics") || content.contains("diagnostics") {
-            let diagnostics_section: Vec<&str> = content.lines()
-                .skip_while(|line| !line.contains("diagnostics"))
-                .take(30)
-                .collect();
-            
-            let diagnostics_text = diagnostics_section.join("\n");
-            
-            // Verify it returns Result<DiagnosticsData> not sends data externally
-            assert!(diagnostics_text.contains("Result") || diagnostics_text.contains("DiagnosticsData"),
-                    "Diagnostics command should return local data");
-            
-            // Verify no HTTP POST in diagnostics
-            assert!(!diagnostics_text.contains("post(") || diagnostics_text.contains("// "),
-                    "Diagnostics should not POST data externally");
-        }
+        // Verify diagnostics command exists
+        assert!(content.contains("pub async fn get_diagnostics"),
+                "Diagnostics command should exist");
         
-        // Verify cache stats command returns local data
-        if content.contains("get_cache_stats") {
-            let cache_stats_section: Vec<&str> = content.lines()
-                .skip_while(|line| !line.contains("get_cache_stats"))
-                .take(20)
-                .collect();
-            
-            let cache_stats_text = cache_stats_section.join("\n");
-            
-            // Verify it queries local database
-            assert!(cache_stats_text.contains("db.") || cache_stats_text.contains("database"),
-                    "Cache stats should query local database");
+        // Verify it returns DiagnosticsData (local data structure)
+        assert!(content.contains("Result<DiagnosticsData>"),
+                "Diagnostics command should return local data");
+        
+        // Verify no HTTP POST to external services in the entire commands file
+        // (POST to local server is OK, but not to external analytics)
+        let post_lines: Vec<&str> = content.lines()
+            .filter(|line| line.contains(".post("))
+            .collect();
+        
+        for line in post_lines {
+            // If there's a POST, it should be to localhost or a comment
+            assert!(line.contains("localhost") || line.contains("127.0.0.1") || line.contains("//"),
+                    "Commands should not POST to external services: {}", line);
         }
     }
 

@@ -63,6 +63,7 @@ mod api_parsing_tests {
     fn test_parse_claim_item_missing_title() {
         let item = json!({
             "claim_id": "test-claim-123",
+            "value_type": "stream",
             "value": {
                 "hd_url": "https://example.com/video.mp4"
             }
@@ -79,6 +80,7 @@ mod api_parsing_tests {
     fn test_parse_claim_item_empty_title() {
         let item = json!({
             "claim_id": "test-claim-123",
+            "value_type": "stream",
             "value": {
                 "title": "",
                 "hd_url": "https://example.com/video.mp4"
@@ -96,6 +98,7 @@ mod api_parsing_tests {
     fn test_parse_claim_item_null_title() {
         let item = json!({
             "claim_id": "test-claim-123",
+            "value_type": "stream",
             "value": {
                 "title": null,
                 "hd_url": "https://example.com/video.mp4"
@@ -125,6 +128,7 @@ mod api_parsing_tests {
     fn test_parse_claim_item_malformed_tags() {
         let item = json!({
             "claim_id": "test-claim-123",
+            "value_type": "stream",
             "value": {
                 "title": "Test Movie",
                 "tags": "not-an-array",
@@ -143,6 +147,7 @@ mod api_parsing_tests {
     fn test_parse_claim_item_tags_with_nulls() {
         let item = json!({
             "claim_id": "test-claim-123",
+            "value_type": "stream",
             "value": {
                 "title": "Test Movie",
                 "tags": ["movie", null, "action", null],
@@ -161,6 +166,7 @@ mod api_parsing_tests {
     fn test_parse_claim_item_tags_with_empty_strings() {
         let item = json!({
             "claim_id": "test-claim-123",
+            "value_type": "stream",
             "value": {
                 "title": "Test Movie",
                 "tags": ["movie", "", "action", "  "],
@@ -184,6 +190,7 @@ mod api_parsing_tests {
     fn test_parse_claim_item_invalid_thumbnail_url() {
         let item = json!({
             "claim_id": "test-claim-123",
+            "value_type": "stream",
             "value": {
                 "title": "Test Movie",
                 "thumbnail": {
@@ -204,6 +211,7 @@ mod api_parsing_tests {
     fn test_parse_claim_item_empty_thumbnail_url() {
         let item = json!({
             "claim_id": "test-claim-123",
+            "value_type": "stream",
             "value": {
                 "title": "Test Movie",
                 "thumbnail": {
@@ -223,6 +231,7 @@ mod api_parsing_tests {
     fn test_parse_claim_item_malformed_duration() {
         let item = json!({
             "claim_id": "test-claim-123",
+            "value_type": "stream",
             "value": {
                 "title": "Test Movie",
                 "video": {
@@ -243,6 +252,7 @@ mod api_parsing_tests {
     fn test_parse_claim_item_negative_duration() {
         let item = json!({
             "claim_id": "test-claim-123",
+            "value_type": "stream",
             "value": {
                 "title": "Test Movie",
                 "video": {
@@ -269,11 +279,12 @@ mod api_parsing_tests {
         });
 
         let result = parse_claim_item(&item);
-        // Should fail when no video URLs can be extracted
+        // With CDN-first approach, this fails because value_type is missing
+        // and there's no source.sd_hash to infer stream type
         assert!(result.is_err());
         match result {
             Err(KiyyaError::ContentParsing { message }) => {
-                assert!(message.contains("video") || message.contains("URL"));
+                assert!(message.contains("stream") || message.contains("value_type"));
             }
             _ => panic!("Expected ContentParsing error"),
         }
@@ -318,6 +329,7 @@ mod api_parsing_tests {
     fn test_parse_claim_item_mixed_valid_invalid_streams() {
         let item = json!({
             "claim_id": "test-claim-123",
+            "value_type": "stream",
             "value": {
                 "title": "Test Movie",
                 "streams": [
@@ -338,11 +350,13 @@ mod api_parsing_tests {
         });
 
         let result = parse_claim_item(&item);
-        // Should succeed with valid streams only
+        // With CDN-first approach, streams array is ignored
+        // Should succeed with CDN master URL only
         assert!(result.is_ok());
         let content = result.unwrap();
-        assert!(content.video_urls.contains_key("1080p"));
-        assert!(content.video_urls.contains_key("480p"));
+        assert!(content.video_urls.contains_key("master"));
+        assert!(!content.video_urls.contains_key("1080p"));
+        assert!(!content.video_urls.contains_key("480p"));
         assert!(!content.video_urls.contains_key("720p"));
     }
 
@@ -350,6 +364,7 @@ mod api_parsing_tests {
     fn test_parse_claim_item_null_release_time() {
         let item = json!({
             "claim_id": "test-claim-123",
+            "value_type": "stream",
             "value": {
                 "title": "Test Movie",
                 "hd_url": "https://example.com/video.mp4"
@@ -515,6 +530,7 @@ mod api_parsing_tests {
                 "items": [
                     {
                         "claim_id": "valid-1",
+                        "value_type": "stream",
                         "value": {
                             "title": "Valid Movie",
                             "hd_url": "https://example.com/video1.mp4"
@@ -522,12 +538,14 @@ mod api_parsing_tests {
                     },
                     {
                         // Invalid - missing claim_id
+                        "value_type": "stream",
                         "value": {
                             "title": "Invalid Movie"
                         }
                     },
                     {
                         "claim_id": "valid-2",
+                        "value_type": "stream",
                         "value": {
                             "title": "Another Valid Movie",
                             "sd_url": "https://example.com/video2.mp4"
@@ -631,6 +649,7 @@ mod api_parsing_tests {
     fn test_parse_claim_item_unicode_in_title() {
         let item = json!({
             "claim_id": "test-claim-123",
+            "value_type": "stream",
             "value": {
                 "title": "Test Movie 🎬 with émojis and spëcial çhars",
                 "hd_url": "https://example.com/video.mp4"
@@ -649,6 +668,7 @@ mod api_parsing_tests {
         let long_title = "A".repeat(10000);
         let item = json!({
             "claim_id": "test-claim-123",
+            "value_type": "stream",
             "value": {
                 "title": long_title,
                 "hd_url": "https://example.com/video.mp4"
@@ -666,6 +686,7 @@ mod api_parsing_tests {
         let tags: Vec<String> = (0..1000).map(|i| format!("tag{}", i)).collect();
         let item = json!({
             "claim_id": "test-claim-123",
+            "value_type": "stream",
             "value": {
                 "title": "Test Movie",
                 "tags": tags,
@@ -683,6 +704,7 @@ mod api_parsing_tests {
     fn test_parse_claim_item_nested_value_objects() {
         let item = json!({
             "claim_id": "test-claim-123",
+            "value_type": "stream",
             "value": {
                 "value": {
                     "title": "Nested Title"
@@ -702,6 +724,7 @@ mod api_parsing_tests {
     fn test_parse_claim_item_multiple_url_sources() {
         let item = json!({
             "claim_id": "test-claim-123",
+            "value_type": "stream",
             "value": {
                 "title": "Test Movie",
                 "hd_url": "https://example.com/hd.mp4",
@@ -719,7 +742,9 @@ mod api_parsing_tests {
         let result = parse_claim_item(&item);
         assert!(result.is_ok());
         let content = result.unwrap();
-        // Should have multiple quality options
-        assert!(content.video_urls.len() >= 3);
+        // With CDN-first approach, all direct URLs are ignored
+        // Should only have "master" key
+        assert_eq!(content.video_urls.len(), 1);
+        assert!(content.video_urls.contains_key("master"));
     }
 }
