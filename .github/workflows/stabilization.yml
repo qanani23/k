@@ -235,6 +235,9 @@ jobs:
       - name: Install npm dependencies
         run: npm install
       
+      - name: Create dist directory placeholder
+        run: mkdir -p dist && echo "{}" > dist/placeholder.json
+      
       - name: Build backend
         run: cd src-tauri && cargo build
       
