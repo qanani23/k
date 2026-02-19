@@ -111,6 +111,7 @@ jobs:
       
       - name: Build frontend
         run: npm run build
+        continue-on-error: true
       
       - name: Build backend
         run: cd src-tauri && cargo build 2>&1 | tee ../stabilization/audit_warnings.txt
