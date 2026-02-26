@@ -5,7 +5,7 @@
 #[cfg(test)]
 mod api_parsing_tests {
     use crate::commands::{
-        parse_claim_item, parse_playlist_item, parse_claim_search_response,
+        parse_claim_item, parse_claim_search_response, parse_playlist_item,
         parse_playlist_search_response, parse_resolve_response,
     };
     use crate::error::KiyyaError;

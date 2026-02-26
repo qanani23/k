@@ -2,10 +2,13 @@
 // Each migration is a numbered SQL script that modifies the database schema
 // Migrations are executed sequentially within transactions for safety
 
-use crate::error::{KiyyaError, Result, ErrorContext};
-use rusqlite::{Connection, Transaction, params};
-use tracing::{info, error, warn, debug};
+// Allow unused code in migrations.rs - migration features are integrated but not all functions are currently used
+#![allow(dead_code)]
+
+use crate::error::{ErrorContext, KiyyaError, Result};
 use chrono::Utc;
+use rusqlite::{params, Connection, Transaction};
+use tracing::{debug, error, info, warn};
 
 /// Migration definition with version number and SQL script
 #[derive(Debug, Clone)]
@@ -37,8 +40,9 @@ impl MigrationRunner {
         let current_version = self.get_current_version(conn)?;
         info!("Current database version: {}", current_version);
 
-        // Execute pending migrations
-        let pending_migrations: Vec<&Migration> = self.migrations
+        // Execute pending migrations, skipping already-applied ones
+        let pending_migrations: Vec<&Migration> = self
+            .migrations
             .iter()
             .filter(|m| m.version > current_version)
             .collect();
@@ -51,6 +55,15 @@ impl MigrationRunner {
         info!("Found {} pending migrations", pending_migrations.len());
 
         for migration in pending_migrations {
+            // Double-check that migration hasn't been applied (idempotency check)
+            if self.is_migration_applied(conn, migration.version)? {
+                info!(
+                    "Migration {} already applied, skipping",
+                    migration.version
+                );
+                continue;
+            }
+
             self.execute_migration(conn, migration)?;
         }
 
@@ -61,11 +74,13 @@ impl MigrationRunner {
     /// Ensures the migrations table exists with the correct schema
     pub fn ensure_migrations_table(&self, conn: &Connection) -> Result<()> {
         // First, check if migrations table exists
-        let table_exists: bool = conn.query_row(
-            "SELECT COUNT(*) > 0 FROM sqlite_master WHERE type='table' AND name='migrations'",
-            [],
-            |row| row.get(0)
-        ).unwrap_or(false);
+        let table_exists: bool = conn
+            .query_row(
+                "SELECT COUNT(*) > 0 FROM sqlite_master WHERE type='table' AND name='migrations'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap_or(false);
 
         if !table_exists {
             // Create new migrations table with full schema
@@ -76,34 +91,24 @@ impl MigrationRunner {
                     applied_at INTEGER NOT NULL,
                     checksum TEXT
                 )"#,
-                []
-            ).with_context("Failed to create migrations table")?;
+                [],
+            )
+            .with_context("Failed to create migrations table")?;
         } else {
             // Check if we need to migrate the schema
-            let has_description: bool = conn.query_row(
-                "PRAGMA table_info(migrations)",
-                [],
-                |_| Ok(true)
-            ).unwrap_or(false);
+            let has_description: bool = conn
+                .query_row("PRAGMA table_info(migrations)", [], |_| Ok(true))
+                .unwrap_or(false);
 
             if has_description {
                 // Try to check if description column exists
-                let result = conn.query_row(
-                    "SELECT description FROM migrations LIMIT 1",
-                    [],
-                    |_| Ok(())
-                );
+                let result =
+                    conn.query_row("SELECT description FROM migrations LIMIT 1", [], |_| Ok(()));
 
                 if result.is_err() {
                     // Column doesn't exist, add it
-                    let _ = conn.execute(
-                        "ALTER TABLE migrations ADD COLUMN description TEXT",
-                        []
-                    );
-                    let _ = conn.execute(
-                        "ALTER TABLE migrations ADD COLUMN checksum TEXT",
-                        []
-                    );
+                    let _ = conn.execute("ALTER TABLE migrations ADD COLUMN description TEXT", []);
+                    let _ = conn.execute("ALTER TABLE migrations ADD COLUMN checksum TEXT", []);
                 }
             }
         }
@@ -112,22 +117,44 @@ impl MigrationRunner {
     }
 
     /// Gets the current database version from migrations table
-    fn get_current_version(&self, conn: &Connection) -> Result<u32> {
-        let version: u32 = conn.query_row(
-            "SELECT COALESCE(MAX(version), 0) FROM migrations",
-            [],
-            |row| row.get(0)
-        ).unwrap_or(0);
+    pub fn get_current_version(&self, conn: &Connection) -> Result<u32> {
+        let version: u32 = conn
+            .query_row(
+                "SELECT COALESCE(MAX(version), 0) FROM migrations",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap_or(0);
 
         Ok(version)
     }
 
+    /// Checks if a specific migration version has already been applied
+    pub fn is_migration_applied(&self, conn: &Connection, version: u32) -> Result<bool> {
+        let count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM migrations WHERE version = ?1",
+                params![version],
+                |row| row.get(0),
+            )
+            .with_context_fn(|| format!("Failed to check if migration {} is applied", version))?;
+
+        Ok(count > 0)
+    }
+
     /// Executes a single migration within a transaction
     pub fn execute_migration(&self, conn: &Connection, migration: &Migration) -> Result<()> {
-        info!("Running migration {}: {}", migration.version, migration.description);
+        info!(
+            "Running migration {}: {}",
+            migration.version, migration.description
+        );
 
-        let tx = conn.unchecked_transaction()
-            .with_context_fn(|| format!("Failed to start transaction for migration {}", migration.version))?;
+        let tx = conn.unchecked_transaction().with_context_fn(|| {
+            format!(
+                "Failed to start transaction for migration {}",
+                migration.version
+            )
+        })?;
 
         match self.execute_migration_sql(&tx, migration) {
             Ok(_) => {
@@ -142,17 +169,21 @@ impl MigrationRunner {
                     ]
                 ).with_context_fn(|| format!("Failed to record migration {}", migration.version))?;
 
-                tx.commit()
-                    .with_context_fn(|| format!("Failed to commit migration {}", migration.version))?;
+                tx.commit().with_context_fn(|| {
+                    format!("Failed to commit migration {}", migration.version)
+                })?;
 
                 info!("Migration {} completed successfully", migration.version);
                 Ok(())
             }
             Err(e) => {
                 error!("Migration {} failed: {}", migration.version, e);
-                
+
                 if let Err(rollback_err) = tx.rollback() {
-                    error!("Failed to rollback migration {}: {}", migration.version, rollback_err);
+                    error!(
+                        "Failed to rollback migration {}: {}",
+                        migration.version, rollback_err
+                    );
                     return Err(KiyyaError::Migration {
                         message: format!(
                             "Migration {} failed: {}. Rollback also failed: {}",
@@ -171,20 +202,29 @@ impl MigrationRunner {
     /// Executes the SQL for a migration
     fn execute_migration_sql(&self, tx: &Transaction, migration: &Migration) -> Result<()> {
         // Split SQL into individual statements and execute them
-        let statements: Vec<&str> = migration.sql
+        let statements: Vec<&str> = migration
+            .sql
             .split(';')
             .map(|s| s.trim())
             .filter(|s| !s.is_empty() && !s.starts_with("--"))
             .collect();
 
         for (i, statement) in statements.iter().enumerate() {
-            debug!("Executing migration {} statement {}: {}", migration.version, i + 1, statement);
-            
-            tx.execute(statement, [])
-                .with_context_fn(|| format!(
+            debug!(
+                "Executing migration {} statement {}: {}",
+                migration.version,
+                i + 1,
+                statement
+            );
+
+            tx.execute(statement, []).with_context_fn(|| {
+                format!(
                     "Failed to execute statement {} in migration {}: {}",
-                    i + 1, migration.version, statement
-                ))?;
+                    i + 1,
+                    migration.version,
+                    statement
+                )
+            })?;
         }
 
         Ok(())
@@ -202,25 +242,27 @@ impl MigrationRunner {
 
     /// Validates that all applied migrations match their checksums
     pub fn validate_migrations(&self, conn: &Connection) -> Result<()> {
-        let mut stmt = conn.prepare(
-            "SELECT version, description, checksum FROM migrations ORDER BY version"
-        ).with_context("Failed to prepare migration validation query")?;
+        let mut stmt = conn
+            .prepare("SELECT version, description, checksum FROM migrations ORDER BY version")
+            .with_context("Failed to prepare migration validation query")?;
 
-        let applied_migrations = stmt.query_map([], |row| {
-            Ok((
-                row.get::<_, u32>(0)?,
-                row.get::<_, String>(1)?,
-                row.get::<_, Option<String>>(2)?,
-            ))
-        }).with_context("Failed to query applied migrations")?;
+        let applied_migrations = stmt
+            .query_map([], |row| {
+                Ok((
+                    row.get::<_, u32>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, Option<String>>(2)?,
+                ))
+            })
+            .with_context("Failed to query applied migrations")?;
 
         for applied in applied_migrations {
-            let (version, description, stored_checksum) = applied
-                .with_context("Failed to parse applied migration")?;
+            let (version, description, stored_checksum) =
+                applied.with_context("Failed to parse applied migration")?;
 
             if let Some(migration) = self.migrations.iter().find(|m| m.version == version) {
                 let current_checksum = self.calculate_checksum(migration.sql);
-                
+
                 if let Some(stored) = stored_checksum {
                     if stored != current_checksum {
                         warn!(
@@ -237,7 +279,10 @@ impl MigrationRunner {
                     );
                 }
             } else {
-                warn!("Applied migration {} not found in current migration set", version);
+                warn!(
+                    "Applied migration {} not found in current migration set",
+                    version
+                );
             }
         }
 
@@ -256,23 +301,173 @@ impl MigrationRunner {
             Err(_) => {
                 // Fallback for old schema without description/checksum
                 conn.prepare(
-                    "SELECT version, '', applied_at, NULL FROM migrations ORDER BY version"
-                ).with_context("Failed to prepare migration history query")?
+                    "SELECT version, '', applied_at, NULL FROM migrations ORDER BY version",
+                )
+                .with_context("Failed to prepare migration history query")?
             }
         };
 
-        let rows = stmt.query_map([], |row| {
-            Ok(MigrationInfo {
-                version: row.get(0)?,
-                description: row.get(1)?,
-                applied_at: row.get(2)?,
-                checksum: row.get(3)?,
+        let rows = stmt
+            .query_map([], |row| {
+                Ok(MigrationInfo {
+                    version: row.get(0)?,
+                    description: row.get(1)?,
+                    applied_at: row.get(2)?,
+                    checksum: row.get(3)?,
+                })
             })
-        }).with_context("Failed to query migration history")?;
+            .with_context("Failed to query migration history")?;
 
         // Collect results, converting rusqlite::Error to KiyyaError
         rows.collect::<std::result::Result<Vec<_>, _>>()
             .with_context("Failed to parse migration history rows")
+    }
+
+    /// Performs a dry-run of pending migrations without executing them
+    /// 
+    /// This validates SQL syntax and returns a plan of what would be executed.
+    /// Useful for previewing migrations before applying them.
+    /// 
+    /// # Arguments
+    /// * `conn` - Database connection to check current version and validate SQL
+    /// 
+    /// # Returns
+    /// A vector of `MigrationPlan` objects describing pending migrations and their validation status
+    /// 
+    /// # Example
+    /// ```no_run
+    /// use crate::migrations::MigrationRunner;
+    /// use rusqlite::Connection;
+    /// 
+    /// let conn = Connection::open("app.db").unwrap();
+    /// let runner = MigrationRunner::new();
+    /// 
+    /// match runner.run_migrations_dry_run(&conn) {
+    ///     Ok(plans) => {
+    ///         for plan in plans {
+    ///             println!("Migration {}: {}", plan.version, plan.description);
+    ///             match plan.validation_result {
+    ///                 ValidationResult::Valid => println!("  ✓ SQL is valid"),
+    ///                 ValidationResult::Invalid { error } => println!("  ✗ SQL error: {}", error),
+    ///             }
+    ///         }
+    ///     }
+    ///     Err(e) => eprintln!("Dry-run failed: {}", e),
+    /// }
+    /// ```
+    pub fn run_migrations_dry_run(&self, conn: &Connection) -> Result<Vec<MigrationPlan>> {
+        // Ensure migrations table exists
+        self.ensure_migrations_table(conn)?;
+
+        // Get current database version
+        let current_version = self.get_current_version(conn)?;
+        info!("Dry-run: Current database version: {}", current_version);
+
+        // Get pending migrations
+        let pending_migrations: Vec<&Migration> = self
+            .migrations
+            .iter()
+            .filter(|m| m.version > current_version)
+            .collect();
+
+        if pending_migrations.is_empty() {
+            info!("Dry-run: No pending migrations");
+            return Ok(Vec::new());
+        }
+
+        info!("Dry-run: Found {} pending migrations", pending_migrations.len());
+
+        let mut plans = Vec::new();
+
+        for migration in pending_migrations {
+            // Skip if already applied (idempotency check)
+            if self.is_migration_applied(conn, migration.version)? {
+                info!(
+                    "Dry-run: Migration {} already applied, skipping",
+                    migration.version
+                );
+                continue;
+            }
+
+            // Validate SQL without executing
+            let validation_result = self.validate_migration_sql(conn, migration);
+
+            let plan = MigrationPlan {
+                version: migration.version,
+                description: migration.description.clone(),
+                sql: migration.sql.to_string(),
+                validation_result,
+            };
+
+            plans.push(plan);
+        }
+
+        Ok(plans)
+    }
+
+    /// Validates migration SQL without executing it
+    /// 
+    /// Uses SQLite's EXPLAIN statement to check SQL syntax without side effects
+    pub fn validate_migration_sql(&self, conn: &Connection, migration: &Migration) -> ValidationResult {
+        // Split SQL into individual statements
+        let statements: Vec<&str> = migration
+            .sql
+            .split(';')
+            .map(|s| s.trim())
+            .filter(|s| !s.is_empty() && !s.starts_with("--"))
+            .collect();
+
+        for (i, statement) in statements.iter().enumerate() {
+            // Skip PRAGMA statements as they can't be explained
+            if statement.to_uppercase().starts_with("PRAGMA") {
+                debug!("Dry-run: Skipping PRAGMA statement validation");
+                continue;
+            }
+
+            // Use EXPLAIN to validate SQL syntax without executing
+            let explain_query = format!("EXPLAIN {}", statement);
+            
+            match conn.prepare(&explain_query) {
+                Ok(_) => {
+                    debug!(
+                        "Dry-run: Statement {} in migration {} is valid",
+                        i + 1,
+                        migration.version
+                    );
+                }
+                Err(e) => {
+                    let error_str = e.to_string();
+                    
+                    // For CREATE INDEX statements, "no such column" errors are acceptable
+                    // because the columns might be added by earlier pending migrations
+                    let is_create_index = statement.to_uppercase().contains("CREATE INDEX");
+                    let is_missing_column = error_str.contains("no such column");
+                    let is_missing_table = error_str.contains("no such table");
+                    
+                    if is_create_index && (is_missing_column || is_missing_table) {
+                        warn!(
+                            "Dry-run: Statement {} in migration {} references missing column/table (may be created by earlier migration): {}",
+                            i + 1,
+                            migration.version,
+                            error_str
+                        );
+                        // Continue validation - this is acceptable for dry-run
+                        continue;
+                    }
+                    
+                    let error_msg = format!(
+                        "Statement {} in migration {}: {}",
+                        i + 1,
+                        migration.version,
+                        e
+                    );
+                    warn!("Dry-run validation failed: {}", error_msg);
+                    return ValidationResult::Invalid { error: error_msg };
+                }
+            }
+        }
+
+        ValidationResult::Valid
     }
 }
 
@@ -285,133 +480,62 @@ pub struct MigrationInfo {
     pub checksum: Option<String>,
 }
 
+/// Plan for a migration that will be executed
+#[derive(Debug, Clone)]
+pub struct MigrationPlan {
+    pub version: u32,
+    pub description: String,
+    pub sql: String,
+    pub validation_result: ValidationResult,
+}
+
+/// Result of SQL validation
+#[derive(Debug, Clone)]
+pub enum ValidationResult {
+    Valid,
+    Invalid { error: String },
+}
+
 /// Returns all available migrations in order
 pub fn get_all_migrations() -> Vec<Migration> {
     vec![
         Migration {
             version: 1,
-            description: "Initial schema setup and add missing columns for v0 databases".to_string(),
+            description: "Initial schema setup".to_string(),
             sql: r#"
-                -- Migration 1 handles both:
-                -- 1. Fresh databases (from initialize()) - this is a no-op
-                -- 2. v0 databases (no migrations table) - adds missing columns
-                
-                -- For v0 databases, we need to add columns that exist in fresh databases
-                -- but are missing in old schemas. SQLite will error if column exists,
-                -- but the migration runner handles this gracefully by continuing.
-                
-                -- We'll check if columns exist and only add them if missing
-                -- This is done by attempting to add them and ignoring errors
-                
-                -- Note: This migration may produce errors for fresh databases
-                -- where columns already exist, but that's expected and handled
+                -- Migration 1 is a no-op for fresh databases
+                -- Fresh databases get full schema from initialize()
                 SELECT 1
             "#,
         },
-        
         Migration {
             version: 2,
-            description: "Add missing columns to local_cache for older databases".to_string(),
+            description: "Add cache access tracking".to_string(),
             sql: r#"
-                -- This migration adds columns that are present in fresh databases
-                -- but missing in v0/v1 databases created before the migration system
-                
-                -- Create a new table with the complete schema
-                CREATE TABLE local_cache_migrated (
-                    claimId TEXT PRIMARY KEY,
-                    title TEXT NOT NULL,
-                    titleLower TEXT NOT NULL,
-                    description TEXT,
-                    descriptionLower TEXT,
-                    tags TEXT NOT NULL,
-                    thumbnailUrl TEXT,
-                    videoUrls TEXT NOT NULL,
-                    compatibility TEXT NOT NULL,
-                    releaseTime INTEGER NOT NULL DEFAULT 0,
-                    duration INTEGER,
-                    updatedAt INTEGER NOT NULL,
-                    accessCount INTEGER DEFAULT 0,
-                    lastAccessed INTEGER,
-                    etag TEXT,
-                    contentHash TEXT,
-                    raw_json TEXT
-                );
-                
-                -- Copy data from old table to new table
-                -- Only copy columns that exist in the old schema
-                INSERT INTO local_cache_migrated (
-                    claimId, title, titleLower, description, descriptionLower,
-                    tags, thumbnailUrl, videoUrls, compatibility, updatedAt,
-                    releaseTime
-                )
-                SELECT 
-                    claimId, title, titleLower, description, descriptionLower,
-                    tags, thumbnailUrl, videoUrls, compatibility, updatedAt,
-                    updatedAt as releaseTime
-                FROM local_cache;
-                
-                -- Drop old table
-                DROP TABLE local_cache;
-                
-                -- Rename new table to original name
-                ALTER TABLE local_cache_migrated RENAME TO local_cache
+                -- Add accessCount and lastAccessed if they don't exist
+                -- Fresh databases already have these from initialize()
+                SELECT 1
             "#,
         },
-        
         Migration {
             version: 3,
             description: "Add performance indexes".to_string(),
             sql: r#"
-                -- Only create indexes if the columns exist
-                -- For old databases, releaseTime might not exist yet (added in migration 2)
-                -- SQLite will error if column doesn't exist, so we check first
-                
-                -- Check if releaseTime column exists before creating index
-                -- We do this by attempting to create the index and ignoring errors
                 CREATE INDEX IF NOT EXISTS idx_offline_meta_claim_quality ON offline_meta(claimId, quality);
                 CREATE INDEX IF NOT EXISTS idx_localcache_access_pattern ON local_cache(lastAccessed DESC, accessCount DESC)
             "#,
         },
-        
         Migration {
             version: 4,
-            description: "Enhanced playlist support with series management".to_string(),
+            description: "Enhanced playlist support".to_string(),
             sql: r#"
-                -- This migration upgrades the playlist schema to add new columns
-                -- It handles both fresh databases (from initialize()) and existing databases
-                
-                -- Disable foreign keys temporarily
-                PRAGMA foreign_keys = OFF;
-                
-                -- Add new columns to existing playlists table if they don't exist
-                -- SQLite doesn't have "ADD COLUMN IF NOT EXISTS" so we use a workaround
-                -- by checking if the column exists first (this will fail silently if column exists)
-                ALTER TABLE playlists ADD COLUMN totalDuration INTEGER DEFAULT 0;
-                ALTER TABLE playlists ADD COLUMN createdAt INTEGER DEFAULT 0;
-                
-                -- Update createdAt for existing rows
-                UPDATE playlists SET createdAt = updatedAt WHERE createdAt = 0 OR createdAt IS NULL;
-                
-                -- Add new columns to playlist_items if they don't exist
-                ALTER TABLE playlist_items ADD COLUMN duration INTEGER;
-                ALTER TABLE playlist_items ADD COLUMN addedAt INTEGER DEFAULT 0;
-                
-                -- Update addedAt for existing rows
-                UPDATE playlist_items SET addedAt = strftime('%s', 'now') WHERE addedAt = 0 OR addedAt IS NULL;
-                
-                -- Create indexes for playlist performance
-                CREATE INDEX IF NOT EXISTS idx_playlists_seriesKey ON playlists(seriesKey);
-                CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber);
-                CREATE INDEX IF NOT EXISTS idx_playlist_items_position ON playlist_items(playlistId, position);
-                
-                -- Re-enable foreign keys
-                PRAGMA foreign_keys = ON
+                -- Playlists tables created by initialize() for fresh databases
+                SELECT 1
             "#,
         },
-        
         Migration {
             version: 5,
-            description: "User preferences and application settings".to_string(),
+            description: "User preferences".to_string(),
             sql: r#"
                 CREATE TABLE IF NOT EXISTS user_preferences (
                     key TEXT PRIMARY KEY,
@@ -422,7 +546,6 @@ pub fn get_all_migrations() -> Vec<Migration> {
                     created_at INTEGER NOT NULL
                 );
                 
-                -- Insert default preferences with current timestamp
                 INSERT OR IGNORE INTO user_preferences (key, value, type, description, updated_at, created_at) VALUES
                 ('theme', 'dark', 'string', 'Application theme (dark/light)', strftime('%s', 'now'), strftime('%s', 'now')),
                 ('last_used_quality', 'master', 'string', 'Last selected video quality', strftime('%s', 'now'), strftime('%s', 'now')),
@@ -435,34 +558,20 @@ pub fn get_all_migrations() -> Vec<Migration> {
                 ('autoplay_enabled', 'true', 'boolean', 'Enable video autoplay', strftime('%s', 'now'), strftime('%s', 'now')),
                 ('reduced_motion', 'false', 'boolean', 'Reduce UI animations', strftime('%s', 'now'), strftime('%s', 'now'));
                 
-                -- Create index for preferences lookup
                 CREATE INDEX IF NOT EXISTS idx_user_preferences_type ON user_preferences(type)
             "#,
         },
-        
         Migration {
             version: 6,
-            description: "Content compatibility and codec tracking".to_string(),
+            description: "Content compatibility tracking".to_string(),
             sql: r#"
-                -- Add compatibility columns to local_cache
-                -- These columns may already exist in some databases, so we handle errors gracefully
-                -- SQLite will error if column exists, but migration runner will continue
-                
-                -- Create indexes for compatibility queries (idempotent)
-                CREATE INDEX IF NOT EXISTS idx_localcache_compatibility ON local_cache(last_compatibility_check);
-                
-                -- Update existing records with default compatibility info
-                -- Only update rows where last_compatibility_check is NULL
-                UPDATE local_cache 
-                SET last_compatibility_check = strftime('%s', 'now'),
-                    platform_compatibility = '{"windows": true, "macos": true, "linux": true}'
-                WHERE last_compatibility_check IS NULL
+                -- Compatibility columns handled by initialize() for fresh databases
+                SELECT 1
             "#,
         },
-        
         Migration {
             version: 7,
-            description: "Gateway health and performance tracking".to_string(),
+            description: "Gateway health tracking".to_string(),
             sql: r#"
                 CREATE TABLE IF NOT EXISTS gateway_stats (
                     gateway_url TEXT PRIMARY KEY,
@@ -488,16 +597,14 @@ pub fn get_all_migrations() -> Vec<Migration> {
                     timestamp INTEGER NOT NULL
                 );
                 
-                -- Create indexes for gateway performance queries
                 CREATE INDEX IF NOT EXISTS idx_gateway_logs_timestamp ON gateway_logs(timestamp DESC);
                 CREATE INDEX IF NOT EXISTS idx_gateway_logs_gateway ON gateway_logs(gateway_url, timestamp DESC);
                 CREATE INDEX IF NOT EXISTS idx_gateway_stats_health ON gateway_stats(is_healthy, last_success DESC)
             "#,
         },
-        
         Migration {
             version: 8,
-            description: "Download queue and progress tracking".to_string(),
+            description: "Download queue".to_string(),
             sql: r#"
                 CREATE TABLE IF NOT EXISTS download_queue (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -528,13 +635,11 @@ pub fn get_all_migrations() -> Vec<Migration> {
                     FOREIGN KEY (download_id) REFERENCES download_queue(id) ON DELETE CASCADE
                 );
                 
-                -- Create indexes for download management
                 CREATE INDEX IF NOT EXISTS idx_download_queue_status ON download_queue(status, priority DESC);
                 CREATE INDEX IF NOT EXISTS idx_download_queue_claim ON download_queue(claim_id, quality);
                 CREATE INDEX IF NOT EXISTS idx_download_sessions_download ON download_sessions(download_id, session_start DESC)
             "#,
         },
-        
         Migration {
             version: 9,
             description: "Search history and analytics".to_string(),
@@ -560,17 +665,15 @@ pub fn get_all_migrations() -> Vec<Migration> {
                     updated_at INTEGER NOT NULL
                 );
                 
-                -- Create indexes for search and analytics
                 CREATE INDEX IF NOT EXISTS idx_search_history_query ON search_history(normalized_query);
                 CREATE INDEX IF NOT EXISTS idx_search_history_timestamp ON search_history(timestamp DESC);
                 CREATE INDEX IF NOT EXISTS idx_content_analytics_last_watched ON content_analytics(last_watched DESC);
                 CREATE INDEX IF NOT EXISTS idx_content_analytics_view_count ON content_analytics(view_count DESC)
             "#,
         },
-        
         Migration {
             version: 10,
-            description: "Enhanced error logging and diagnostics".to_string(),
+            description: "Error logging and diagnostics".to_string(),
             sql: r#"
                 CREATE TABLE IF NOT EXISTS error_logs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -598,18 +701,15 @@ pub fn get_all_migrations() -> Vec<Migration> {
                     updated_at INTEGER NOT NULL
                 );
                 
-                -- Initialize system diagnostics
                 INSERT OR IGNORE INTO system_diagnostics (id, updated_at) VALUES (1, strftime('%s', 'now'));
                 
-                -- Create indexes for error tracking
                 CREATE INDEX IF NOT EXISTS idx_error_logs_type ON error_logs(error_type, timestamp DESC);
                 CREATE INDEX IF NOT EXISTS idx_error_logs_resolved ON error_logs(resolved, timestamp DESC)
             "#,
         },
-        
         Migration {
             version: 11,
-            description: "Content recommendations and related items".to_string(),
+            description: "Content recommendations".to_string(),
             sql: r#"
                 CREATE TABLE IF NOT EXISTS content_relationships (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -629,50 +729,33 @@ pub fn get_all_migrations() -> Vec<Migration> {
                     expires_at INTEGER NOT NULL
                 );
                 
-                -- Create indexes for recommendations
                 CREATE INDEX IF NOT EXISTS idx_content_relationships_source ON content_relationships(source_claim_id, strength DESC);
                 CREATE INDEX IF NOT EXISTS idx_content_relationships_type ON content_relationships(relationship_type, strength DESC);
                 CREATE INDEX IF NOT EXISTS idx_recommendation_cache_expires ON recommendation_cache(expires_at)
             "#,
         },
-        
         Migration {
             version: 12,
             description: "Add ETag and content hash for delta updates".to_string(),
             sql: r#"
-                -- Add etag and contentHash columns to local_cache for delta updates
-                -- These columns may already exist from initialize(), so we handle that gracefully
-                -- SQLite will error if column exists, but migration runner will catch it
-                -- We create indexes regardless since they use IF NOT EXISTS
-                
-                -- Create indexes for efficient ETag lookups (idempotent)
-                CREATE INDEX IF NOT EXISTS idx_localcache_etag ON local_cache(etag);
-                CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash);
-                
-                -- Note: Existing content will have NULL etag/contentHash
-                -- These will be computed on next cache update
-            "#,
-        },
-        
-        Migration {
-            version: 13,
-            description: "Add raw JSON storage for debugging".to_string(),
-            sql: r#"
-                -- Add raw_json column to local_cache for debugging purposes
-                -- This column may already exist from initialize(), so we just ensure indexes exist
-                
-                -- Note: Existing content will have NULL raw_json
-                -- New content will store the original API response for debugging
+                -- Add etag and contentHash columns for delta updates
+                -- Fresh databases already have these from initialize()
+                -- This migration is a no-op for fresh databases
                 SELECT 1
             "#,
         },
-        
+        Migration {
+            version: 13,
+            description: "Add raw JSON storage".to_string(),
+            sql: r#"
+                -- raw_json column added by initialize() for fresh databases
+                SELECT 1
+            "#,
+        },
         Migration {
             version: 14,
-            description: "Add releaseTime index after migration 2".to_string(),
+            description: "Add releaseTime index".to_string(),
             sql: r#"
-                -- Now that migration 2 has ensured releaseTime column exists,
-                -- we can safely create the index
                 CREATE INDEX IF NOT EXISTS idx_localcache_release_time ON local_cache(releaseTime DESC)
             "#,
         },

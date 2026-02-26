@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod hero_single_item_tests {
     use crate::database::Database;
-    use crate::models::{ContentItem, VideoUrl, CompatibilityInfo, CacheQuery};
+    use crate::models::{CacheQuery, CompatibilityInfo, ContentItem, VideoUrl};
     use std::collections::HashMap;
     use tempfile::TempDir;
 

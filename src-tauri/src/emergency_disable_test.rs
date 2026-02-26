@@ -58,7 +58,7 @@ mod tests {
 
         let manifest: Result<VersionManifest, _> = serde_json::from_str(json);
         assert!(manifest.is_ok());
-        
+
         let manifest = manifest.unwrap();
         assert!(!manifest.is_emergency_disabled());
     }

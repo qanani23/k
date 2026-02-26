@@ -1,21 +1,21 @@
 /// Property-Based Tests for Partial Success When Processing Multiple Claims
-/// 
+///
 /// **Feature: odysee-cdn-playback-standardization, Property 5: Partial Success When Processing Multiple Claims**
-/// 
+///
 /// For any list of claim metadata where some claims have valid claim_id and stream type and others
 /// have missing claim_id or non-stream type, the parsing function should:
 /// - Return ContentItems for all claims with valid claim_id and stream type
 /// - Not fail the entire batch due to individual claim failures
 /// - Produce a result list with length equal to the number of valid stream claims
-/// 
+///
 /// **Validates: Requirements 5.1, 5.2, 5.5**
 
 #[cfg(test)]
 mod partial_success_property_tests {
     use crate::commands::parse_claim_search_response;
     use crate::models::OdyseeResponse;
-    use serde_json::json;
     use proptest::prelude::*;
+    use serde_json::json;
 
     /// Strategy for generating valid claim IDs (alphanumeric, 20-40 chars)
     fn claim_id_strategy() -> impl Strategy<Value = String> {
@@ -49,10 +49,21 @@ mod partial_success_property_tests {
     /// Enum representing different types of claims for testing
     #[derive(Debug, Clone)]
     enum ClaimVariant {
-        ValidStream { claim_id: String, title: String },
-        MissingClaimId { title: String },
-        EmptyClaimId { title: String },
-        NonStreamType { claim_id: String, title: String, claim_type: String },
+        ValidStream {
+            claim_id: String,
+            title: String,
+        },
+        MissingClaimId {
+            title: String,
+        },
+        EmptyClaimId {
+            title: String,
+        },
+        NonStreamType {
+            claim_id: String,
+            title: String,
+            claim_type: String,
+        },
     }
 
     /// Strategy for generating a mix of valid and invalid claims
@@ -60,26 +71,31 @@ mod partial_success_property_tests {
         prop_oneof![
             // Valid stream claims (should succeed)
             (claim_id_strategy(), title_strategy()).prop_map(|(id, title)| {
-                ClaimVariant::ValidStream { claim_id: id, title }
+                ClaimVariant::ValidStream {
+                    claim_id: id,
+                    title,
+                }
             }),
             // Missing claim_id (should be skipped)
-            title_strategy().prop_map(|title| {
-                ClaimVariant::MissingClaimId { title }
-            }),
+            title_strategy().prop_map(|title| { ClaimVariant::MissingClaimId { title } }),
             // Empty claim_id (should be skipped)
-            title_strategy().prop_map(|title| {
-                ClaimVariant::EmptyClaimId { title }
-            }),
+            title_strategy().prop_map(|title| { ClaimVariant::EmptyClaimId { title } }),
             // Non-stream type (should be skipped)
-            (claim_id_strategy(), title_strategy(), claim_type_strategy()).prop_map(|(id, title, claim_type)| {
-                // Filter out "stream" type to ensure this is non-stream
-                let non_stream_type = if claim_type == "stream" {
-                    "channel".to_string()
-                } else {
-                    claim_type
-                };
-                ClaimVariant::NonStreamType { claim_id: id, title, claim_type: non_stream_type }
-            }),
+            (claim_id_strategy(), title_strategy(), claim_type_strategy()).prop_map(
+                |(id, title, claim_type)| {
+                    // Filter out "stream" type to ensure this is non-stream
+                    let non_stream_type = if claim_type == "stream" {
+                        "channel".to_string()
+                    } else {
+                        claim_type
+                    };
+                    ClaimVariant::NonStreamType {
+                        claim_id: id,
+                        title,
+                        claim_type: non_stream_type,
+                    }
+                }
+            ),
         ]
     }
 
@@ -115,7 +131,11 @@ mod partial_success_property_tests {
                     "timestamp": 1234567890
                 })
             }
-            ClaimVariant::NonStreamType { claim_id, title, claim_type } => {
+            ClaimVariant::NonStreamType {
+                claim_id,
+                title,
+                claim_type,
+            } => {
                 json!({
                     "claim_id": claim_id,
                     "value_type": claim_type,
@@ -294,7 +314,7 @@ mod partial_success_property_tests {
             };
 
             let result = parse_claim_search_response(response);
-            
+
             // Property: Should not fail (should return Ok with empty array)
             prop_assert!(
                 result.is_ok(),
@@ -400,7 +420,7 @@ mod partial_success_property_tests {
 
             // Build items list with valid claims and invalid claims at specified positions
             let mut invalid_iter = invalid_positions.iter();
-            
+
             for (i, (claim_id, title)) in valid_claims.iter().enumerate() {
                 // Maybe insert an invalid claim before this valid one
                 if let Some(&pos) = invalid_iter.next() {
@@ -525,7 +545,7 @@ mod partial_success_property_tests {
 
             if let Ok(content_items) = result {
                 let expected_count = valid_before.len() + valid_after.len();
-                
+
                 // Property: Should have all valid claims (before and after errors)
                 prop_assert_eq!(
                     content_items.len(),

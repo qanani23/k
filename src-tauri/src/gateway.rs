@@ -1,14 +1,14 @@
 use crate::error::{KiyyaError, Result};
-use crate::models::{OdyseeRequest, OdyseeResponse, GatewayHealth};
+use crate::models::{GatewayHealth, OdyseeRequest, OdyseeResponse};
 use crate::path_security;
 use crate::security_logging::{log_security_event, SecurityEvent};
+use rand::Rng;
 use reqwest::Client;
-use std::time::{Duration, Instant};
 use std::fs::OpenOptions;
 use std::io::Write;
+use std::time::{Duration, Instant};
 use tokio::time::sleep;
-use tracing::{info, warn, error};
-use rand::Rng;
+use tracing::{error, info, warn};
 
 pub struct GatewayClient {
     /// IMMUTABLE gateway priority order: primary → secondary → fallback
@@ -19,6 +19,7 @@ pub struct GatewayClient {
     gateways: Vec<String>,
     /// Internal tracking field - does NOT affect priority order
     /// Priority order is always: gateways[0] → gateways[1] → gateways[2]
+    #[allow(dead_code)]
     current_gateway: usize,
     client: Client,
     health_stats: Vec<GatewayHealth>,
@@ -36,18 +37,21 @@ impl GatewayClient {
         // Priority: primary → secondary → fallback
         // This order is enforced by the task requirements and ensures consistent failover behavior
         let gateways = vec![
-            "https://api.na-backend.odysee.com/api/v1/proxy".to_string(),  // Primary (index 0)
-            "https://api.lbry.tv/api/v1/proxy".to_string(),                // Secondary (index 1)
-            "https://api.odysee.com/api/v1/proxy".to_string(),             // Fallback (index 2)
+            "https://api.na-backend.odysee.com/api/v1/proxy".to_string(), // Primary (index 0)
+            "https://api.lbry.tv/api/v1/proxy".to_string(),               // Secondary (index 1)
+            "https://api.odysee.com/api/v1/proxy".to_string(),            // Fallback (index 2)
         ];
 
-        let health_stats = gateways.iter().map(|url| GatewayHealth {
-            url: url.clone(),
-            status: "unknown".to_string(),
-            last_success: None,
-            last_error: None,
-            response_time_ms: None,
-        }).collect();
+        let health_stats = gateways
+            .iter()
+            .map(|url| GatewayHealth {
+                url: url.clone(),
+                status: "unknown".to_string(),
+                last_success: None,
+                last_error: None,
+                response_time_ms: None,
+            })
+            .collect();
 
         Self {
             gateways,
@@ -57,13 +61,14 @@ impl GatewayClient {
                 .build()
                 .expect("Failed to create HTTP client"),
             health_stats,
-            max_attempts: 3, // Attempt all 3 gateways
+            max_attempts: 3,            // Attempt all 3 gateways
             max_retries_per_gateway: 2, // Retry each gateway up to 2 times before moving to next
-            base_delay_ms: 300, // Start with 300ms delay
+            base_delay_ms: 300,         // Start with 300ms delay
         }
     }
 
     pub async fn fetch_with_failover(&mut self, request: OdyseeRequest) -> Result<OdyseeResponse> {
+        #[allow(unused_assignments)]
         let mut last_error = None;
         let mut gateway_attempt = 0;
         let mut total_attempts = 0;
@@ -74,97 +79,108 @@ impl GatewayClient {
         while gateway_attempt < self.max_attempts && gateway_attempt < self.gateways.len() {
             let gateway_index = gateway_attempt; // Always use sequential order: 0, 1, 2
             let gateway_url = self.gateways[gateway_index].clone();
-            
-            info!("Trying gateway {} of {}: {} ({})", 
-                  gateway_attempt + 1, 
-                  self.max_attempts, 
-                  gateway_url,
-                  match gateway_index {
-                      0 => "PRIMARY",
-                      1 => "SECONDARY", 
-                      2 => "FALLBACK",
-                      _ => "UNKNOWN"
-                  });
-            
+
+            info!(
+                "Trying gateway {} of {}: {} ({})",
+                gateway_attempt + 1,
+                self.max_attempts,
+                gateway_url,
+                match gateway_index {
+                    0 => "PRIMARY",
+                    1 => "SECONDARY",
+                    2 => "FALLBACK",
+                    _ => "UNKNOWN",
+                }
+            );
+
             // Retry logic for individual gateway
             let mut retry_attempt = 0;
             while retry_attempt <= self.max_retries_per_gateway {
                 total_attempts += 1;
-                
+
                 let attempt_label = if retry_attempt == 0 {
                     "initial attempt".to_string()
                 } else {
                     format!("retry {}/{}", retry_attempt, self.max_retries_per_gateway)
                 };
-                
-                info!("Gateway {} ({}): {} (total attempt {})", 
-                      gateway_url,
-                      match gateway_index {
-                          0 => "PRIMARY",
-                          1 => "SECONDARY",
-                          2 => "FALLBACK",
-                          _ => "UNKNOWN"
-                      },
-                      attempt_label,
-                      total_attempts);
-                
+
+                info!(
+                    "Gateway {} ({}): {} (total attempt {})",
+                    gateway_url,
+                    match gateway_index {
+                        0 => "PRIMARY",
+                        1 => "SECONDARY",
+                        2 => "FALLBACK",
+                        _ => "UNKNOWN",
+                    },
+                    attempt_label,
+                    total_attempts
+                );
+
                 let start_time = Instant::now();
-                
+
                 match self.make_request(&gateway_url, &request).await {
                     Ok(response) => {
                         let response_time = start_time.elapsed();
                         self.log_gateway_success(gateway_index, response_time);
-                        
+
                         // DO NOT update current_gateway - maintain immutable priority order
                         // The next request will always start with primary gateway (index 0)
-                        
-                        info!("Gateway {} ({}) succeeded on {} after {}ms (total attempts: {})", 
-                              gateway_url, 
-                              match gateway_index {
-                                  0 => "PRIMARY",
-                                  1 => "SECONDARY",
-                                  2 => "FALLBACK", 
-                                  _ => "UNKNOWN"
-                              },
-                              attempt_label,
-                              response_time.as_millis(),
-                              total_attempts);
+
+                        info!(
+                            "Gateway {} ({}) succeeded on {} after {}ms (total attempts: {})",
+                            gateway_url,
+                            match gateway_index {
+                                0 => "PRIMARY",
+                                1 => "SECONDARY",
+                                2 => "FALLBACK",
+                                _ => "UNKNOWN",
+                            },
+                            attempt_label,
+                            response_time.as_millis(),
+                            total_attempts
+                        );
                         return Ok(response);
                     }
                     Err(e) => {
                         let response_time = start_time.elapsed();
-                        
+
                         // Check if this error is retryable before moving the error
                         let is_retryable = self.is_error_retryable(&e);
-                        
+
                         self.log_gateway_failure(gateway_index, &e, response_time);
                         last_error = Some(e);
-                        
-                        warn!("Gateway {} ({}) failed on {} after {}ms: {} (retryable: {})", 
-                              gateway_url,
-                              match gateway_index {
-                                  0 => "PRIMARY",
-                                  1 => "SECONDARY",
-                                  2 => "FALLBACK",
-                                  _ => "UNKNOWN"
-                              },
-                              attempt_label,
-                              response_time.as_millis(),
-                              last_error.as_ref().unwrap(),
-                              is_retryable);
-                        
+
+                        warn!(
+                            "Gateway {} ({}) failed on {} after {}ms: {} (retryable: {})",
+                            gateway_url,
+                            match gateway_index {
+                                0 => "PRIMARY",
+                                1 => "SECONDARY",
+                                2 => "FALLBACK",
+                                _ => "UNKNOWN",
+                            },
+                            attempt_label,
+                            response_time.as_millis(),
+                            last_error.as_ref().unwrap(),
+                            is_retryable
+                        );
+
                         // If error is not retryable or we've exhausted retries for this gateway, move to next gateway
                         if !is_retryable || retry_attempt >= self.max_retries_per_gateway {
-                            info!("Moving to next gateway after {} attempts on {}", 
-                                  retry_attempt + 1, gateway_url);
+                            info!(
+                                "Moving to next gateway after {} attempts on {}",
+                                retry_attempt + 1,
+                                gateway_url
+                            );
                             break;
                         }
-                        
+
                         // Apply retry delay with exponential backoff
                         if retry_attempt < self.max_retries_per_gateway {
                             let retry_delay = match retry_attempt {
                                 0 => 200,  // 200ms for first retry
-                                1 => 500,  // 500ms for second retry  
+                                1 => 500,  // 500ms for second retry
                                 _ => 1000, // 1s for subsequent retries
                             };
                             // Add jitter: 0-49ms random delay to prevent thundering herd
@@ -173,25 +189,27 @@ impl GatewayClient {
                                 rng.gen_range(0..50) // 0-49ms jitter for retries
                             };
                             let total_delay = Duration::from_millis(retry_delay + jitter);
-                            
-                            info!("Retrying gateway {} in {}ms (retry {}/{})", 
-                                  gateway_url, 
-                                  total_delay.as_millis(),
-                                  retry_attempt + 1,
-                                  self.max_retries_per_gateway);
+
+                            info!(
+                                "Retrying gateway {} in {}ms (retry {}/{})",
+                                gateway_url,
+                                total_delay.as_millis(),
+                                retry_attempt + 1,
+                                self.max_retries_per_gateway
+                            );
                             sleep(total_delay).await;
                         }
                     }
                 }
-                
+
                 retry_attempt += 1;
             }
-            
+
             // Apply gateway failover delay before trying next gateway
             if gateway_attempt < self.max_attempts - 1 {
                 let failover_delay = match gateway_attempt {
                     0 => 300,  // 300ms before trying secondary
-                    1 => 1000, // 1s before trying fallback  
+                    1 => 1000, // 1s before trying fallback
                     _ => 2000, // 2s for subsequent gateways
                 };
                 // Add jitter: 0-99ms random delay to prevent thundering herd
@@ -200,35 +218,48 @@ impl GatewayClient {
                     rng.gen_range(0..100) // 0-99ms jitter for failover
                 };
                 let total_delay = Duration::from_millis(failover_delay + jitter);
-                
-                info!("Gateway {} ({}) exhausted all retries, failing over to next gateway in {}ms", 
-                      gateway_url,
-                      match gateway_index {
-                          0 => "PRIMARY",
-                          1 => "SECONDARY",
-                          2 => "FALLBACK",
-                          _ => "UNKNOWN"
-                      },
-                      total_delay.as_millis());
+
+                info!(
+                    "Gateway {} ({}) exhausted all retries, failing over to next gateway in {}ms",
+                    gateway_url,
+                    match gateway_index {
+                        0 => "PRIMARY",
+                        1 => "SECONDARY",
+                        2 => "FALLBACK",
+                        _ => "UNKNOWN",
+                    },
+                    total_delay.as_millis()
+                );
                 sleep(total_delay).await;
             }
-            
+
             gateway_attempt += 1;
         }
 
         // All gateways failed - return comprehensive error
-        let final_error = KiyyaError::AllGatewaysFailed { attempts: total_attempts as u32 };
-        error!("All {} gateways failed after {} total attempts ({} gateway attempts)", 
-               self.gateways.len(), total_attempts, gateway_attempt);
-        
+        let final_error = KiyyaError::AllGatewaysFailed {
+            attempts: total_attempts as u32,
+        };
+        error!(
+            "All {} gateways failed after {} total attempts ({} gateway attempts)",
+            self.gateways.len(),
+            total_attempts,
+            gateway_attempt
+        );
+
         // Log the final failure to dedicated gateway log
         self.write_gateway_failure_summary(total_attempts as u32, &final_error);
-        
+
         Err(final_error)
     }
 
-    async fn make_request(&self, gateway_url: &str, request: &OdyseeRequest) -> Result<OdyseeResponse> {
-        let response = self.client
+    async fn make_request(
+        &self,
+        gateway_url: &str,
+        request: &OdyseeRequest,
+    ) -> Result<OdyseeResponse> {
+        let response = self
+            .client
             .post(gateway_url)
             .json(request)
             .send()
@@ -237,7 +268,9 @@ impl GatewayClient {
                 // Check if the error is a timeout
                 if e.is_timeout() {
                     warn!("Request to {} timed out after 10 seconds", gateway_url);
-                    KiyyaError::ApiTimeout { timeout_seconds: 10 }
+                    KiyyaError::ApiTimeout {
+                        timeout_seconds: 10,
+                    }
                 } else {
                     // Convert other reqwest errors to KiyyaError
                     KiyyaError::Network(e)
@@ -245,7 +278,7 @@ impl GatewayClient {
             })?;
 
         let status = response.status();
-        
+
         // Handle rate limiting (HTTP 429)
         if status.as_u16() == 429 {
             // Try to extract retry-after header
@@ -255,28 +288,39 @@ impl GatewayClient {
                 .and_then(|v| v.to_str().ok())
                 .and_then(|s| s.parse::<u64>().ok())
                 .unwrap_or(60); // Default to 60 seconds if header is missing
-            
+
             // Log rate limiting event
             log_security_event(SecurityEvent::RateLimitTriggered {
                 endpoint: gateway_url.to_string(),
                 retry_after_seconds,
             });
-            
-            warn!("Rate limit exceeded on {}: retry after {} seconds", gateway_url, retry_after_seconds);
-            return Err(KiyyaError::RateLimitExceeded { retry_after_seconds });
+
+            warn!(
+                "Rate limit exceeded on {}: retry after {} seconds",
+                gateway_url, retry_after_seconds
+            );
+            return Err(KiyyaError::RateLimitExceeded {
+                retry_after_seconds,
+            });
         }
 
         if !status.is_success() {
             return Err(KiyyaError::Gateway {
-                message: format!("HTTP {}: {}", status, status.canonical_reason().unwrap_or("Unknown error")),
+                message: format!(
+                    "HTTP {}: {}",
+                    status,
+                    status.canonical_reason().unwrap_or("Unknown error")
+                ),
             });
         }
 
         let odysee_response: OdyseeResponse = response.json().await?;
-        
+
         if !odysee_response.success {
             return Err(KiyyaError::Gateway {
-                message: odysee_response.error.unwrap_or_else(|| "Unknown Odysee API error".to_string()),
+                message: odysee_response
+                    .error
+                    .unwrap_or_else(|| "Unknown Odysee API error".to_string()),
             });
         }
 
@@ -298,7 +342,7 @@ impl GatewayClient {
                     true // Other network errors are generally retryable
                 }
             }
-            
+
             // Gateway errors with specific HTTP status codes
             KiyyaError::Gateway { message } => {
                 // Parse HTTP status codes from gateway error messages
@@ -308,7 +352,10 @@ impl GatewayClient {
                     true // Rate limiting is retryable (with backoff)
                 } else if message.contains("HTTP 408") {
                     true // Request timeout is retryable
-                } else if message.contains("HTTP 502") || message.contains("HTTP 503") || message.contains("HTTP 504") {
+                } else if message.contains("HTTP 502")
+                    || message.contains("HTTP 503")
+                    || message.contains("HTTP 504")
+                {
                     true // Bad gateway, service unavailable, gateway timeout are retryable
                 } else if message.contains("HTTP 4") {
                     false // 4xx client errors are generally not retryable
@@ -316,13 +363,13 @@ impl GatewayClient {
                     true // Unknown gateway errors default to retryable
                 }
             }
-            
+
             // API timeout errors are retryable
             KiyyaError::ApiTimeout { .. } => true,
-            
+
             // Rate limiting is retryable (backoff is handled separately)
             KiyyaError::RateLimitExceeded { .. } => true,
-            
+
             // IO errors might be transient
             KiyyaError::Io(io_error) => {
                 match io_error.kind() {
@@ -336,16 +383,16 @@ impl GatewayClient {
                     _ => false, // Other IO errors are likely not retryable
                 }
             }
-            
+
             // JSON parsing errors are not retryable (indicates malformed response)
             KiyyaError::Json(_) => false,
-            
+
             // Invalid API responses are not retryable
             KiyyaError::InvalidApiResponse { .. } => false,
-            
+
             // Content parsing errors are not retryable
             KiyyaError::ContentParsing { .. } => false,
-            
+
             // Most other errors are not retryable by default
             _ => false,
         }
@@ -358,10 +405,14 @@ impl GatewayClient {
             health.response_time_ms = Some(response_time.as_millis() as u64);
             health.last_error = None;
         }
-        
+
         let gateway_url = &self.gateways[gateway_index];
-        info!("Gateway {} responded successfully in {}ms", gateway_url, response_time.as_millis());
-        
+        info!(
+            "Gateway {} responded successfully in {}ms",
+            gateway_url,
+            response_time.as_millis()
+        );
+
         // Write success to dedicated gateway log file
         self.write_gateway_log_entry(
             gateway_url,
@@ -369,35 +420,46 @@ impl GatewayClient {
             &format!("Response time: {}ms", response_time.as_millis()),
             response_time,
         );
-        
+
         // Also log using the unified health logging interface
         self.log_gateway_health(gateway_url, true, response_time);
     }
 
-    fn log_gateway_failure(&mut self, gateway_index: usize, error: &KiyyaError, response_time: Duration) {
+    fn log_gateway_failure(
+        &mut self,
+        gateway_index: usize,
+        error: &KiyyaError,
+        response_time: Duration,
+    ) {
         if let Some(health) = self.health_stats.get_mut(gateway_index) {
             health.status = "down".to_string();
             health.last_error = Some(error.to_string());
             health.response_time_ms = Some(response_time.as_millis() as u64);
         }
-        
+
         let gateway_url = &self.gateways[gateway_index];
-        warn!("Gateway {} failed after {}ms: {}", gateway_url, response_time.as_millis(), error);
-        
-        // Write failure to dedicated gateway log file
-        self.write_gateway_log_entry(
+        warn!(
+            "Gateway {} failed after {}ms: {}",
             gateway_url,
-            "FAILURE",
-            &error.to_string(),
-            response_time,
+            response_time.as_millis(),
+            error
         );
-        
+
+        // Write failure to dedicated gateway log file
+        self.write_gateway_log_entry(gateway_url, "FAILURE", &error.to_string(), response_time);
+
         // Also log using the unified health logging interface
         self.log_gateway_health(gateway_url, false, response_time);
     }
 
     /// Writes a structured log entry to the dedicated gateway.log file
-    fn write_gateway_log_entry(&self, gateway_url: &str, status: &str, message: &str, response_time: Duration) {
+    fn write_gateway_log_entry(
+        &self,
+        gateway_url: &str,
+        status: &str,
+        message: &str,
+        response_time: Duration,
+    ) {
         let timestamp = chrono::Utc::now().to_rfc3339();
         let log_entry = format!(
             "{} | {} | {} | {}ms | {}\n",
@@ -407,14 +469,14 @@ impl GatewayClient {
             response_time.as_millis(),
             message
         );
-        
+
         // Write to gateway.log file in app data directory using path validation
         if let Ok(log_file_path) = path_security::validate_subdir_path("logs", "gateway.log") {
             // Ensure the logs directory exists
             if let Some(parent) = log_file_path.parent() {
                 let _ = std::fs::create_dir_all(parent);
             }
-            
+
             if let Ok(mut file) = OpenOptions::new()
                 .create(true)
                 .append(true)
@@ -424,7 +486,7 @@ impl GatewayClient {
                 let _ = file.flush();
             }
         }
-        
+
         // Also log to standard logging for development
         if status == "SUCCESS" {
             info!("GATEWAY_LOG: {}", log_entry.trim());
@@ -443,14 +505,14 @@ impl GatewayClient {
             self.gateways.len(),
             final_error
         );
-        
+
         // Write summary to gateway.log file using path validation
         if let Ok(log_file_path) = path_security::validate_subdir_path("logs", "gateway.log") {
             // Ensure the logs directory exists
             if let Some(parent) = log_file_path.parent() {
                 let _ = std::fs::create_dir_all(parent);
             }
-            
+
             if let Ok(mut file) = OpenOptions::new()
                 .create(true)
                 .append(true)
@@ -460,7 +522,7 @@ impl GatewayClient {
                 let _ = file.flush();
             }
         }
-        
+
         error!("GATEWAY_SUMMARY: {}", summary.trim());
     }
 
@@ -496,7 +558,7 @@ impl GatewayClient {
     pub fn log_gateway_health(&self, gateway: &str, success: bool, response_time: Duration) {
         let timestamp = chrono::Utc::now().to_rfc3339();
         let status = if success { "HEALTHY" } else { "UNHEALTHY" };
-        
+
         let log_entry = format!(
             "{} | HEALTH_CHECK | {} | {} | {}ms\n",
             timestamp,
@@ -504,14 +566,14 @@ impl GatewayClient {
             gateway,
             response_time.as_millis()
         );
-        
+
         // Write to gateway.log file in app data directory using path validation
         if let Ok(log_file_path) = path_security::validate_subdir_path("logs", "gateway.log") {
             // Ensure the logs directory exists
             if let Some(parent) = log_file_path.parent() {
                 let _ = std::fs::create_dir_all(parent);
             }
-            
+
             if let Ok(mut file) = OpenOptions::new()
                 .create(true)
                 .append(true)
@@ -521,12 +583,20 @@ impl GatewayClient {
                 let _ = file.flush();
             }
         }
-        
+
         // Also log to standard logging for development
         if success {
-            info!("GATEWAY_HEALTH: {} is healthy ({}ms)", gateway, response_time.as_millis());
+            info!(
+                "GATEWAY_HEALTH: {} is healthy ({}ms)",
+                gateway,
+                response_time.as_millis()
+            );
         } else {
-            warn!("GATEWAY_HEALTH: {} is unhealthy ({}ms)", gateway, response_time.as_millis());
+            warn!(
+                "GATEWAY_HEALTH: {} is unhealthy ({}ms)",
+                gateway,
+                response_time.as_millis()
+            );
         }
     }
 }
@@ -561,14 +631,17 @@ mod tests {
     #[test]
     fn test_gateway_client_creation() {
         let client = GatewayClient::new();
-        
+
         // Verify immutable gateway order
         let gateways = client.get_gateway_priority_order();
         assert_eq!(gateways.len(), 3);
-        assert_eq!(gateways[0], "https://api.na-backend.odysee.com/api/v1/proxy");
+        assert_eq!(
+            gateways[0],
+            "https://api.na-backend.odysee.com/api/v1/proxy"
+        );
         assert_eq!(gateways[1], "https://api.lbry.tv/api/v1/proxy");
         assert_eq!(gateways[2], "https://api.odysee.com/api/v1/proxy");
-        
+
         // Verify initial health stats
         let health_stats = client.get_health_stats();
         assert_eq!(health_stats.len(), 3);
@@ -577,7 +650,7 @@ mod tests {
             assert!(health.last_success.is_none());
             assert!(health.last_error.is_none());
         }
-        
+
         // Verify configuration
         let config = client.get_gateway_config();
         assert_eq!(config.max_attempts, 3);
@@ -589,29 +662,32 @@ mod tests {
     fn test_gateway_priority_immutability() {
         let client = GatewayClient::new();
         let original_order = client.get_gateway_priority_order().to_vec();
-        
+
         // Verify that the gateway order cannot be modified externally
         // (This is enforced by the API design - no reorder_gateways method)
         let gateways_after = client.get_gateway_priority_order();
         assert_eq!(original_order, gateways_after);
-        
+
         // Verify the order is exactly as specified in requirements
-        assert_eq!(gateways_after[0], "https://api.na-backend.odysee.com/api/v1/proxy"); // Primary
-        assert_eq!(gateways_after[1], "https://api.lbry.tv/api/v1/proxy");                // Secondary
-        assert_eq!(gateways_after[2], "https://api.odysee.com/api/v1/proxy");             // Fallback
+        assert_eq!(
+            gateways_after[0],
+            "https://api.na-backend.odysee.com/api/v1/proxy"
+        ); // Primary
+        assert_eq!(gateways_after[1], "https://api.lbry.tv/api/v1/proxy"); // Secondary
+        assert_eq!(gateways_after[2], "https://api.odysee.com/api/v1/proxy"); // Fallback
     }
 
     #[tokio::test]
     async fn test_failover_logic() {
         // This test verifies the failover logic without making actual HTTP requests
         // In a real scenario, we would mock the HTTP client or use a test server
-        
+
         let client = GatewayClient::new();
         let _request = create_test_request();
-        
+
         // Since we can't easily mock reqwest in this context, we'll test the logic
         // by verifying that the client attempts all gateways in the correct order
-        
+
         // The actual failover test would require mocking HTTP responses
         // For now, we verify the configuration is correct for failover
         assert_eq!(client.max_attempts, 3);
@@ -623,16 +699,16 @@ mod tests {
     #[test]
     fn test_exponential_backoff_calculation() {
         let client = GatewayClient::new();
-        
+
         // Test exponential backoff calculation: 300ms → 1s → 2s
-        let delay_0 = 300;  // 300ms for first retry
+        let delay_0 = 300; // 300ms for first retry
         let delay_1 = 1000; // 1s for second retry
         let delay_2 = 2000; // 2s for subsequent retries
-        
+
         assert_eq!(delay_0, 300);
         assert_eq!(delay_1, 1000);
         assert_eq!(delay_2, 2000);
-        
+
         // Verify base delay is still 300ms for configuration
         assert_eq!(client.base_delay_ms, 300);
     }
@@ -640,33 +716,46 @@ mod tests {
     #[test]
     fn test_exponential_backoff_with_jitter() {
         let client = GatewayClient::new();
-        
+
         // Test that jitter is properly applied to exponential backoff
         // We can't test the exact values due to randomness, but we can test the ranges
-        
+
         // Test multiple jitter generations to ensure they're in the correct range
         for _ in 0..100 {
             let jitter = {
                 let mut rng = rand::thread_rng();
                 rng.gen_range(0..100) // 0-99ms jitter
             };
-            
+
             // Jitter should be between 0 and 99 (inclusive)
-            assert!(jitter < 100, "Jitter should be less than 100ms, got {}", jitter);
-            
+            assert!(
+                jitter < 100,
+                "Jitter should be less than 100ms, got {}",
+                jitter
+            );
+
             // Test total delays with jitter
-            let delay_0_with_jitter = 300 + jitter;  // 300-399ms
+            let delay_0_with_jitter = 300 + jitter; // 300-399ms
             let delay_1_with_jitter = 1000 + jitter; // 1000-1099ms
             let delay_2_with_jitter = 2000 + jitter; // 2000-2099ms
-            
-            assert!(delay_0_with_jitter >= 300 && delay_0_with_jitter < 400, 
-                   "First retry delay with jitter should be 300-399ms, got {}", delay_0_with_jitter);
-            assert!(delay_1_with_jitter >= 1000 && delay_1_with_jitter < 1100, 
-                   "Second retry delay with jitter should be 1000-1099ms, got {}", delay_1_with_jitter);
-            assert!(delay_2_with_jitter >= 2000 && delay_2_with_jitter < 2100, 
-                   "Subsequent retry delay with jitter should be 2000-2099ms, got {}", delay_2_with_jitter);
+
+            assert!(
+                delay_0_with_jitter >= 300 && delay_0_with_jitter < 400,
+                "First retry delay with jitter should be 300-399ms, got {}",
+                delay_0_with_jitter
+            );
+            assert!(
+                delay_1_with_jitter >= 1000 && delay_1_with_jitter < 1100,
+                "Second retry delay with jitter should be 1000-1099ms, got {}",
+                delay_1_with_jitter
+            );
+            assert!(
+                delay_2_with_jitter >= 2000 && delay_2_with_jitter < 2100,
+                "Subsequent retry delay with jitter should be 2000-2099ms, got {}",
+                delay_2_with_jitter
+            );
         }
-        
+
         // Verify base delay is still 300ms for configuration
         assert_eq!(client.base_delay_ms, 300);
     }
@@ -675,9 +764,9 @@ mod tests {
     fn test_health_stats_initialization() {
         let client = GatewayClient::new();
         let health_stats = client.get_health_stats();
-        
+
         assert_eq!(health_stats.len(), 3);
-        
+
         for (i, health) in health_stats.iter().enumerate() {
             assert_eq!(health.url, client.gateways[i]);
             assert_eq!(health.status, "unknown");
@@ -691,8 +780,11 @@ mod tests {
     fn test_gateway_config_generation() {
         let client = GatewayClient::new();
         let config = client.get_gateway_config();
-        
-        assert_eq!(config.primary, "https://api.na-backend.odysee.com/api/v1/proxy");
+
+        assert_eq!(
+            config.primary,
+            "https://api.na-backend.odysee.com/api/v1/proxy"
+        );
         assert_eq!(config.secondary, "https://api.lbry.tv/api/v1/proxy");
         assert_eq!(config.fallback, "https://api.odysee.com/api/v1/proxy");
         assert_eq!(config.max_attempts, 3);
@@ -703,11 +795,14 @@ mod tests {
     #[test]
     fn test_current_gateway_tracking() {
         let client = GatewayClient::new();
-        
+
         // Should always return the primary gateway (immutable priority order)
-        assert_eq!(client.get_current_gateway(), "https://api.na-backend.odysee.com/api/v1/proxy");
+        assert_eq!(
+            client.get_current_gateway(),
+            "https://api.na-backend.odysee.com/api/v1/proxy"
+        );
         assert_eq!(client.current_gateway, 0);
-        
+
         // The current_gateway field is maintained for internal use but doesn't affect priority order
         // Priority order is always: primary (0) → secondary (1) → fallback (2)
     }
@@ -724,14 +819,14 @@ mod tests {
         // 4. Verify that exponential backoff is applied
         // 5. Verify that health stats are updated correctly
         // 6. Verify that gateway logs are written
-        
+
         let client = GatewayClient::new();
-        
+
         // Verify the client is properly configured for failover testing
         assert_eq!(client.gateways.len(), 3);
         assert_eq!(client.max_attempts, 3);
         assert_eq!(client.max_retries_per_gateway, 2);
-        
+
         // In a real test, we would make a request that fails on the first two gateways
         // and succeeds on the third, then verify:
         // - All three gateways were attempted in order
@@ -746,7 +841,7 @@ mod tests {
     fn test_gateway_health_logging() {
         let mut client = GatewayClient::new();
         let response_time = Duration::from_millis(250);
-        
+
         // Test success logging
         client.log_gateway_success(0, response_time);
         let health = &client.health_stats[0];
@@ -754,7 +849,7 @@ mod tests {
         assert!(health.last_success.is_some());
         assert_eq!(health.response_time_ms, Some(250));
         assert!(health.last_error.is_none());
-        
+
         // Test failure logging
         let error = KiyyaError::gateway_error("Connection timeout");
         client.log_gateway_failure(1, &error, response_time);
@@ -770,13 +865,13 @@ mod tests {
         let client = GatewayClient::new();
         let response_time = Duration::from_millis(150);
         let gateway_url = "https://api.na-backend.odysee.com/api/v1/proxy";
-        
+
         // Test successful health logging
         client.log_gateway_health(gateway_url, true, response_time);
-        
+
         // Test failed health logging
         client.log_gateway_health(gateway_url, false, response_time);
-        
+
         // Note: In a real test environment, we would verify that the log entries
         // were written to the gateway.log file. For unit tests, we're primarily
         // testing that the method doesn't panic and handles the parameters correctly.
@@ -787,15 +882,18 @@ mod tests {
     fn test_gateway_priority_consistency() {
         // Create multiple client instances and verify they all have the same gateway order
         let clients: Vec<GatewayClient> = (0..10).map(|_| GatewayClient::new()).collect();
-        
+
         let reference_order = clients[0].get_gateway_priority_order();
-        
+
         for client in &clients {
             assert_eq!(client.get_gateway_priority_order(), reference_order);
         }
-        
+
         // Verify the order matches the specification exactly
-        assert_eq!(reference_order[0], "https://api.na-backend.odysee.com/api/v1/proxy");
+        assert_eq!(
+            reference_order[0],
+            "https://api.na-backend.odysee.com/api/v1/proxy"
+        );
         assert_eq!(reference_order[1], "https://api.lbry.tv/api/v1/proxy");
         assert_eq!(reference_order[2], "https://api.odysee.com/api/v1/proxy");
     }
@@ -804,32 +902,41 @@ mod tests {
     #[test]
     fn test_gateway_priority_immutability_enforcement() {
         let mut client = GatewayClient::new();
-        
+
         // Record the initial gateway order
         let initial_order = client.get_gateway_priority_order().to_vec();
-        
+
         // Simulate multiple successful requests that would previously change current_gateway
         // With the new implementation, priority order should remain unchanged
-        
+
         // Verify that get_current_gateway always returns primary
         assert_eq!(client.get_current_gateway(), initial_order[0]);
-        
+
         // Verify that the gateway order is still the same
-        assert_eq!(client.get_gateway_priority_order(), initial_order.as_slice());
-        
+        assert_eq!(
+            client.get_gateway_priority_order(),
+            initial_order.as_slice()
+        );
+
         // Verify the order is exactly: primary → secondary → fallback
         let gateways = client.get_gateway_priority_order();
-        assert_eq!(gateways[0], "https://api.na-backend.odysee.com/api/v1/proxy"); // Primary
-        assert_eq!(gateways[1], "https://api.lbry.tv/api/v1/proxy");                // Secondary  
-        assert_eq!(gateways[2], "https://api.odysee.com/api/v1/proxy");             // Fallback
-        
+        assert_eq!(
+            gateways[0],
+            "https://api.na-backend.odysee.com/api/v1/proxy"
+        ); // Primary
+        assert_eq!(gateways[1], "https://api.lbry.tv/api/v1/proxy"); // Secondary
+        assert_eq!(gateways[2], "https://api.odysee.com/api/v1/proxy"); // Fallback
+
         // Verify that there's no method to reorder gateways
         // (This is enforced by the API design - no reorder_gateways method exists)
-        
+
         // The priority order should be immutable and deterministic
         for _ in 0..100 {
             let test_client = GatewayClient::new();
-            assert_eq!(test_client.get_gateway_priority_order(), initial_order.as_slice());
+            assert_eq!(
+                test_client.get_gateway_priority_order(),
+                initial_order.as_slice()
+            );
         }
     }
 
@@ -837,69 +944,111 @@ mod tests {
     #[test]
     fn test_error_retryability() {
         let client = GatewayClient::new();
-        
+
         // Test retryable gateway errors
-        let server_error = KiyyaError::Gateway { message: "HTTP 500: Internal Server Error".to_string() };
+        let server_error = KiyyaError::Gateway {
+            message: "HTTP 500: Internal Server Error".to_string(),
+        };
         assert!(client.is_error_retryable(&server_error));
-        
-        let rate_limit_error = KiyyaError::Gateway { message: "HTTP 429: Too Many Requests".to_string() };
+
+        let rate_limit_error = KiyyaError::Gateway {
+            message: "HTTP 429: Too Many Requests".to_string(),
+        };
         assert!(client.is_error_retryable(&rate_limit_error));
-        
-        let timeout_gateway_error = KiyyaError::Gateway { message: "HTTP 408: Request Timeout".to_string() };
+
+        let timeout_gateway_error = KiyyaError::Gateway {
+            message: "HTTP 408: Request Timeout".to_string(),
+        };
         assert!(client.is_error_retryable(&timeout_gateway_error));
-        
-        let bad_gateway_error = KiyyaError::Gateway { message: "HTTP 502: Bad Gateway".to_string() };
+
+        let bad_gateway_error = KiyyaError::Gateway {
+            message: "HTTP 502: Bad Gateway".to_string(),
+        };
         assert!(client.is_error_retryable(&bad_gateway_error));
-        
-        let service_unavailable_error = KiyyaError::Gateway { message: "HTTP 503: Service Unavailable".to_string() };
+
+        let service_unavailable_error = KiyyaError::Gateway {
+            message: "HTTP 503: Service Unavailable".to_string(),
+        };
         assert!(client.is_error_retryable(&service_unavailable_error));
-        
-        let gateway_timeout_error = KiyyaError::Gateway { message: "HTTP 504: Gateway Timeout".to_string() };
+
+        let gateway_timeout_error = KiyyaError::Gateway {
+            message: "HTTP 504: Gateway Timeout".to_string(),
+        };
         assert!(client.is_error_retryable(&gateway_timeout_error));
-        
+
         // Test non-retryable gateway errors
-        let client_error = KiyyaError::Gateway { message: "HTTP 400: Bad Request".to_string() };
+        let client_error = KiyyaError::Gateway {
+            message: "HTTP 400: Bad Request".to_string(),
+        };
         assert!(!client.is_error_retryable(&client_error));
-        
-        let not_found_error = KiyyaError::Gateway { message: "HTTP 404: Not Found".to_string() };
+
+        let not_found_error = KiyyaError::Gateway {
+            message: "HTTP 404: Not Found".to_string(),
+        };
         assert!(!client.is_error_retryable(&not_found_error));
-        
-        let unauthorized_error = KiyyaError::Gateway { message: "HTTP 401: Unauthorized".to_string() };
+
+        let unauthorized_error = KiyyaError::Gateway {
+            message: "HTTP 401: Unauthorized".to_string(),
+        };
         assert!(!client.is_error_retryable(&unauthorized_error));
-        
+
         // Test retryable API timeout
-        let api_timeout = KiyyaError::ApiTimeout { timeout_seconds: 10 };
+        let api_timeout = KiyyaError::ApiTimeout {
+            timeout_seconds: 10,
+        };
         assert!(client.is_error_retryable(&api_timeout));
-        
+
         // Test retryable rate limiting
-        let rate_limit = KiyyaError::RateLimitExceeded { retry_after_seconds: 60 };
+        let rate_limit = KiyyaError::RateLimitExceeded {
+            retry_after_seconds: 60,
+        };
         assert!(client.is_error_retryable(&rate_limit));
-        
+
         // Test retryable IO errors
-        let timeout_io = KiyyaError::Io(std::io::Error::new(std::io::ErrorKind::TimedOut, "timeout"));
+        let timeout_io =
+            KiyyaError::Io(std::io::Error::new(std::io::ErrorKind::TimedOut, "timeout"));
         assert!(client.is_error_retryable(&timeout_io));
-        
-        let interrupted_io = KiyyaError::Io(std::io::Error::new(std::io::ErrorKind::Interrupted, "interrupted"));
+
+        let interrupted_io = KiyyaError::Io(std::io::Error::new(
+            std::io::ErrorKind::Interrupted,
+            "interrupted",
+        ));
         assert!(client.is_error_retryable(&interrupted_io));
-        
-        let connection_refused_io = KiyyaError::Io(std::io::Error::new(std::io::ErrorKind::ConnectionRefused, "refused"));
+
+        let connection_refused_io = KiyyaError::Io(std::io::Error::new(
+            std::io::ErrorKind::ConnectionRefused,
+            "refused",
+        ));
         assert!(client.is_error_retryable(&connection_refused_io));
-        
+
         // Test non-retryable IO errors
-        let permission_denied_io = KiyyaError::Io(std::io::Error::new(std::io::ErrorKind::PermissionDenied, "denied"));
+        let permission_denied_io = KiyyaError::Io(std::io::Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            "denied",
+        ));
         assert!(!client.is_error_retryable(&permission_denied_io));
-        
-        let not_found_io = KiyyaError::Io(std::io::Error::new(std::io::ErrorKind::NotFound, "not found"));
+
+        let not_found_io = KiyyaError::Io(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "not found",
+        ));
         assert!(!client.is_error_retryable(&not_found_io));
-        
+
         // Test non-retryable errors
-        let json_error = KiyyaError::Json(serde_json::Error::io(std::io::Error::new(std::io::ErrorKind::Other, "test")));
+        let json_error = KiyyaError::Json(serde_json::Error::io(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "test",
+        )));
         assert!(!client.is_error_retryable(&json_error));
-        
-        let invalid_api_response = KiyyaError::InvalidApiResponse { message: "malformed".to_string() };
+
+        let invalid_api_response = KiyyaError::InvalidApiResponse {
+            message: "malformed".to_string(),
+        };
         assert!(!client.is_error_retryable(&invalid_api_response));
-        
-        let content_parsing = KiyyaError::ContentParsing { message: "invalid format".to_string() };
+
+        let content_parsing = KiyyaError::ContentParsing {
+            message: "invalid format".to_string(),
+        };
         assert!(!client.is_error_retryable(&content_parsing));
     }
 
@@ -907,25 +1056,25 @@ mod tests {
     #[test]
     fn test_retry_delay_calculation() {
         let client = GatewayClient::new();
-        
+
         // Test retry delays: 200ms → 500ms → 1s
-        let retry_delay_0 = 200;  // 200ms for first retry
-        let retry_delay_1 = 500;  // 500ms for second retry
+        let retry_delay_0 = 200; // 200ms for first retry
+        let retry_delay_1 = 500; // 500ms for second retry
         let retry_delay_2 = 1000; // 1s for subsequent retries
-        
+
         assert_eq!(retry_delay_0, 200);
         assert_eq!(retry_delay_1, 500);
         assert_eq!(retry_delay_2, 1000);
-        
+
         // Test failover delays: 300ms → 1s → 2s (unchanged from original)
-        let failover_delay_0 = 300;  // 300ms before trying secondary
+        let failover_delay_0 = 300; // 300ms before trying secondary
         let failover_delay_1 = 1000; // 1s before trying fallback
         let failover_delay_2 = 2000; // 2s for subsequent gateways
-        
+
         assert_eq!(failover_delay_0, 300);
         assert_eq!(failover_delay_1, 1000);
         assert_eq!(failover_delay_2, 2000);
-        
+
         // Verify base delay is still 300ms for configuration
         assert_eq!(client.base_delay_ms, 300);
         assert_eq!(client.max_retries_per_gateway, 2);
@@ -935,41 +1084,58 @@ mod tests {
     #[test]
     fn test_retry_jitter_calculation() {
         let client = GatewayClient::new();
-        
+
         // Test that retry jitter is properly applied
         // We can't test the exact values due to randomness, but we can test the ranges
-        
+
         // Test multiple jitter generations to ensure they're in the correct range
         for _ in 0..100 {
             let retry_jitter = {
                 let mut rng = rand::thread_rng();
                 rng.gen_range(0..50) // 0-49ms jitter for retries
             };
-            
+
             // Retry jitter should be between 0 and 49 (inclusive)
-            assert!(retry_jitter < 50, "Retry jitter should be less than 50ms, got {}", retry_jitter);
-            
+            assert!(
+                retry_jitter < 50,
+                "Retry jitter should be less than 50ms, got {}",
+                retry_jitter
+            );
+
             let failover_jitter = {
                 let mut rng = rand::thread_rng();
                 rng.gen_range(0..100) // 0-99ms jitter for failover
             };
-            
+
             // Failover jitter should be between 0 and 99 (inclusive)
-            assert!(failover_jitter < 100, "Failover jitter should be less than 100ms, got {}", failover_jitter);
-            
+            assert!(
+                failover_jitter < 100,
+                "Failover jitter should be less than 100ms, got {}",
+                failover_jitter
+            );
+
             // Test total delays with jitter
-            let retry_delay_0_with_jitter = 200 + retry_jitter;  // 200-249ms
-            let retry_delay_1_with_jitter = 500 + retry_jitter;  // 500-549ms
+            let retry_delay_0_with_jitter = 200 + retry_jitter; // 200-249ms
+            let retry_delay_1_with_jitter = 500 + retry_jitter; // 500-549ms
             let retry_delay_2_with_jitter = 1000 + retry_jitter; // 1000-1049ms
-            
-            assert!(retry_delay_0_with_jitter >= 200 && retry_delay_0_with_jitter < 250, 
-                   "First retry delay with jitter should be 200-249ms, got {}", retry_delay_0_with_jitter);
-            assert!(retry_delay_1_with_jitter >= 500 && retry_delay_1_with_jitter < 550, 
-                   "Second retry delay with jitter should be 500-549ms, got {}", retry_delay_1_with_jitter);
-            assert!(retry_delay_2_with_jitter >= 1000 && retry_delay_2_with_jitter < 1050, 
-                   "Subsequent retry delay with jitter should be 1000-1049ms, got {}", retry_delay_2_with_jitter);
+
+            assert!(
+                retry_delay_0_with_jitter >= 200 && retry_delay_0_with_jitter < 250,
+                "First retry delay with jitter should be 200-249ms, got {}",
+                retry_delay_0_with_jitter
+            );
+            assert!(
+                retry_delay_1_with_jitter >= 500 && retry_delay_1_with_jitter < 550,
+                "Second retry delay with jitter should be 500-549ms, got {}",
+                retry_delay_1_with_jitter
+            );
+            assert!(
+                retry_delay_2_with_jitter >= 1000 && retry_delay_2_with_jitter < 1050,
+                "Subsequent retry delay with jitter should be 1000-1049ms, got {}",
+                retry_delay_2_with_jitter
+            );
         }
-        
+
         // Verify configuration
         assert_eq!(client.base_delay_ms, 300);
         assert_eq!(client.max_retries_per_gateway, 2);
@@ -979,16 +1145,16 @@ mod tests {
     #[test]
     fn test_max_retry_configuration() {
         let client = GatewayClient::new();
-        
+
         // Verify retry configuration
         assert_eq!(client.max_retries_per_gateway, 2);
         assert_eq!(client.max_attempts, 3);
-        
+
         // Verify that configuration is included in gateway config
         let config = client.get_gateway_config();
         assert_eq!(config.max_retries_per_gateway, 2);
         assert_eq!(config.max_attempts, 3);
-        
+
         // Calculate maximum possible attempts
         // Each gateway can be tried up to (max_retries_per_gateway + 1) times
         // With 3 gateways and 2 retries per gateway: 3 * (2 + 1) = 9 total attempts
@@ -1079,9 +1245,12 @@ mod tests {
 
         assert_eq!(request.method, "claim_search");
         assert!(request.params.is_object());
-        
+
         let params = request.params.as_object().unwrap();
-        assert_eq!(params.get("channel").and_then(|v| v.as_str()), Some("@TestChannel"));
+        assert_eq!(
+            params.get("channel").and_then(|v| v.as_str()),
+            Some("@TestChannel")
+        );
         assert_eq!(params.get("page_size").and_then(|v| v.as_u64()), Some(50));
         assert_eq!(params.get("page").and_then(|v| v.as_u64()), Some(1));
     }
@@ -1100,9 +1269,12 @@ mod tests {
 
         assert_eq!(request.method, "playlist_search");
         assert!(request.params.is_object());
-        
+
         let params = request.params.as_object().unwrap();
-        assert_eq!(params.get("channel").and_then(|v| v.as_str()), Some("@TestChannel"));
+        assert_eq!(
+            params.get("channel").and_then(|v| v.as_str()),
+            Some("@TestChannel")
+        );
         assert_eq!(params.get("page_size").and_then(|v| v.as_u64()), Some(50));
         assert_eq!(params.get("page").and_then(|v| v.as_u64()), Some(1));
     }
@@ -1135,24 +1307,36 @@ mod tests {
 
         assert!(response.success);
         assert!(response.data.is_some());
-        
+
         let data = response.data.unwrap();
         let items = data.get("items").and_then(|v| v.as_array()).unwrap();
         assert_eq!(items.len(), 2);
-        
+
         // Verify first playlist
         let playlist1 = &items[0];
-        assert_eq!(playlist1.get("claim_id").and_then(|v| v.as_str()), Some("playlist-1"));
         assert_eq!(
-            playlist1.get("value").and_then(|v| v.get("title")).and_then(|v| v.as_str()),
+            playlist1.get("claim_id").and_then(|v| v.as_str()),
+            Some("playlist-1")
+        );
+        assert_eq!(
+            playlist1
+                .get("value")
+                .and_then(|v| v.get("title"))
+                .and_then(|v| v.as_str()),
             Some("Breaking Bad – Season 1")
         );
-        
+
         // Verify second playlist
         let playlist2 = &items[1];
-        assert_eq!(playlist2.get("claim_id").and_then(|v| v.as_str()), Some("playlist-2"));
         assert_eq!(
-            playlist2.get("value").and_then(|v| v.get("title")).and_then(|v| v.as_str()),
+            playlist2.get("claim_id").and_then(|v| v.as_str()),
+            Some("playlist-2")
+        );
+        assert_eq!(
+            playlist2
+                .get("value")
+                .and_then(|v| v.get("title"))
+                .and_then(|v| v.as_str()),
             Some("Breaking Bad – Season 2")
         );
     }
@@ -1170,7 +1354,7 @@ mod tests {
 
         assert!(response.success);
         assert!(response.data.is_some());
-        
+
         let data = response.data.unwrap();
         let items = data.get("items").and_then(|v| v.as_array()).unwrap();
         assert_eq!(items.len(), 0);
@@ -1208,15 +1392,21 @@ mod tests {
 
         assert!(response.success);
         assert!(response.data.is_some());
-        
+
         let data = response.data.unwrap();
         let items = data.get("items").and_then(|v| v.as_array()).unwrap();
         assert_eq!(items.len(), 3); // All items present, but one is malformed
-        
+
         // Verify valid playlists can still be extracted
-        assert_eq!(items[0].get("claim_id").and_then(|v| v.as_str()), Some("valid-playlist"));
+        assert_eq!(
+            items[0].get("claim_id").and_then(|v| v.as_str()),
+            Some("valid-playlist")
+        );
         assert!(items[1].get("claim_id").is_none()); // Malformed item
-        assert_eq!(items[2].get("claim_id").and_then(|v| v.as_str()), Some("another-valid"));
+        assert_eq!(
+            items[2].get("claim_id").and_then(|v| v.as_str()),
+            Some("another-valid")
+        );
     }
 
     /// Test playlist_search error response
@@ -1247,7 +1437,7 @@ mod tests {
 
         assert!(malformed_response.success);
         assert!(malformed_response.data.is_some());
-        
+
         // Verify that data exists but doesn't have items array
         let data = malformed_response.data.unwrap();
         assert!(data.get("items").is_none());
@@ -1299,7 +1489,7 @@ mod tests {
 
         assert!(mixed_response.success);
         assert!(mixed_response.data.is_some());
-        
+
         let data = mixed_response.data.unwrap();
         let items = data.get("items").and_then(|v| v.as_array()).unwrap();
         assert_eq!(items.len(), 3); // All items present, but one is malformed
@@ -1309,17 +1499,19 @@ mod tests {
     #[test]
     fn test_rate_limit_error_detection() {
         let client = GatewayClient::new();
-        
+
         // Test that rate limit errors are retryable
-        let rate_limit_error = KiyyaError::RateLimitExceeded { retry_after_seconds: 60 };
+        let rate_limit_error = KiyyaError::RateLimitExceeded {
+            retry_after_seconds: 60,
+        };
         assert!(client.is_error_retryable(&rate_limit_error));
-        
+
         // Test that rate limit errors are categorized correctly
         assert_eq!(rate_limit_error.category(), "network");
-        
+
         // Test that rate limit errors are warning level
         assert!(rate_limit_error.is_warning_level());
-        
+
         // Test user message for rate limiting
         let user_msg = rate_limit_error.user_message();
         assert!(user_msg.contains("60 seconds"));
@@ -1330,14 +1522,16 @@ mod tests {
     #[test]
     fn test_timeout_error_detection() {
         let client = GatewayClient::new();
-        
+
         // Test that timeout errors are retryable
-        let timeout_error = KiyyaError::ApiTimeout { timeout_seconds: 10 };
+        let timeout_error = KiyyaError::ApiTimeout {
+            timeout_seconds: 10,
+        };
         assert!(client.is_error_retryable(&timeout_error));
-        
+
         // Test that timeout errors are categorized correctly
         assert_eq!(timeout_error.category(), "network");
-        
+
         // Test that timeout errors are recoverable
         assert!(timeout_error.is_recoverable());
     }
@@ -1346,10 +1540,10 @@ mod tests {
     #[test]
     fn test_http_429_handling() {
         let client = GatewayClient::new();
-        
+
         // Test that HTTP 429 errors are detected as retryable
-        let rate_limit_gateway_error = KiyyaError::Gateway { 
-            message: "HTTP 429: Too Many Requests".to_string() 
+        let rate_limit_gateway_error = KiyyaError::Gateway {
+            message: "HTTP 429: Too Many Requests".to_string(),
         };
         assert!(client.is_error_retryable(&rate_limit_gateway_error));
     }
@@ -1358,7 +1552,7 @@ mod tests {
     #[test]
     fn test_timeout_configuration() {
         let client = GatewayClient::new();
-        
+
         // Verify that the HTTP client has a 10-second timeout configured
         // This is set in the client builder: .timeout(Duration::from_secs(10))
         // The timeout is configured but not directly accessible via the client API
@@ -1370,16 +1564,18 @@ mod tests {
     #[test]
     fn test_rate_limit_retry_behavior() {
         let client = GatewayClient::new();
-        
+
         // Test that rate limiting errors trigger retry logic
-        let rate_limit_error = KiyyaError::RateLimitExceeded { retry_after_seconds: 30 };
-        
+        let rate_limit_error = KiyyaError::RateLimitExceeded {
+            retry_after_seconds: 30,
+        };
+
         // Verify error is retryable
         assert!(client.is_error_retryable(&rate_limit_error));
-        
+
         // Verify error is recoverable
         assert!(rate_limit_error.is_recoverable());
-        
+
         // Verify error category
         assert_eq!(rate_limit_error.category(), "network");
     }
@@ -1388,16 +1584,18 @@ mod tests {
     #[test]
     fn test_timeout_retry_behavior() {
         let client = GatewayClient::new();
-        
+
         // Test that timeout errors trigger retry logic
-        let timeout_error = KiyyaError::ApiTimeout { timeout_seconds: 10 };
-        
+        let timeout_error = KiyyaError::ApiTimeout {
+            timeout_seconds: 10,
+        };
+
         // Verify error is retryable
         assert!(client.is_error_retryable(&timeout_error));
-        
+
         // Verify error is recoverable
         assert!(timeout_error.is_recoverable());
-        
+
         // Verify error category
         assert_eq!(timeout_error.category(), "network");
     }
@@ -1406,17 +1604,29 @@ mod tests {
     #[test]
     fn test_5xx_server_errors_retryable() {
         let client = GatewayClient::new();
-        
+
         // Test various 5xx errors
         let errors = vec![
-            KiyyaError::Gateway { message: "HTTP 500: Internal Server Error".to_string() },
-            KiyyaError::Gateway { message: "HTTP 502: Bad Gateway".to_string() },
-            KiyyaError::Gateway { message: "HTTP 503: Service Unavailable".to_string() },
-            KiyyaError::Gateway { message: "HTTP 504: Gateway Timeout".to_string() },
+            KiyyaError::Gateway {
+                message: "HTTP 500: Internal Server Error".to_string(),
+            },
+            KiyyaError::Gateway {
+                message: "HTTP 502: Bad Gateway".to_string(),
+            },
+            KiyyaError::Gateway {
+                message: "HTTP 503: Service Unavailable".to_string(),
+            },
+            KiyyaError::Gateway {
+                message: "HTTP 504: Gateway Timeout".to_string(),
+            },
         ];
-        
+
         for error in errors {
-            assert!(client.is_error_retryable(&error), "Error should be retryable: {}", error);
+            assert!(
+                client.is_error_retryable(&error),
+                "Error should be retryable: {}",
+                error
+            );
         }
     }
 
@@ -1424,27 +1634,47 @@ mod tests {
     #[test]
     fn test_4xx_client_errors_not_retryable() {
         let client = GatewayClient::new();
-        
+
         // Test non-retryable 4xx errors
         let non_retryable_errors = vec![
-            KiyyaError::Gateway { message: "HTTP 400: Bad Request".to_string() },
-            KiyyaError::Gateway { message: "HTTP 401: Unauthorized".to_string() },
-            KiyyaError::Gateway { message: "HTTP 403: Forbidden".to_string() },
-            KiyyaError::Gateway { message: "HTTP 404: Not Found".to_string() },
+            KiyyaError::Gateway {
+                message: "HTTP 400: Bad Request".to_string(),
+            },
+            KiyyaError::Gateway {
+                message: "HTTP 401: Unauthorized".to_string(),
+            },
+            KiyyaError::Gateway {
+                message: "HTTP 403: Forbidden".to_string(),
+            },
+            KiyyaError::Gateway {
+                message: "HTTP 404: Not Found".to_string(),
+            },
         ];
-        
+
         for error in non_retryable_errors {
-            assert!(!client.is_error_retryable(&error), "Error should not be retryable: {}", error);
+            assert!(
+                !client.is_error_retryable(&error),
+                "Error should not be retryable: {}",
+                error
+            );
         }
-        
+
         // Test retryable 4xx errors
         let retryable_errors = vec![
-            KiyyaError::Gateway { message: "HTTP 408: Request Timeout".to_string() },
-            KiyyaError::Gateway { message: "HTTP 429: Too Many Requests".to_string() },
+            KiyyaError::Gateway {
+                message: "HTTP 408: Request Timeout".to_string(),
+            },
+            KiyyaError::Gateway {
+                message: "HTTP 429: Too Many Requests".to_string(),
+            },
         ];
-        
+
         for error in retryable_errors {
-            assert!(client.is_error_retryable(&error), "Error should be retryable: {}", error);
+            assert!(
+                client.is_error_retryable(&error),
+                "Error should be retryable: {}",
+                error
+            );
         }
     }
 }

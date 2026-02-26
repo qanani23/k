@@ -1,13 +1,12 @@
 /// Property-Based Tests for HTTP Range Support Compliance
-/// 
+///
 /// **Feature: kiyya-desktop-streaming, Property 12: HTTP Range Support Compliance**
-/// 
+///
 /// For any Range request to the local HTTP server, the server should correctly parse
 /// range headers and return appropriate start/end positions for valid ranges, or reject
 /// invalid ranges with appropriate errors.
-/// 
+///
 /// Validates: Requirements 17.2, 17.3, 17.4, 17.7, 4.5
-
 use crate::error::KiyyaError;
 use proptest::prelude::*;
 
@@ -24,7 +23,7 @@ fn parse_range_header(range: &str, file_size: u64) -> Result<(u64, u64), KiyyaEr
 
     let range_spec = &range[6..]; // Remove "bytes="
     let parts: Vec<&str> = range_spec.split('-').collect();
-    
+
     if parts.len() != 2 {
         return Err(KiyyaError::InvalidRange {
             range: range.to_string(),
@@ -49,17 +48,21 @@ fn parse_range_header(range: &str, file_size: u64) -> Result<(u64, u64), KiyyaEr
     }
 
     // Parse start position
-    let start = parts[0].parse::<u64>().map_err(|_| KiyyaError::InvalidRange {
-        range: range.to_string(),
-    })?;
+    let start = parts[0]
+        .parse::<u64>()
+        .map_err(|_| KiyyaError::InvalidRange {
+            range: range.to_string(),
+        })?;
 
     // Parse end position
     let end = if parts[1].is_empty() {
         file_size - 1
     } else {
-        let parsed_end = parts[1].parse::<u64>().map_err(|_| KiyyaError::InvalidRange {
-            range: range.to_string(),
-        })?;
+        let parsed_end = parts[1]
+            .parse::<u64>()
+            .map_err(|_| KiyyaError::InvalidRange {
+                range: range.to_string(),
+            })?;
         std::cmp::min(parsed_end, file_size - 1)
     };
 
@@ -91,10 +94,10 @@ proptest! {
         // Ensure start is within file bounds
         let start = start % file_size;
         let end = std::cmp::min(start + 1024, file_size - 1);
-        
+
         let range_header = format!("bytes={}-{}", start, end);
         let result = parse_range_header(&range_header, file_size);
-        
+
         prop_assert!(result.is_ok(), "Valid range should be accepted: {}", range_header);
         let (parsed_start, parsed_end) = result.unwrap();
         prop_assert_eq!(parsed_start, start);
@@ -111,7 +114,7 @@ proptest! {
         let start = start % file_size;
         let range_header = format!("bytes={}-", start);
         let result = parse_range_header(&range_header, file_size);
-        
+
         prop_assert!(result.is_ok(), "Open-ended range should be accepted: {}", range_header);
         let (parsed_start, parsed_end) = result.unwrap();
         prop_assert_eq!(parsed_start, start);
@@ -127,16 +130,16 @@ proptest! {
     ) {
         let range_header = format!("bytes=-{}", suffix);
         let result = parse_range_header(&range_header, file_size);
-        
+
         prop_assert!(result.is_ok(), "Suffix range should be accepted: {}", range_header);
         let (parsed_start, parsed_end) = result.unwrap();
-        
+
         let expected_start = if suffix >= file_size {
             0
         } else {
             file_size - suffix
         };
-        
+
         prop_assert_eq!(parsed_start, expected_start);
         prop_assert_eq!(parsed_end, file_size - 1);
     }
@@ -151,7 +154,7 @@ proptest! {
     ) {
         let range_header = format!("{}0-1023", malformed_prefix);
         let result = parse_range_header(&range_header, 2048);
-        
+
         if malformed_prefix != "bytes=" {
             prop_assert!(result.is_err(), "Invalid format should be rejected: {}", range_header);
         }
@@ -167,7 +170,7 @@ proptest! {
         let start = file_size + excess;
         let range_header = format!("bytes={}-", start);
         let result = parse_range_header(&range_header, file_size);
-        
+
         prop_assert!(result.is_err(), "Out of bounds range should be rejected: {}", range_header);
     }
 
@@ -181,11 +184,11 @@ proptest! {
     ) {
         let start = start % (file_size / 2);
         let end = if start > gap { start - gap } else { 0 };
-        
+
         if start > end {
             let range_header = format!("bytes={}-{}", start, end);
             let result = parse_range_header(&range_header, file_size);
-            
+
             prop_assert!(result.is_err(), "Inverted range should be rejected: {}", range_header);
         }
     }
@@ -202,7 +205,7 @@ proptest! {
         let end = file_size + excess;
         let range_header = format!("bytes={}-{}", start, end);
         let result = parse_range_header(&range_header, file_size);
-        
+
         prop_assert!(result.is_ok(), "Range with end beyond file size should be clamped: {}", range_header);
         let (parsed_start, parsed_end) = result.unwrap();
         prop_assert_eq!(parsed_start, start);
@@ -217,7 +220,7 @@ proptest! {
     ) {
         let range_header = format!("bytes={}-1023", non_numeric);
         let result = parse_range_header(&range_header, 2048);
-        
+
         prop_assert!(result.is_err(), "Non-numeric range should be rejected: {}", range_header);
     }
 }

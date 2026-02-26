@@ -15,8 +15,8 @@
 
 #[cfg(test)]
 mod tests {
-    use crate::path_security;
     use crate::error::KiyyaError;
+    use crate::path_security;
     use std::fs;
     use std::path::PathBuf;
 
@@ -48,8 +48,8 @@ mod tests {
 
             let validated_path = result.unwrap();
             assert!(
-                validated_path.to_string_lossy().contains("kiyya_test") || 
-                validated_path.to_string_lossy().contains("Kiyya"),
+                validated_path.to_string_lossy().contains("kiyya_test")
+                    || validated_path.to_string_lossy().contains("Kiyya"),
                 "Validated path should be within app data directory: {:?}",
                 validated_path
             );
@@ -82,8 +82,8 @@ mod tests {
             match result {
                 Err(KiyyaError::SecurityViolation { message }) => {
                     assert!(
-                        message.contains("outside application data directory") ||
-                        message.contains("Path traversal"),
+                        message.contains("outside application data directory")
+                            || message.contains("Path traversal"),
                         "Error message should indicate security violation: {}",
                         message
                     );
@@ -151,23 +151,23 @@ mod tests {
     fn test_special_characters_in_paths() {
         // Test paths with special characters that might be used in attacks
         let special_paths = vec![
-            "vault/movie%00.mp4",  // Null byte encoded
-            "vault/movie\0.mp4",   // Null byte
-            "vault/movie;rm -rf.mp4",  // Command injection attempt
-            "vault/movie|cat /etc/passwd.mp4",  // Pipe character
-            "vault/movie&& rm -rf /.mp4",  // Command chaining
+            "vault/movie%00.mp4",              // Null byte encoded
+            "vault/movie\0.mp4",               // Null byte
+            "vault/movie;rm -rf.mp4",          // Command injection attempt
+            "vault/movie|cat /etc/passwd.mp4", // Pipe character
+            "vault/movie&& rm -rf /.mp4",      // Command chaining
         ];
 
         for path in special_paths {
             // These should either be blocked or sanitized
             let result = path_security::validate_path(path);
-            
+
             if result.is_ok() {
                 // If accepted, ensure it's still within app data
                 let validated_path = result.unwrap();
                 assert!(
-                    validated_path.to_string_lossy().contains("kiyya_test") || 
-                    validated_path.to_string_lossy().contains("Kiyya"),
+                    validated_path.to_string_lossy().contains("kiyya_test")
+                        || validated_path.to_string_lossy().contains("Kiyya"),
                     "Path with special characters should still be within app data: {:?}",
                     validated_path
                 );
@@ -243,7 +243,7 @@ mod tests {
         assert!(test_path.is_ok(), "Should be able to validate path");
 
         let file_path = test_path.unwrap();
-        
+
         // Ensure parent directory exists
         if let Some(parent) = file_path.parent() {
             fs::create_dir_all(parent).ok();
@@ -276,7 +276,7 @@ mod tests {
         assert!(test_path.is_ok(), "Should be able to validate path");
 
         let dir_path = test_path.unwrap();
-        
+
         // Create directory
         let create_result = fs::create_dir_all(&dir_path);
         assert!(
@@ -298,7 +298,7 @@ mod tests {
         // Verify that attempting to access system files fails at validation level
         #[cfg(target_os = "windows")]
         let system_file = "C:\\Windows\\System32\\notepad.exe";
-        
+
         #[cfg(not(target_os = "windows"))]
         let system_file = "/etc/passwd";
 
@@ -372,10 +372,7 @@ mod tests {
     #[test]
     fn test_empty_path_components() {
         // Test paths with empty components
-        let empty_component_paths = vec![
-            "vault//movie.mp4",
-            "vault///movies//action.mp4",
-        ];
+        let empty_component_paths = vec!["vault//movie.mp4", "vault///movies//action.mp4"];
 
         for path in empty_component_paths {
             let result = path_security::validate_path(path);
@@ -383,8 +380,8 @@ mod tests {
             if result.is_ok() {
                 let validated_path = result.unwrap();
                 assert!(
-                    validated_path.to_string_lossy().contains("kiyya_test") || 
-                    validated_path.to_string_lossy().contains("Kiyya"),
+                    validated_path.to_string_lossy().contains("kiyya_test")
+                        || validated_path.to_string_lossy().contains("Kiyya"),
                     "Path should still be within app data"
                 );
             }
@@ -401,20 +398,13 @@ mod tests {
         long_path.push_str("/file.txt");
 
         let result = path_security::validate_path(&long_path);
-        assert!(
-            result.is_ok(),
-            "Long valid path should be accepted"
-        );
+        assert!(result.is_ok(), "Long valid path should be accepted");
     }
 
     #[test]
     fn test_case_sensitivity() {
         // Test case variations (behavior depends on OS)
-        let paths = vec![
-            "vault/Movie.mp4",
-            "Vault/movie.mp4",
-            "VAULT/MOVIE.MP4",
-        ];
+        let paths = vec!["vault/Movie.mp4", "Vault/movie.mp4", "VAULT/MOVIE.MP4"];
 
         for path in paths {
             let result = path_security::validate_path(path);
@@ -432,8 +422,8 @@ mod tests {
             if result.is_ok() {
                 let validated_path = result.unwrap();
                 assert!(
-                    validated_path.to_string_lossy().contains("kiyya_test") || 
-                    validated_path.to_string_lossy().contains("Kiyya"),
+                    validated_path.to_string_lossy().contains("kiyya_test")
+                        || validated_path.to_string_lossy().contains("Kiyya"),
                     "Path should be within app data"
                 );
             }
@@ -452,11 +442,7 @@ mod tests {
 
         for path in unicode_paths {
             let result = path_security::validate_path(path);
-            assert!(
-                result.is_ok(),
-                "Unicode path should be accepted: {}",
-                path
-            );
+            assert!(result.is_ok(), "Unicode path should be accepted: {}", path);
         }
     }
 
@@ -467,7 +453,7 @@ mod tests {
         assert!(app_data.is_ok(), "Should be able to get app data directory");
 
         let path = app_data.unwrap();
-        
+
         // In test mode, should be in temp directory
         #[cfg(test)]
         {

@@ -1,22 +1,22 @@
 /// Property-Based Tests for Missing claim_id
-/// 
+///
 /// **Feature: odysee-cdn-playback-standardization, Property 3: Missing claim_id Returns Error**
-/// 
+///
 /// For any claim metadata where claim_id is missing, empty, or null, the extract_video_urls
 /// function should return an error and not produce a ContentItem.
-/// 
+///
 /// **Validates: Requirements 2.4**
 
 #[cfg(test)]
 mod missing_claim_id_property_tests {
     use crate::commands::parse_claim_item;
-    use serde_json::json;
     use proptest::prelude::*;
+    use serde_json::json;
 
     /// Strategy for generating valid titles
     fn title_strategy() -> impl Strategy<Value = String> {
         prop_oneof![
-            "[A-Za-z0-9 ]{5,100}",  // Normal titles
+            "[A-Za-z0-9 ]{5,100}", // Normal titles
             Just("Test Movie".to_string()),
             Just("Series Episode 1".to_string()),
             Just("Documentary Film".to_string()),
@@ -33,7 +33,7 @@ mod missing_claim_id_property_tests {
                 Just("hero_trailer".to_string()),
                 "[a-z_]{3,20}",
             ],
-            0..10
+            0..10,
         )
     }
 
@@ -41,17 +41,16 @@ mod missing_claim_id_property_tests {
     fn thumbnail_url_strategy() -> impl Strategy<Value = Option<String>> {
         prop_oneof![
             Just(None),
-            Just(Some("https://thumbnails.odysee.com/thumb123.jpg".to_string())),
+            Just(Some(
+                "https://thumbnails.odysee.com/thumb123.jpg".to_string()
+            )),
             Just(Some("https://cdn.example.com/image.png".to_string())),
         ]
     }
 
     /// Strategy for generating optional duration
     fn duration_strategy() -> impl Strategy<Value = Option<u32>> {
-        prop_oneof![
-            Just(None),
-            (60u32..7200u32).prop_map(Some),
-        ]
+        prop_oneof![Just(None), (60u32..7200u32).prop_map(Some),]
     }
 
     /// Strategy for generating optional description
@@ -324,7 +323,7 @@ mod missing_claim_id_property_tests {
         ) {
             // Create multiple claims, some with claim_id, some without
             let mut results = Vec::new();
-            
+
             for (i, title) in titles.iter().enumerate() {
                 let item = if i % 2 == 0 {
                     // Even index: has claim_id

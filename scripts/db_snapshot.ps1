@@ -1,4 +1,4 @@
-﻿# Database Backup Script for Windows PowerShell
+# Database Backup Script for Windows PowerShell
 # Creates a timestamped backup of the Kiyya Desktop database with SHA256 checksum
 
 Set-StrictMode -Version Latest

@@ -1,13 +1,12 @@
 /// Property-Based Tests for SQL Injection Prevention
-/// 
+///
 /// **Feature: kiyya-desktop-streaming, Property 11: SQL Injection Prevention**
-/// 
+///
 /// For any user input used in SQL queries, the sanitization functions should either
 /// accept valid inputs and properly escape/validate them, or reject malicious inputs
 /// that could lead to SQL injection attacks.
-/// 
+///
 /// Validates: Requirements 14.1, 14.2, 14.3, 14.4
-
 use crate::sanitization;
 use proptest::prelude::*;
 
@@ -29,7 +28,7 @@ proptest! {
         // Try to inject SQL after a valid column name
         let malicious_input = format!("releaseTime{}", malicious_suffix);
         let result = sanitization::sanitize_order_by(&malicious_input);
-        
+
         // Should be rejected (either invalid column or invalid format)
         prop_assert!(result.is_err(), "Malicious ORDER BY should be blocked: {}", malicious_input);
     }
@@ -39,7 +38,7 @@ proptest! {
     #[test]
     fn prop_valid_order_by_accepted(
         column in prop::sample::select(vec![
-            "releaseTime", "title", "titleLower", "duration", 
+            "releaseTime", "title", "titleLower", "duration",
             "updatedAt", "lastAccessed", "accessCount", "insertedAt"
         ]),
         direction in prop::sample::select(vec!["ASC", "DESC", "asc", "desc", ""])
@@ -49,10 +48,10 @@ proptest! {
         } else {
             format!("{} {}", column, direction)
         };
-        
+
         let result = sanitization::sanitize_order_by(&input);
         prop_assert!(result.is_ok(), "Valid ORDER BY should be accepted: {}", input);
-        
+
         // Verify the output is properly formatted
         let sanitized = result.unwrap();
         prop_assert!(sanitized.contains(&column));
@@ -71,7 +70,7 @@ proptest! {
     ) {
         let malicious_tag = format!("movie{}tag", special_char);
         let result = sanitization::sanitize_tag(&malicious_tag);
-        
+
         prop_assert!(result.is_err(), "Tag with special character should be blocked: {}", malicious_tag);
     }
 
@@ -98,12 +97,12 @@ proptest! {
             prop_assert!(result.is_err(), "Null bytes should be rejected");
             return Ok(());
         }
-        
+
         let result = sanitization::sanitize_like_pattern(&text);
         prop_assert!(result.is_ok(), "Valid text should be escapable");
-        
+
         let escaped = result.unwrap();
-        
+
         // Verify special characters are escaped
         if text.contains('%') {
             prop_assert!(escaped.contains("\\%"), "Percent should be escaped");
@@ -124,7 +123,7 @@ proptest! {
     #[test]
     fn prop_limit_validation(limit in any::<u32>()) {
         let result = sanitization::sanitize_limit(limit);
-        
+
         if limit == 0 || limit > 1000 {
             prop_assert!(result.is_err(), "Invalid limit should be rejected: {}", limit);
         } else {
@@ -138,7 +137,7 @@ proptest! {
     #[test]
     fn prop_offset_validation(offset in any::<u32>()) {
         let result = sanitization::sanitize_offset(offset);
-        
+
         if offset > 100_000 {
             prop_assert!(result.is_err(), "Invalid offset should be rejected: {}", offset);
         } else {
@@ -159,16 +158,16 @@ proptest! {
             prop_assert!(result.is_err(), "Invalid query should be rejected");
             return Ok(());
         }
-        
+
         let result = sanitization::sanitize_fts5_query(&query);
         prop_assert!(result.is_ok(), "Valid query should be escapable: {}", query);
-        
+
         let escaped = result.unwrap();
-        
+
         // Verify query is wrapped in quotes
         prop_assert!(escaped.starts_with('"'), "Query should start with quote");
         prop_assert!(escaped.ends_with('"'), "Query should end with quote");
-        
+
         // Verify internal quotes are escaped
         if query.contains('"') {
             prop_assert!(escaped.contains("\"\""), "Internal quotes should be escaped");

@@ -1,18 +1,18 @@
 /// Property-Based Tests for Missing Direct URLs
-/// 
+///
 /// **Feature: odysee-cdn-playback-standardization, Property 1: Missing Direct URL Fields Do Not Cause Errors**
-/// 
+///
 /// For any claim metadata that contains a valid claim_id and is a stream type but is missing
 /// direct URL fields (hd_url, sd_url, streams, video.url), processing the claim should succeed
 /// and return a valid ContentItem with CDN-constructed playback URL.
-/// 
+///
 /// **Validates: Requirements 4.6, 4.7**
 
 #[cfg(test)]
 mod missing_direct_urls_property_tests {
     use crate::commands::parse_claim_item;
-    use serde_json::json;
     use proptest::prelude::*;
+    use serde_json::json;
 
     /// Strategy for generating valid claim IDs (alphanumeric, 20-40 chars)
     fn claim_id_strategy() -> impl Strategy<Value = String> {
@@ -32,7 +32,7 @@ mod missing_direct_urls_property_tests {
     /// Strategy for generating valid titles
     fn title_strategy() -> impl Strategy<Value = String> {
         prop_oneof![
-            "[A-Za-z0-9 ]{5,100}",  // Normal titles
+            "[A-Za-z0-9 ]{5,100}", // Normal titles
             Just("Test Movie".to_string()),
             Just("Series Episode 1".to_string()),
             Just("Documentary Film".to_string()),
@@ -49,7 +49,7 @@ mod missing_direct_urls_property_tests {
                 Just("hero_trailer".to_string()),
                 "[a-z_]{3,20}",
             ],
-            0..10
+            0..10,
         )
     }
 
@@ -57,17 +57,16 @@ mod missing_direct_urls_property_tests {
     fn thumbnail_url_strategy() -> impl Strategy<Value = Option<String>> {
         prop_oneof![
             Just(None),
-            Just(Some("https://thumbnails.odysee.com/thumb123.jpg".to_string())),
+            Just(Some(
+                "https://thumbnails.odysee.com/thumb123.jpg".to_string()
+            )),
             Just(Some("https://cdn.example.com/image.png".to_string())),
         ]
     }
 
     /// Strategy for generating optional duration
     fn duration_strategy() -> impl Strategy<Value = Option<u32>> {
-        prop_oneof![
-            Just(None),
-            (60u32..7200u32).prop_map(Some),
-        ]
+        prop_oneof![Just(None), (60u32..7200u32).prop_map(Some),]
     }
 
     /// Strategy for generating optional description
@@ -82,7 +81,9 @@ mod missing_direct_urls_property_tests {
     /// Strategy for generating optional sd_hash (for stream type inference)
     fn sd_hash_strategy() -> impl Strategy<Value = Option<String>> {
         prop_oneof![
-            Just(Some("abc123def456ghi789jkl012mno345pqr678stu901vwx234yz".to_string())),
+            Just(Some(
+                "abc123def456ghi789jkl012mno345pqr678stu901vwx234yz".to_string()
+            )),
             "[a-f0-9]{96}".prop_map(Some),
         ]
     }
@@ -519,7 +520,7 @@ mod missing_direct_urls_property_tests {
         ) {
             // Process multiple claims with missing direct URLs
             let mut results = Vec::new();
-            
+
             for claim_id in &claim_ids {
                 let item = json!({
                     "claim_id": claim_id,
@@ -551,7 +552,7 @@ mod missing_direct_urls_property_tests {
                             .video_urls.get("master").unwrap().url.clone();
                         let url_j = results[j].1.as_ref().unwrap()
                             .video_urls.get("master").unwrap().url.clone();
-                        
+
                         prop_assert_ne!(
                             url_i,
                             url_j,

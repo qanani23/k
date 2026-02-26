@@ -1,7 +1,7 @@
 /// Property-Based Tests for Valid claim_id CDN Playback URL Generation
-/// 
+///
 /// **Feature: odysee-cdn-playback-standardization, Property 2: Valid claim_id Always Produces CDN Playback URL**
-/// 
+///
 /// For any claim metadata containing a non-empty claim_id string and stream type, the CDN builder
 /// should produce a playback URL that:
 /// - Is a non-empty string
@@ -9,14 +9,14 @@
 /// - Contains the claim_id in the path
 /// - Ends with `/master.m3u8`
 /// - Produces the same URL when called multiple times with the same inputs (deterministic)
-/// 
+///
 /// **Validates: Requirements 1.1, 1.2, 1.4**
 
 #[cfg(test)]
 mod valid_claim_id_property_tests {
-    use crate::commands::{parse_claim_item, build_cdn_playback_url, get_cdn_gateway};
-    use serde_json::json;
+    use crate::commands::{build_cdn_playback_url, get_cdn_gateway, parse_claim_item};
     use proptest::prelude::*;
+    use serde_json::json;
 
     /// Strategy for generating valid claim IDs (alphanumeric, 20-40 chars)
     fn claim_id_strategy() -> impl Strategy<Value = String> {
@@ -42,7 +42,7 @@ mod valid_claim_id_property_tests {
     /// Strategy for generating valid titles
     fn title_strategy() -> impl Strategy<Value = String> {
         prop_oneof![
-            "[A-Za-z0-9 ]{5,100}",  // Normal titles
+            "[A-Za-z0-9 ]{5,100}", // Normal titles
             Just("Test Movie".to_string()),
             Just("Series Episode 1".to_string()),
             Just("Documentary Film".to_string()),
@@ -62,7 +62,7 @@ mod valid_claim_id_property_tests {
                 Just("comedy".to_string()),
                 "[a-z_]{3,20}",
             ],
-            0..10
+            0..10,
         )
     }
 
@@ -70,7 +70,9 @@ mod valid_claim_id_property_tests {
     fn thumbnail_url_strategy() -> impl Strategy<Value = Option<String>> {
         prop_oneof![
             Just(None),
-            Just(Some("https://thumbnails.odysee.com/thumb123.jpg".to_string())),
+            Just(Some(
+                "https://thumbnails.odysee.com/thumb123.jpg".to_string()
+            )),
             Just(Some("https://cdn.example.com/image.png".to_string())),
             Just(Some("https://spee.ch/thumbnail.webp".to_string())),
         ]
@@ -353,7 +355,7 @@ mod valid_claim_id_property_tests {
         ) {
             // Process multiple claims with different claim_ids
             let mut results = Vec::new();
-            
+
             for claim_id in &claim_ids {
                 let item = json!({
                     "claim_id": claim_id,
@@ -384,7 +386,7 @@ mod valid_claim_id_property_tests {
                             .video_urls.get("master").unwrap().url.clone();
                         let url_j = results[j].1.as_ref().unwrap()
                             .video_urls.get("master").unwrap().url.clone();
-                        
+
                         prop_assert_ne!(
                             url_i,
                             url_j,
@@ -404,7 +406,7 @@ mod valid_claim_id_property_tests {
                             .video_urls.get("master").unwrap().url.clone();
                         let url_j = results[j].1.as_ref().unwrap()
                             .video_urls.get("master").unwrap().url.clone();
-                        
+
                         prop_assert_eq!(
                             url_i,
                             url_j,
@@ -590,7 +592,7 @@ mod valid_claim_id_property_tests {
             });
 
             let result = parse_claim_item(&item);
-            
+
             // Property: Should succeed with alphanumeric claim_id
             prop_assert!(
                 result.is_ok(),

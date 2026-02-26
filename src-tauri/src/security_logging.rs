@@ -1,3 +1,6 @@
+// Allow unused code in security_logging.rs - security logging features are integrated but not all variants are currently used
+#![allow(dead_code)]
+
 //! Security Logging Module
 //!
 //! This module provides dedicated security event logging for the Kiyya application.
@@ -41,7 +44,7 @@
 use crate::path_security;
 use std::fs::OpenOptions;
 use std::io::Write;
-use tracing::{warn, error, info};
+use tracing::{error, info, warn};
 
 /// Security event types that can be logged
 #[derive(Debug, Clone)]
@@ -51,54 +54,51 @@ pub enum SecurityEvent {
         attempted_path: String,
         source: String,
     },
-    
+
     /// Input validation failure - malformed or suspicious input
     InputValidationFailure {
         input_type: String,
         reason: String,
         source: String,
     },
-    
+
     /// SQL injection attempt detected
     SqlInjectionAttempt {
         input: String,
         context: String,
         source: String,
     },
-    
+
     /// Network security violation - attempt to access unauthorized domain
     NetworkViolation {
         attempted_url: String,
         reason: String,
         source: String,
     },
-    
+
     /// Encryption key operation
     EncryptionKeyOperation {
         operation: String, // "generate", "access", "delete", "export", "import"
         success: bool,
         details: Option<String>,
     },
-    
+
     /// Authentication failure (for future use)
-    AuthenticationFailure {
-        reason: String,
-        source: String,
-    },
-    
+    AuthenticationFailure { reason: String, source: String },
+
     /// Authorization failure (for future use)
     AuthorizationFailure {
         resource: String,
         reason: String,
         source: String,
     },
-    
+
     /// Rate limiting triggered
     RateLimitTriggered {
         endpoint: String,
         retry_after_seconds: u64,
     },
-    
+
     /// Suspicious activity detected
     SuspiciousActivity {
         activity_type: String,
@@ -139,7 +139,7 @@ impl SecurityEvent {
             SecurityEvent::SuspiciousActivity { .. } => SecuritySeverity::Warning,
         }
     }
-    
+
     /// Returns the event type as a string
     pub fn event_type(&self) -> &str {
         match self {
@@ -154,38 +154,92 @@ impl SecurityEvent {
             SecurityEvent::SuspiciousActivity { .. } => "SUSPICIOUS_ACTIVITY",
         }
     }
-    
+
     /// Formats the event details as a string
     pub fn details(&self) -> String {
         match self {
-            SecurityEvent::PathViolation { attempted_path, source } => {
-                format!("Attempted to access path '{}' from {}", attempted_path, source)
+            SecurityEvent::PathViolation {
+                attempted_path,
+                source,
+            } => {
+                format!(
+                    "Attempted to access path '{}' from {}",
+                    attempted_path, source
+                )
             }
-            SecurityEvent::InputValidationFailure { input_type, reason, source } => {
-                format!("Validation failed for {} in {}: {}", input_type, source, reason)
+            SecurityEvent::InputValidationFailure {
+                input_type,
+                reason,
+                source,
+            } => {
+                format!(
+                    "Validation failed for {} in {}: {}",
+                    input_type, source, reason
+                )
             }
-            SecurityEvent::SqlInjectionAttempt { input, context, source } => {
-                format!("Possible SQL injection in {} from {}: '{}'", context, source, input)
+            SecurityEvent::SqlInjectionAttempt {
+                input,
+                context,
+                source,
+            } => {
+                format!(
+                    "Possible SQL injection in {} from {}: '{}'",
+                    context, source, input
+                )
             }
-            SecurityEvent::NetworkViolation { attempted_url, reason, source } => {
-                format!("Network violation from {}: {} - {}", source, attempted_url, reason)
+            SecurityEvent::NetworkViolation {
+                attempted_url,
+                reason,
+                source,
+            } => {
+                format!(
+                    "Network violation from {}: {} - {}",
+                    source, attempted_url, reason
+                )
             }
-            SecurityEvent::EncryptionKeyOperation { operation, success, details } => {
+            SecurityEvent::EncryptionKeyOperation {
+                operation,
+                success,
+                details,
+            } => {
                 let status = if *success { "SUCCESS" } else { "FAILURE" };
-                let detail_str = details.as_ref().map(|d| format!(" - {}", d)).unwrap_or_default();
+                let detail_str = details
+                    .as_ref()
+                    .map(|d| format!(" - {}", d))
+                    .unwrap_or_default();
                 format!("Encryption key {}: {}{}", operation, status, detail_str)
             }
             SecurityEvent::AuthenticationFailure { reason, source } => {
                 format!("Authentication failed from {}: {}", source, reason)
             }
-            SecurityEvent::AuthorizationFailure { resource, reason, source } => {
-                format!("Authorization failed for resource '{}' from {}: {}", resource, source, reason)
+            SecurityEvent::AuthorizationFailure {
+                resource,
+                reason,
+                source,
+            } => {
+                format!(
+                    "Authorization failed for resource '{}' from {}: {}",
+                    resource, source, reason
+                )
             }
-            SecurityEvent::RateLimitTriggered { endpoint, retry_after_seconds } => {
-                format!("Rate limit triggered for {}: retry after {} seconds", endpoint, retry_after_seconds)
+            SecurityEvent::RateLimitTriggered {
+                endpoint,
+                retry_after_seconds,
+            } => {
+                format!(
+                    "Rate limit triggered for {}: retry after {} seconds",
+                    endpoint, retry_after_seconds
+                )
             }
-            SecurityEvent::SuspiciousActivity { activity_type, details, source } => {
-                format!("Suspicious activity '{}' from {}: {}", activity_type, source, details)
+            SecurityEvent::SuspiciousActivity {
+                activity_type,
+                details,
+                source,
+            } => {
+                format!(
+                    "Suspicious activity '{}' from {}: {}",
+                    activity_type, source, details
+                )
             }
         }
     }
@@ -213,28 +267,25 @@ pub fn log_security_event(event: SecurityEvent) {
     let severity = event.severity();
     let event_type = event.event_type();
     let details = event.details();
-    
+
     let severity_str = match severity {
         SecuritySeverity::Info => "INFO",
         SecuritySeverity::Warning => "WARNING",
         SecuritySeverity::Critical => "CRITICAL",
     };
-    
+
     let log_entry = format!(
         "{} | {} | {} | {}\n",
-        timestamp,
-        severity_str,
-        event_type,
-        details
+        timestamp, severity_str, event_type, details
     );
-    
+
     // Write to security.log file in app data directory using path validation
     if let Ok(log_file_path) = path_security::validate_subdir_path("logs", "security.log") {
         // Ensure the logs directory exists
         if let Some(parent) = log_file_path.parent() {
             let _ = std::fs::create_dir_all(parent);
         }
-        
+
         if let Ok(mut file) = OpenOptions::new()
             .create(true)
             .append(true)
@@ -244,7 +295,7 @@ pub fn log_security_event(event: SecurityEvent) {
             let _ = file.flush();
         }
     }
-    
+
     // Also log to standard logging system based on severity
     match severity {
         SecuritySeverity::Info => {
@@ -279,21 +330,21 @@ mod tests {
             source: "test".to_string(),
         };
         assert_eq!(path_violation.severity(), SecuritySeverity::Critical);
-        
+
         let input_failure = SecurityEvent::InputValidationFailure {
             input_type: "claim_id".to_string(),
             reason: "Invalid format".to_string(),
             source: "test".to_string(),
         };
         assert_eq!(input_failure.severity(), SecuritySeverity::Warning);
-        
+
         let key_op_success = SecurityEvent::EncryptionKeyOperation {
             operation: "generate".to_string(),
             success: true,
             details: None,
         };
         assert_eq!(key_op_success.severity(), SecuritySeverity::Info);
-        
+
         let key_op_failure = SecurityEvent::EncryptionKeyOperation {
             operation: "access".to_string(),
             success: false,

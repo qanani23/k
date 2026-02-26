@@ -1,0 +1,486 @@
+﻿cargo :    Compiling kiyya-desktop v1.0.0 (C:\Users\hp\Desktop\kiyya1\src-tauri)
+At line:1 char:26
++ ... Seconds 10; cargo test --no-fail-fast -- --test-threads=1 2>&1 | Out- ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (   Compiling ki...yya1\src-tauri):String) [],  
+   RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+warning: duplicated attribute
+    --> src\commands.rs:1526:5
+     |
+1526 |     #[test]
+     |     ^^^^^^^
+     |
+     = note: `#[warn(duplicate_macro_attributes)]` on by default
+
+warning: duplicated attribute
+    --> src\commands.rs:2329:5
+     |
+2329 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2330:5
+     |
+2330 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2331:5
+     |
+2331 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2332:5
+     |
+2332 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2333:5
+     |
+2333 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2334:5
+     |
+2334 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2335:5
+     |
+2335 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2336:5
+     |
+2336 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2337:5
+     |
+2337 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2338:5
+     |
+2338 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2339:5
+     |
+2339 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2340:5
+     |
+2340 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2341:5
+     |
+2341 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2342:5
+     |
+2342 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2343:5
+     |
+2343 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2344:5
+     |
+2344 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2346:5
+     |
+2346 |     #[test]
+     |     ^^^^^^^
+
+warning: unused import: `create_dir_all`
+   --> src\download.rs:775:21
+    |
+775 |     use tokio::fs::{create_dir_all, write};
+    |                     ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `std::fs`
+   --> src\logging.rs:380:9
+    |
+380 |     use std::fs;
+    |         ^^^^^^^
+
+warning: duplicated attribute
+    --> src\models.rs:1031:5
+     |
+1031 |     #[test]
+     |     ^^^^^^^
+
+warning: unused imports: `Duration` and `sleep`
+   --> src\server.rs:667:27
+    |
+667 |         use tokio::time::{sleep, Duration};
+    |                           ^^^^^  ^^^^^^^^
+
+warning: unused import: `std::fs`
+ --> src\logging_test.rs:2:5
+  |
+2 | use std::fs;
+  |     ^^^^^^^
+
+warning: unused import: `std::path::PathBuf`
+  --> src\filesystem_access_test.rs:21:9
+   |
+21 |     use std::path::PathBuf;
+   |         ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `build_cdn_playback_url`
+  --> src\valid_claim_id_property_test.rs:17:27
+   |
+17 |     use crate::commands::{build_cdn_playback_url, get_cdn_gateway, parse_claim_item};
+   |                           ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `KiyyaError`
+ --> src\migrations_error_handling_test.rs:4:34
+  |
+4 | use crate::error::{ErrorContext, KiyyaError};
+  |                                  ^^^^^^^^^^
+
+warning: unused import: `MigrationInfo`
+ --> src\migrations_error_handling_test.rs:5:36
+  |
+5 | use crate::migrations::{Migration, MigrationInfo, MigrationRunner};
+  |                                    ^^^^^^^^^^^^^
+
+warning: unused import: `MigrationPlan`
+ --> src\migrations_dry_run_test.rs:4:36
+  |
+4 | use crate::migrations::{Migration, MigrationPlan, MigrationRunner, ValidationResult};
+  |                                    ^^^^^^^^^^^^^
+
+warning: unused import: `std::path::Path`
+ --> src\diagnostics_test.rs:5:5
+  |
+5 | use std::path::Path;
+  |     ^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::database::Database`
+  --> src\migration_property_test.rs:10:9
+   |
+10 |     use crate::database::Database;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused variable: `supports_range`
+   --> src\download.rs:961:39
+    |
+961 |             Ok((content_length, etag, supports_range)) => {
+    |                                       ^^^^^^^^^^^^^^ help: if this is intentional, 
+prefix it with an underscore: `_supports_range`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+   --> src\gateway.rs:904:13
+    |
+904 |         let mut client = GatewayClient::new();
+    |             ----^^^^^^
+    |             |
+    |             help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `encrypted_file_size`
+   --> src\server.rs:940:13
+    |
+940 |         let encrypted_file_size = 
+tokio::fs::metadata(&encrypted_file).await.unwrap().len();
+    |             ^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an 
+underscore: `_encrypted_file_size`
+
+warning: unused variable: `original_error_msg`
+   --> src\migrations_error_handling_test.rs:683:17
+    |
+683 |             let original_error_msg = error.to_string();
+    |                 ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an 
+underscore: `_original_error_msg`
+
+warning: unused variable: `db`
+  --> src\database_initialization_test.rs:93:14
+   |
+93 |         let (db, db_path) = create_test_db().await;
+   |              ^^ help: if this is intentional, prefix it with an underscore: `_db`
+
+warning: unused variable: `db`
+  --> src\database_optimization_test.rs:46:14
+   |
+46 |         let (db, _temp_dir, db_path) = create_test_database_with_ttl(30 * 60);
+   |              ^^ help: if this is intentional, prefix it with an underscore: `_db`
+
+warning: unused variable: `tags`
+  --> src\hero_stream_filter_test.rs:14:13
+   |
+14 |         let tags = vec!["hero_trailer".to_string()];
+   |             ^^^^ help: if this is intentional, prefix it with an underscore: `_tags`
+
+warning: unused variable: `tags`
+  --> src\hero_stream_filter_test.rs:47:13
+   |
+47 |         let tags = vec!["movie".to_string()];
+   |             ^^^^ help: if this is intentional, prefix it with an underscore: `_tags`
+
+warning: unused variable: `db`
+   --> src\encryption_key_management_test.rs:111:13
+    |
+111 |         let db = Database::new_with_path(&db_path).await.unwrap();
+    |             ^^ help: if this is intentional, prefix it with an underscore: `_db`
+
+warning: unused variable: `db`
+   --> src\migration_older_db_test.rs:333:13
+    |
+333 |         let db = Database::new_with_path(&db_path)
+    |             ^^ help: if this is intentional, prefix it with an underscore: `_db`
+
+warning: unused variable: `db`
+   --> src\migration_older_db_test.rs:410:13
+    |
+410 |         let db = Database::new_with_path(&db_path)
+    |             ^^ help: if this is intentional, prefix it with an underscore: `_db`
+
+warning: unused variable: `db`
+   --> src\migration_older_db_test.rs:496:13
+    |
+496 |         let db = Database::new_with_path(&db_path)
+    |             ^^ help: if this is intentional, prefix it with an underscore: `_db`
+
+warning: unused variable: `db`
+   --> src\migration_older_db_test.rs:597:13
+    |
+597 |         let db = Database::new_with_path(&db_path)
+    |             ^^ help: if this is intentional, prefix it with an underscore: `_db`
+
+warning: unused variable: `db`
+   --> src\migration_older_db_test.rs:673:13
+    |
+673 |         let db = Database::new_with_path(&db_path)
+    |             ^^ help: if this is intentional, prefix it with an underscore: `_db`
+
+warning: unused variable: `db`
+   --> src\migration_older_db_test.rs:714:13
+    |
+714 |         let db = Database::new_with_path(&db_path)
+    |             ^^ help: if this is intentional, prefix it with an underscore: `_db`
+
+warning: unused variable: `db`
+   --> src\migration_older_db_test.rs:787:13
+    |
+787 |         let db = Database::new_with_path(&db_path)
+    |             ^^ help: if this is intentional, prefix it with an underscore: `_db`
+
+warning: function `get_security_log_path` is never used
+  --> src\security_logging_e2e_test.rs:17:8
+   |
+17 |     fn get_security_log_path() -> PathBuf {
+   |        ^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `read_security_log` is never used
+  --> src\security_logging_e2e_test.rs:23:8
+   |
+23 |     fn read_security_log() -> Result<String, std::io::Error> {
+   |        ^^^^^^^^^^^^^^^^^
+
+warning: function `migration_version_strategy` is never used
+  --> src\migration_property_test.rs:77:8
+   |
+77 |     fn migration_version_strategy() -> impl Strategy<Value = u32> {
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: comparison is useless due to type limits
+    --> src\database.rs:2699:17
+     |
+2699 |         assert!(version >= 0, "Database version should be non-negative");
+     |                 ^^^^^^^^^^^^
+     |
+     = note: `#[warn(unused_comparisons)]` on by default
+
+warning: comparison is useless due to type limits
+   --> src\integration_test.rs:427:21
+    |
+427 |             assert!(favorites.len() >= 0, "Database should be operational");
+    |                     ^^^^^^^^^^^^^^^^^^^^
+
+error: linking with `link.exe` failed: exit code: 1104
+  |
+  = note: "C:\\Program Files (x86)\\Microsoft Visual 
+Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.50.35717\\bin\\HostX64\\x64\\link.exe" 
+"/NOLOGO" "C:\\Users\\hp\\AppData\\Local\\Temp\\rustc7o1fVv\\symbols.o" "<257 object files 
+omitted>" "C:\\Users\\hp\\Desktop\\kiyya1\\src-tauri\\target\\debug\\deps/{libdirs-cd868dad8
+05c7ba7,libdirs_sys-f60ee22aa5d2c6b8,liboption_ext-e965c00d72ff6c07,libfutures-dafcce0fad3ba
+828,libfutures_executor-37716b692a98031d,libtokio_stream-dc53ebd5652bbba8,libfiletime-9c53ed
+ad40e6e40c}.rlib" "<sysroot>\\lib\\rustlib\\x86_64-pc-windows-msvc\\lib/{libtest-*,libgetopt
+s-*,librustc_std_workspace_std-*}.rlib" "C:\\Users\\hp\\Desktop\\kiyya1\\src-tauri\\target\\
+debug\\deps/{libproptest-d6f780f1e775e4c4,libunarray-6de945fc82cc3cbe,librand_xorshift-64eda
+f1207001d2b,librand_chacha-2036938810c8a1d2,librand-5beed89103c3ec70,librand_core-178adb6d30
+14ba2d,librusty_fork-1ff42760cbea2d8f,libwait_timeout-ee944a821b24840e,libquick_error-1c5bcc
+e0228e8ac2,libbit_set-553b3b9701441c02,libbit_vec-c32f71b51c1d0097,libwarp-4321b83edb0c92fe,
+libmime_guess-22c2620722d2253c,libunicase-26d9a1c3ba9c4635,libscoped_tls-c067868328b62398,li
+btokio_tungstenite-d8eea839d4299bd7,libtungstenite-a6874287d5f1e20e,libdata_encoding-4ea85e0
+312d62a1b,libhttp-cb5a52ab37935ee4,libmulter-760e7111d6fcbb4b,libspin-0219ddaaeeb2b4c0,libhe
+aders-d648d483eb0081c6,libheaders_core-d01fea2107ed3050,libpin_project-71975f1d1952da4a,libt
+racing_appender-40c34a3f9e8dbf91,libtracing_subscriber-0fa5b9ea83304806,libtracing_serde-d70
+1ee6ae41c7423,libsharded_slab-c9c8ae386d55ecf9,libmatchers-396f768d8c577f01,libnu_ansi_term-
+4eed2c9eb2b5dcbf,libthread_local-5388836ba630b05d,libtracing_log-b2d1095f7ba6952e,libkeyring
+-66d47ae2631c0c27,libwindows_sys-74fbf589862fd3a4,libaes_gcm-f112a1201544cd1c,libctr-bced63a
+4ab3f7fa1,libghash-854197b481bc827c,libpolyval-d5fdc921c3e51965,libopaque_debug-1351fec76d41
+2f6c,libuniversal_hash-5d9b38d28daaf75b,libaead-ec9559f5cbdbbe99,libzip-e835c6e92a2e30aa,lib
+pbkdf2-10386909382efeb4,libsha2-28038e13fa1c780e,libpassword_hash-959c841331d3cfeb,libbase64
+ct-683113ca78f5883a,libtime-f40f6ba0c95572da,libtime_core-b74dec58fdab2ccf,libnum_conv-723ad
+4bf2ad50eb9,libderanged-fff715a47e6ede68,libpowerfmt-791ddfd53c3bf35f,libzstd-8ac4688eccfa72
+75,libzstd_safe-456eb8e50b8286ed,libzstd_sys-915f0337f92cdd40,libbzip2-374ccd492f578fe7,libb
+zip2_sys-400d641bca160f00,libflate2-91a3b2844883373a,libminiz_oxide-72230ed0e5f427a0,libsimd
+_adler32-556a0b3ca5128667,libcrc32fast-7cf56846f94a103f,libaes-b21a95a1dfb346a1,libcipher-8c
+13cbc0501ba7d5,libinout-c76ec06c4ab5c6e3,libsha1-7e9808884350cc30,libcpufeatures-e0416c0bcbf
+b3ec6,libhmac-96811cad15b47723,libdigest-a02a228b421fc5b8,libsubtle-aa55a65154b3fcbd,libbloc
+k_buffer-f0cd3be69bf2df03,libcrypto_common-e4fe808d59e27118,libgeneric_array-5e5207ef7c7a362
+b,libtypenum-98378b0eab45a838,libconstant_time_eq-76ac6ed527f67e13,libsysinfo-404d39e8e903db
+23,librayon-7d581ad2c41299c4,librayon_core-4443a6e9dfa5ed9e,libeither-69c3c7fd64a758e0,libnt
+api-f7f6a01320ca7c05,librusqlite-f740d3b4687bea1c,libbitflags-bb50bf8cf435481b,libfallible_s
+treaming_iterator-0fd49df14a8f3b2b,libfallible_iterator-aa7d52aa008e8da5,libhashlink-bd32704
+41ef31165,libhashbrown-de2944f5a4e1404d,libahash-e3bd328d02cb1c6d,liballocator_api2-9f6d451e
+ad62a679,liblibsqlite3_sys-d2a4b99bd5ca79f6,libchrono-b6cfcbe1ee080b98,libnum_traits-28a5dfa
+d5b24ad5e,libtauri-97996f2188befb3e,libnotify_rust-7bc12e545696ac20,libtauri_winrt_notificat
+ion-dc7bc718c5e7ee3e,libquick_xml-f4f2bd0530198905,libthiserror-ab270b7e5fe1b8c9,libwindows-
+4f2b34405649e90a,libwindows_collections-f1888bf4f0e67f38,libwindows_future-730cf085b085b651,
+libwindows_core-28a48149cf4d91e7,libwindows_strings-1eff5b4296600653,libwindows_result-e9e64
+ff121961746,libwindows_link-64b879f8e82a55c3,libopen-963ff51f14825cdd,libwindows_sys-91a97c2
+a7808279f,libdirs_next-07449503ea4d27c2,libdirs_sys_next-0474f7342d55cc4d,librfd-b84cc314ec2
+58970,libwindows-624c9043dc27b9d2,libtauri_runtime_wry-2193bdd5dc9e0e44,librand-bca0653dac69
+857f,librand_chacha-0c9c730b1df5ef0d,libppv_lite86-5b6f1e35a7cf0a1e,libzerocopy-87516b5252b2
+594e,librand_core-79836cf1533d219b,libgetrandom-8acfd03fd2c87542,libwry-f4b98ef4c53a4b21,lib
+tao-b93f9b5b21521a47,liblibc-a025b273a5b83350,libunicode_segmentation-044ec705ee08e581,libcr
+ossbeam_channel-be28ecfba875c3b7,libinstant-b62a22a9c495066c,liblazy_static-2734e6c0015214a3
+,libwebview2_com-b73590aecbd30027,libwebview2_com_sys-cd991c4119a93ceb,libstate-3b28855b14c2
+a7c7,libanyhow-5b131408a451bb7a,libtauri_runtime-09916ed1bdb00861,libwindows-5852160af9954a6
+0,libhttp_range-efa3be185624825c,libtauri_utils-3ea5f9f2a22a5553,libdunce-16fe769e3505e330,l
+ibglob-ace335b215460c9b,libwindows_version-58c79e57c1e2e172,libinfer-6554b3fed5be0e2d,libcfb
+-822144456f2a3f53,libuuid-332f81a654b74a5a,libbrotli-e9548383634a9c18,libbrotli_decompressor
+-9b0f97eff1896f0a,liballoc_stdlib-ed483e3f07ab51ef,liballoc_no_stdlib-688ad7daeb2a11b0,libku
+chikiki-904fedacd6646906,libselectors-8f0064e4247696bd,libthin_slice-484618342d77b34f,libser
+vo_arc-02cfa1809a05fd91,libnodrop-d516c93ed24a833c,libfxhash-f409fd1e2c8e80dd,libbyteorder-1
+f1b6515f7378591,libbitflags-f266f3f07a0a0ca7,libcssparser-e2b863345afbbcab,libitoa-f216fc20b
+9bb9db9,libdtoa_short-30b18c15848d07b9,libdtoa-6106fb2e339fce0b,libphf-015c1881b37d68de,libp
+hf_shared-162c178e53aeb19e,libindexmap-286ab254e8723f1e,libhashbrown-4efd926a039de0f5,libmat
+ches-0b3b074585dbd73d,libhtml5ever-f0d6e816591a806b,libmarkup5ever-755a0ab8004637c2,libstrin
+g_cache-b56a150aa48f4e4c,libprecomputed_hash-a03714069a250bfe,libphf-2dcc11cc9dcfe9e7,libphf
+_shared-d081d0c263eece96,libsiphasher-60c8d9043a437a99,libtendril-81f25af342794532,libutf8-8
+84f4c4f60ab135a,libfutf-8b3d43dab6b13880,libdebug_unreachable-c73f8986f202b9b5,libmac-910b98
+38412453e0,libjson_patch-ac348b79cfe27f25,libthiserror-cda43e2f6ed7f9f0,libjsonptr-07b444fc0
+4bcefc1,libserde_with-95b86f525aef3bfd,libphf-0be12c9e140fb635,libphf_shared-75607378b7a9313
+c,libsiphasher-6c84bb58e06b77b8,libraw_window_handle-6e55d9d7a82aad8a,libsemver-7c41a673e71a
+bdeb,libserialize_to_javascript-87956472001be9b1,libreqwest-917b962ff17f5e3f,librustls_pemfi
+le-6c95592f9129969e,libhyper_tls-510f260fcd94769e,libbase64-061b24e9ec3c7839,libwinreg-8450b
+34df8bd7e7b,libwindows_sys-33f01f8633fd6f86,libwindows_targets-b63a5be621be7177,libipnet-c45
+d9f5257d0f81a,libtokio_native_tls-492b5ee839f52e89,libserde_urlencoded-7d8fb55f49e20b6d,libr
+yu-709c999b9e345d8b,libmime-72181c4138a025ce,libencoding_rs-dc87e327f52e667c,libnative_tls-5
+4700d5c12aff696,libschannel-c3057112ece4fb6b,libhyper-f799a836ef47b6e4,libwant-05deac7761e4f
+c6a,libtry_lock-87822a33464c979e,libsocket2-663d1da5abd4d73d,libwinapi-676855baa2702359,libh
+ttparse-d778772533f56209,libh2-2ee440f9f6ae1503,libtower_service-08e4bcfd85a8bc63,libtracing
+-9f3b2c991a1ab98b,libtracing_core-af32cc12c8b80870,libhttpdate-ed843e7fb618e847,libtokio_uti
+l-c0de6d92b57e2d9f,libtokio-b93959856c38d0e3,libsocket2-161dc0a59973005f,libwindows_sys-9d13
+e5eeccb5236c,libwindows_targets-fd7cc43d55cc2036,libmio-f215b9680ef37d6a,libwindows_sys-a2d4
+2ddec31b8108,libparking_lot-f38f4ae22d1e6570,libparking_lot_core-af86fbd87d7238b6,libwindows
+_link-be7bff08e45979bf,liblock_api-95c89febc39e100a,libscopeguard-ccc4a5f8aa4d8660,libsync_w
+rapper-367e24d9d486d9a4,libhttp_body-9fb06fa66ce948c5,libfutures_util-7d44c0a8ab8f2c4a,libfu
+tures_io-f1ffe22f31adb096,libslab-1a56fc8390e436bf,libfutures_channel-3de95901bcd16b4b,libpi
+n_project_lite-d908eb3b8242388a,libfutures_sink-25f7a13793bc2a51,libfutures_task-2420190f2ab
+9b798,libpin_utils-3c1b3ed507b87ba5,libfutures_core-0d814413620ab80b,libhttp-ecbfbba218657ab
+9,libbytes-1bcab8bc9d0a7021,libfnv-61d912111753ff7c,libignore-0230c12e2a927c54,libwalkdir-51
+c74685ddec610e,libsame_file-f4df181e9711c386,libcrossbeam_deque-fa33c8132ec9220f,libcrossbea
+m_epoch-4b7ea4ad184188cd,libcrossbeam_utils-0741cccf8cd87f54,libwinapi_util-51bbda2e73301502
+,libglobset-68dde96d37772a39,liblog-dce0a5b8bde02c16,libbstr-c53bbaa0b55dc0a1,libtempfile-aa
+713226375c65f5,libgetrandom-afe11ce71565574d,libcfg_if-e3dd695f23b9dc42,libfastrand-ce3f9047
+497167ce,libwindows_sys-a06842b592db44a4,libwindows_targets-58f9f7051209f0d8,liburl-d0d8e519
+db17673a,libidna-c9b768cb982edbd8,libutf8_iter-7b0c0c8b8e6066ad,libidna_adapter-7deae6ebedc9
+bbe8,libicu_properties-1ae920c097747079,libicu_properties_data-b36ad93c308b43f1,libicu_norma
+lizer-bde424deab7c30cb,libsmallvec-13c216f78505b7c4,libicu_normalizer_data-b24f530558ec63c0,
+libicu_collections-e20ce5d2b59bb2fd,libpotential_utf-33cdad70b1561404,libicu_provider-b5f304
+1283f44d92,libicu_locale_core-ddad7d7d0ec176c9,libtinystr-91eb1f03565cb19e,liblitemap-1bcaf7
+e2bfe62333,libwriteable-cfd746043ccd2171,libzerovec-7dc06b048cde8960,libzerotrie-c0e43fb89e8
+6177c,libyoke-92f20c29e11075c3,libstable_deref_trait-c22b6f233388dcf3,libzerofrom-46fe56cda9
+9beb76,libform_urlencoded-5e2f1dc6fe94556c,libpercent_encoding-14518d3b0de41388,libserde-57c
+8bd34ed442f84,libregex-2c9450ea567f6569,libregex_automata-b115a46e25c12897,libaho_corasick-5
+1c57a57d80641c3,libregex_syntax-0b03be3e7e502824,libserde_json-e50d2befeafe37ea,libmemchr-0e
+efb8ee3895b999,libitoa-140975738de8b70c,libzmij-c87a4ac7be362c36,libindexmap-2026c5fc3534fe9
+d,libequivalent-4fef06d4b0277e21,libhashbrown-7e2f62a65fc549db,libserde_core-61799802124ef44
+6,libonce_cell-2a20a8bbf50fd5f2}.rlib" "<sysroot>\\lib\\rustlib\\x86_64-pc-windows-msvc\\lib
+/{libstd-*,libpanic_unwind-*,libcfg_if-*,libwindows_targets-*,librustc_demangle-*,libstd_det
+ect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libunwind-*,librustc_std_workspace_core-
+*,liballoc-*,libcore-*,libcompiler_builtins-*}.rlib" "kernel32.lib" "C:\\Users\\hp\\.cargo\\
+registry\\src\\index.crates.io-1949cf8c6b5b557f\\windows_x86_64_msvc-0.52.6\\lib\\windows.0.
+52.0.lib" "ntdll.lib" "C:\\Users\\hp\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557
+f\\windows_x86_64_msvc-0.42.2\\lib\\windows.lib" "C:\\Users\\hp\\.cargo\\registry\\src\\inde
+x.crates.io-1949cf8c6b5b557f\\windows_x86_64_msvc-0.42.2\\lib\\windows.lib" "bcrypt.lib" 
+"advapi32.lib" "legacy_stdio_definitions.lib" "C:\\Users\\hp\\.cargo\\registry\\src\\index.c
+rates.io-1949cf8c6b5b557f\\windows_x86_64_msvc-0.42.2\\lib\\windows.lib" "C:\\Users\\hp\\.ca
+rgo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\windows_x86_64_msvc-0.48.5\\lib\\windo
+ws.0.48.5.lib" "advapi32.lib" "cfgmgr32.lib" "credui.lib" "fwpuclnt.lib" "gdi32.lib" 
+"iphlpapi.lib" "kernel32.lib" "msimg32.lib" "netapi32.lib" "ntdll.lib" "ole32.lib" 
+"oleaut32.lib" "opengl32.lib" "pdh.lib" "powrprof.lib" "psapi.lib" "secur32.lib" 
+"shell32.lib" "shlwapi.lib" "synchronization.lib" "user32.lib" "winspool.lib" "ws2_32.lib" "
+C:\\Users\\hp\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\windows_x86_64_msvc-
+0.53.1\\lib\\windows.0.53.0.lib" "C:\\Users\\hp\\.cargo\\registry\\src\\index.crates.io-1949
+cf8c6b5b557f\\windows_x86_64_msvc-0.52.6\\lib\\windows.0.52.0.lib" "kernel32.lib" 
+"kernel32.lib" "kernel32.lib" "ntdll.lib" "userenv.lib" "ws2_32.lib" "dbghelp.lib" 
+"/defaultlib:msvcrt" "/NXCOMPAT" "/LIBPATH:C:\\Users\\hp\\Desktop\\kiyya1\\src-tauri\\target
+\\debug\\build\\libsqlite3-sys-c6ea70efde8b41ac\\out" "/LIBPATH:C:\\Users\\hp\\Desktop\\kiyy
+a1\\src-tauri\\target\\debug\\build\\webview2-com-sys-a074eeff20d2fb48\\out\\x64" "/LIBPATH:
+C:\\Users\\hp\\Desktop\\kiyya1\\src-tauri\\target\\debug\\build\\bzip2-sys-d53aeae9efc75e9c\
+\out\\lib" "/LIBPATH:C:\\Users\\hp\\Desktop\\kiyya1\\src-tauri\\target\\debug\\build\\zstd-s
+ys-9b3633448e2b04a3\\out" "/LIBPATH:C:\\Users\\hp\\.cargo\\registry\\src\\index.crates.io-19
+49cf8c6b5b557f\\windows_x86_64_msvc-0.48.5\\lib" "/LIBPATH:C:\\Users\\hp\\.cargo\\registry\\
+src\\index.crates.io-1949cf8c6b5b557f\\windows_x86_64_msvc-0.52.6\\lib" "/LIBPATH:C:\\Users\
+\hp\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\windows_x86_64_msvc-0.53.1\\li
+b" "/LIBPATH:C:\\Users\\hp\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\windows
+_x86_64_msvc-0.42.2\\lib" "/LIBPATH:C:\\Users\\hp\\.cargo\\registry\\src\\index.crates.io-19
+49cf8c6b5b557f\\windows_x86_64_msvc-0.37.0\\lib" "/LIBPATH:C:\\Users\\hp\\.cargo\\registry\\
+src\\index.crates.io-1949cf8c6b5b557f\\windows_x86_64_msvc-0.39.0\\lib" "/OUT:C:\\Users\\hp\
+\Desktop\\kiyya1\\src-tauri\\target\\debug\\deps\\kiyya_desktop-62cb0511019ee90f.exe" 
+"/OPT:REF,NOICF" "/DEBUG" "/PDBALTPATH:%_PDB%" 
+"/NATVIS:<sysroot>\\lib\\rustlib\\etc\\intrinsic.natvis" 
+"/NATVIS:<sysroot>\\lib\\rustlib\\etc\\liballoc.natvis" 
+"/NATVIS:<sysroot>\\lib\\rustlib\\etc\\libcore.natvis" 
+"/NATVIS:<sysroot>\\lib\\rustlib\\etc\\libstd.natvis" 
+"/NATVIS:C:\\Users\\hp\\AppData\\Local\\Temp\\rustc7o1fVv\\kiyya_desktop-0.natvis" 
+"/NATVIS:C:\\Users\\hp\\AppData\\Local\\Temp\\rustc7o1fVv\\kiyya_desktop-1.natvis" 
+"/NATVIS:C:\\Users\\hp\\AppData\\Local\\Temp\\rustc7o1fVv\\kiyya_desktop-2.natvis" 
+"/STACK:16777216" "C:\\Users\\hp\\Desktop\\kiyya1\\src-tauri\\target\\debug\\build\\kiyya-de
+sktop-733874e610f19725\\out\\resource.lib"
+  = note: some arguments are omitted. use `--verbose` to show all linker arguments
+  = note: LINK : fatal error LNK1104: cannot open file 'C:\Users\hp\Desktop\kiyya1\src-tauri
+\target\debug\deps\kiyya_desktop-62cb0511019ee90f.exe'ΓÉì
+          
+
+warning: `kiyya-desktop` (bin "kiyya-desktop" test) generated 51 warnings
+error: could not compile `kiyya-desktop` (bin "kiyya-desktop" test) due to 1 previous 
+error; 51 warnings emitted

@@ -5,17 +5,17 @@
 
 #[cfg(test)]
 mod tests {
-    use crate::validation;
-    use crate::sanitization;
     use crate::path_security;
-    use crate::security_logging::{SecurityEvent, log_security_event};
+    use crate::sanitization;
+    use crate::security_logging::{log_security_event, SecurityEvent};
+    use crate::validation;
 
     #[test]
     fn test_path_security_logs_violations() {
         // Attempt path traversal - should log security event
         let result = path_security::validate_path("../../../etc/passwd");
         assert!(result.is_err(), "Path traversal should be rejected");
-        
+
         // The security event should have been logged to security.log
         // In a real test, we would verify the log file contents
     }
@@ -52,7 +52,10 @@ mod tests {
     fn test_sanitization_logs_sql_injection() {
         // Attempt SQL injection in ORDER BY - should log security event
         let result = sanitization::sanitize_order_by("releaseTime; DROP TABLE users--");
-        assert!(result.is_err(), "SQL injection in ORDER BY should be rejected");
+        assert!(
+            result.is_err(),
+            "SQL injection in ORDER BY should be rejected"
+        );
     }
 
     #[test]
@@ -70,21 +73,21 @@ mod tests {
             source: "test".to_string(),
         };
         assert_eq!(path_violation.event_type(), "PATH_VIOLATION");
-        
+
         let input_failure = SecurityEvent::InputValidationFailure {
             input_type: "claim_id".to_string(),
             reason: "Contains null bytes".to_string(),
             source: "test".to_string(),
         };
         assert_eq!(input_failure.event_type(), "INPUT_VALIDATION_FAILURE");
-        
+
         let sql_injection = SecurityEvent::SqlInjectionAttempt {
             input: "'; DROP TABLE users--".to_string(),
             context: "ORDER BY".to_string(),
             source: "test".to_string(),
         };
         assert_eq!(sql_injection.event_type(), "SQL_INJECTION_ATTEMPT");
-        
+
         let network_violation = SecurityEvent::NetworkViolation {
             attempted_url: "https://evil.com".to_string(),
             reason: "Unauthorized domain".to_string(),
@@ -101,7 +104,7 @@ mod tests {
             details: "This is a test".to_string(),
             source: "test".to_string(),
         });
-        
+
         // If we get here, logging didn't panic
         assert!(true);
     }
@@ -115,7 +118,7 @@ mod tests {
             details: Some("Key stored in OS keystore".to_string()),
         };
         assert_eq!(key_gen_success.event_type(), "ENCRYPTION_KEY_OPERATION");
-        
+
         let key_gen_failure = SecurityEvent::EncryptionKeyOperation {
             operation: "generate".to_string(),
             success: false,
@@ -132,7 +135,7 @@ mod tests {
             retry_after_seconds: 60,
         };
         assert_eq!(rate_limit.event_type(), "RATE_LIMIT_TRIGGERED");
-        
+
         let details = rate_limit.details();
         assert!(details.contains("api.odysee.com"));
         assert!(details.contains("60"));

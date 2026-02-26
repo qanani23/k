@@ -13,10 +13,17 @@ mod hero_stream_filter_tests {
         // Simulate the request parameters that should be sent for hero_trailer queries
         let tags = vec!["hero_trailer".to_string()];
         let stream_types = Some(vec!["stream".to_string()]);
-        
+
         // Verify that stream_types is set when hero_trailer tag is present
-        assert!(stream_types.is_some(), "stream_types should be set for hero_trailer queries");
-        assert_eq!(stream_types.unwrap(), vec!["stream"], "stream_types should contain 'stream'");
+        assert!(
+            stream_types.is_some(),
+            "stream_types should be set for hero_trailer queries"
+        );
+        assert_eq!(
+            stream_types.unwrap(),
+            vec!["stream"],
+            "stream_types should contain 'stream'"
+        );
     }
 
     /// Test that hero_trailer query has limit=1 or reasonable limit
@@ -26,8 +33,11 @@ mod hero_stream_filter_tests {
         // Hero content typically fetches with limit=20 for random selection
         // This is acceptable as long as stream_types filter is applied
         let limit = 20;
-        
-        assert!(limit > 0 && limit <= 50, "Hero query limit should be reasonable (1-50)");
+
+        assert!(
+            limit > 0 && limit <= 50,
+            "Hero query limit should be reasonable (1-50)"
+        );
     }
 
     /// Test that non-hero queries don't force stream_types filter
@@ -35,12 +45,15 @@ mod hero_stream_filter_tests {
     #[test]
     fn test_non_hero_queries_dont_force_stream_filter() {
         let tags = vec!["movie".to_string()];
-        
+
         // For non-hero queries, stream_types should not be automatically set
         // (though it can be set explicitly if needed)
         let stream_types: Option<Vec<String>> = None;
-        
-        assert!(stream_types.is_none(), "Non-hero queries should not automatically set stream_types");
+
+        assert!(
+            stream_types.is_none(),
+            "Non-hero queries should not automatically set stream_types"
+        );
     }
 
     /// Test that hero_trailer with stream_types prevents non-stream claims
@@ -74,14 +87,18 @@ mod hero_stream_filter_tests {
                 }
             }),
         ];
-        
+
         // When stream_types=["stream"] is passed to API, only stream claims should be returned
         // The API should filter out non-stream claims before they reach the backend parser
-        let expected_stream_count = claims.iter()
+        let expected_stream_count = claims
+            .iter()
             .filter(|c| c.get("value_type").and_then(|v| v.as_str()) == Some("stream"))
             .count();
-        
-        assert_eq!(expected_stream_count, 1, "Only stream claims should pass the filter");
+
+        assert_eq!(
+            expected_stream_count, 1,
+            "Only stream claims should pass the filter"
+        );
     }
 
     /// Test that hero section can handle empty results gracefully
@@ -89,9 +106,13 @@ mod hero_stream_filter_tests {
     #[test]
     fn test_hero_handles_empty_results() {
         let claims: Vec<serde_json::Value> = vec![];
-        
+
         // Empty results should not cause errors
-        assert_eq!(claims.len(), 0, "Empty results should be handled gracefully");
+        assert_eq!(
+            claims.len(),
+            0,
+            "Empty results should be handled gracefully"
+        );
     }
 
     /// Integration test: Verify the complete hero query flow
@@ -102,13 +123,23 @@ mod hero_stream_filter_tests {
         let tags = vec!["hero_trailer".to_string()];
         let stream_types = Some(vec!["stream".to_string()]);
         let limit = 20;
-        
+
         // 2. Verify all required parameters are present
-        assert!(tags.contains(&"hero_trailer".to_string()), "Query must include hero_trailer tag");
-        assert!(stream_types.is_some(), "Query must include stream_types filter");
-        assert_eq!(stream_types.unwrap(), vec!["stream"], "stream_types must be ['stream']");
+        assert!(
+            tags.contains(&"hero_trailer".to_string()),
+            "Query must include hero_trailer tag"
+        );
+        assert!(
+            stream_types.is_some(),
+            "Query must include stream_types filter"
+        );
+        assert_eq!(
+            stream_types.unwrap(),
+            vec!["stream"],
+            "stream_types must be ['stream']"
+        );
         assert!(limit > 0, "Query must have positive limit");
-        
+
         // 3. Verify this prevents non-stream claims from being processed
         // The API-level filter (stream_types) ensures non-stream claims never reach the backend parser
         // This is more efficient than backend-side filtering after fetch

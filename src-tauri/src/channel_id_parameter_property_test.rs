@@ -1,11 +1,11 @@
 /// Property-Based Tests for Channel ID Parameter Usage
-/// 
+///
 /// **Feature: pass-channel-id-from-frontend, Property 1: Channel ID parameter usage**
-/// 
+///
 /// For any valid channel_id string, when passed to fetch_channel_claims or fetch_playlists,
 /// the backend should use that exact channel_id value in the Odysee API request
 /// (not read from environment variables).
-/// 
+///
 /// **Validates: Requirements 1.3, 5.2**
 
 #[cfg(test)]
@@ -40,14 +40,14 @@ mod channel_id_parameter_tests {
         ) {
             // Property: All valid channel IDs should pass validation
             let result = validation::validate_channel_id(&channel_id);
-            
+
             prop_assert!(
                 result.is_ok(),
                 "Valid channel_id '{}' should pass validation, got error: {:?}",
                 channel_id,
                 result.err()
             );
-            
+
             // Property: Validated channel_id should match the input
             if let Ok(validated) = result {
                 prop_assert_eq!(
@@ -66,12 +66,12 @@ mod channel_id_parameter_tests {
             iterations in 2usize..10usize
         ) {
             let mut validation_results = Vec::new();
-            
+
             for _ in 0..iterations {
                 let result = validation::validate_channel_id(&channel_id);
                 validation_results.push(result.is_ok());
             }
-            
+
             // Property: All validation results should be identical
             let first_result = validation_results[0];
             for result in &validation_results[1..] {
@@ -93,21 +93,21 @@ mod channel_id_parameter_tests {
             // Test with no environment variable
             std::env::remove_var("CHANNEL_ID");
             let result_no_env = validation::validate_channel_id(&channel_id);
-            
+
             // Test with environment variable set to different value
             std::env::set_var("CHANNEL_ID", &env_channel_id);
             let result_with_env = validation::validate_channel_id(&channel_id);
-            
+
             // Clean up
             std::env::remove_var("CHANNEL_ID");
-            
+
             // Property: Validation should be independent of environment variable
             prop_assert_eq!(
                 result_no_env.is_ok(),
                 result_with_env.is_ok(),
                 "Channel ID validation should not depend on CHANNEL_ID environment variable"
             );
-            
+
             // Property: Both should succeed for valid channel IDs
             prop_assert!(
                 result_no_env.is_ok(),
@@ -126,17 +126,17 @@ mod channel_id_parameter_tests {
             channel_ids in prop::collection::vec(valid_channel_id_strategy(), 2..10)
         ) {
             std::env::remove_var("CHANNEL_ID");
-            
+
             for channel_id in &channel_ids {
                 let result = validation::validate_channel_id(channel_id);
-                
+
                 // Property: Each valid channel_id should pass validation
                 prop_assert!(
                     result.is_ok(),
                     "Valid channel_id '{}' should pass validation",
                     channel_id
                 );
-                
+
                 // Property: Validated value should match input
                 if let Ok(validated) = result {
                     prop_assert_eq!(
@@ -155,13 +155,13 @@ mod channel_id_parameter_tests {
             channel_id in valid_channel_id_strategy()
         ) {
             let result = validation::validate_channel_id(&channel_id);
-            
+
             // Property: Validation should succeed
             prop_assert!(
                 result.is_ok(),
                 "Valid channel_id should pass validation"
             );
-            
+
             // Property: Validated value should be exactly the same as input
             if let Ok(validated) = result {
                 prop_assert_eq!(
@@ -169,7 +169,7 @@ mod channel_id_parameter_tests {
                     &channel_id,
                     "Validation should preserve the exact channel_id value"
                 );
-                
+
                 // Verify byte-for-byte equality
                 prop_assert_eq!(
                     validated.as_bytes(),
@@ -189,18 +189,18 @@ mod channel_id_parameter_tests {
             // Test channel ID with colon (claim ID format)
             let channel_id = format!("@{}:{}", name, claim_id);
             let result = validation::validate_channel_id(&channel_id);
-            
+
             // Property: Channel IDs with colons should be valid
             prop_assert!(
                 result.is_ok(),
                 "Channel ID with colon '{}' should be valid",
                 channel_id
             );
-            
+
             // Test channel ID without colon
             let channel_id_no_claim = format!("@{}", name);
             let result_no_claim = validation::validate_channel_id(&channel_id_no_claim);
-            
+
             // Property: Channel IDs without colons should also be valid
             prop_assert!(
                 result_no_claim.is_ok(),
@@ -219,7 +219,7 @@ mod channel_id_parameter_tests {
             let results: Vec<_> = (0..10)
                 .map(|_| validation::validate_channel_id(&channel_id))
                 .collect();
-            
+
             // Property: All results should be Ok
             for (i, result) in results.iter().enumerate() {
                 prop_assert!(
@@ -229,7 +229,7 @@ mod channel_id_parameter_tests {
                     channel_id
                 );
             }
-            
+
             // Property: All results should be identical
             let first_result = &results[0];
             for result in &results[1..] {
@@ -249,10 +249,10 @@ mod channel_id_parameter_tests {
         ) {
             use std::sync::Arc;
             use std::thread;
-            
+
             let channel_id = Arc::new(channel_id);
             let mut handles = vec![];
-            
+
             // Spawn multiple threads to validate the same channel_id
             for _ in 0..5 {
                 let channel_id_clone = Arc::clone(&channel_id);
@@ -261,12 +261,12 @@ mod channel_id_parameter_tests {
                 });
                 handles.push(handle);
             }
-            
+
             // Collect results
             let results: Vec<_> = handles.into_iter()
                 .map(|h| h.join().unwrap())
                 .collect();
-            
+
             // Property: All threads should get the same result
             for result in &results {
                 prop_assert!(
@@ -274,7 +274,7 @@ mod channel_id_parameter_tests {
                     "Validation should succeed in all threads"
                 );
             }
-            
+
             // Property: All results should be identical
             let first_result = &results[0];
             for result in &results[1..] {
@@ -289,12 +289,12 @@ mod channel_id_parameter_tests {
 }
 
 /// Property-Based Tests for Invalid Channel ID Rejection
-/// 
+///
 /// **Feature: pass-channel-id-from-frontend, Property 2: Invalid channel ID rejection**
-/// 
+///
 /// For any string that does not start with '@' or is empty, when passed as channel_id
 /// to backend commands, the backend should return a validation error.
-/// 
+///
 /// **Validates: Requirements 1.4, 4.2**
 
 #[cfg(test)]
@@ -342,7 +342,7 @@ mod invalid_channel_id_rejection_tests {
         ) {
             // Property: All invalid channel IDs should fail validation
             let result = validation::validate_channel_id(&channel_id);
-            
+
             prop_assert!(
                 result.is_err(),
                 "Invalid channel_id '{}' should fail validation",
@@ -358,7 +358,7 @@ mod invalid_channel_id_rejection_tests {
         ) {
             // Property: Empty and whitespace-only strings should fail validation
             let result = validation::validate_channel_id(&whitespace);
-            
+
             prop_assert!(
                 result.is_err(),
                 "Empty or whitespace-only channel_id '{}' should fail validation",
@@ -375,10 +375,10 @@ mod invalid_channel_id_rejection_tests {
         ) {
             // Generate a string that doesn't start with '@'
             let channel_id = format!("{}{}", prefix, suffix);
-            
+
             // Property: Strings not starting with '@' should fail validation
             let result = validation::validate_channel_id(&channel_id);
-            
+
             prop_assert!(
                 result.is_err(),
                 "Channel_id '{}' without '@' at start should fail validation",
@@ -395,10 +395,10 @@ mod invalid_channel_id_rejection_tests {
         ) {
             // Generate a string with '@' in the middle
             let channel_id = format!("{}@{}", prefix, suffix);
-            
+
             // Property: Strings with '@' not at start should fail validation
             let result = validation::validate_channel_id(&channel_id);
-            
+
             prop_assert!(
                 result.is_err(),
                 "Channel_id '{}' with '@' in middle should fail validation",
@@ -414,12 +414,12 @@ mod invalid_channel_id_rejection_tests {
             iterations in 2usize..10usize
         ) {
             let mut validation_results = Vec::new();
-            
+
             for _ in 0..iterations {
                 let result = validation::validate_channel_id(&channel_id);
                 validation_results.push(result.is_err());
             }
-            
+
             // Property: All validation results should be identical (all errors)
             let first_result = validation_results[0];
             for result in &validation_results[1..] {
@@ -429,7 +429,7 @@ mod invalid_channel_id_rejection_tests {
                     "Invalid channel ID validation should be consistent across calls"
                 );
             }
-            
+
             // Property: All results should be errors
             prop_assert!(
                 first_result,
@@ -448,21 +448,21 @@ mod invalid_channel_id_rejection_tests {
             // Test with no environment variable
             std::env::remove_var("CHANNEL_ID");
             let result_no_env = validation::validate_channel_id(&channel_id);
-            
+
             // Test with environment variable set to valid value
             std::env::set_var("CHANNEL_ID", &env_channel_id);
             let result_with_env = validation::validate_channel_id(&channel_id);
-            
+
             // Clean up
             std::env::remove_var("CHANNEL_ID");
-            
+
             // Property: Validation should be independent of environment variable
             prop_assert_eq!(
                 result_no_env.is_err(),
                 result_with_env.is_err(),
                 "Invalid channel ID validation should not depend on CHANNEL_ID environment variable"
             );
-            
+
             // Property: Both should fail for invalid channel IDs
             prop_assert!(
                 result_no_env.is_err(),
@@ -483,10 +483,10 @@ mod invalid_channel_id_rejection_tests {
             channel_ids in prop::collection::vec(invalid_channel_id_strategy(), 2..10)
         ) {
             std::env::remove_var("CHANNEL_ID");
-            
+
             for channel_id in &channel_ids {
                 let result = validation::validate_channel_id(channel_id);
-                
+
                 // Property: Each invalid channel_id should fail validation
                 prop_assert!(
                     result.is_err(),
@@ -506,7 +506,7 @@ mod invalid_channel_id_rejection_tests {
             let results: Vec<_> = (0..10)
                 .map(|_| validation::validate_channel_id(&channel_id))
                 .collect();
-            
+
             // Property: All results should be Err
             for (i, result) in results.iter().enumerate() {
                 prop_assert!(
@@ -526,10 +526,10 @@ mod invalid_channel_id_rejection_tests {
         ) {
             use std::sync::Arc;
             use std::thread;
-            
+
             let channel_id = Arc::new(channel_id);
             let mut handles = vec![];
-            
+
             // Spawn multiple threads to validate the same invalid channel_id
             for _ in 0..5 {
                 let channel_id_clone = Arc::clone(&channel_id);
@@ -538,12 +538,12 @@ mod invalid_channel_id_rejection_tests {
                 });
                 handles.push(handle);
             }
-            
+
             // Collect results
             let results: Vec<_> = handles.into_iter()
                 .map(|h| h.join().unwrap())
                 .collect();
-            
+
             // Property: All threads should get error results
             for result in &results {
                 prop_assert!(
@@ -562,10 +562,10 @@ mod invalid_channel_id_rejection_tests {
         ) {
             // Generate a string with null byte
             let channel_id = format!("{}\0{}", prefix, suffix);
-            
+
             // Property: Strings with null bytes should fail validation
             let result = validation::validate_channel_id(&channel_id);
-            
+
             prop_assert!(
                 result.is_err(),
                 "Channel_id with null byte should fail validation"

@@ -1,19 +1,15 @@
+use crate::diagnostics;
 use crate::error::{KiyyaError, Result};
 use crate::models::*;
-use crate::gateway::GatewayClient;
-use crate::database::Database;
-use crate::download::DownloadManager;
-use crate::server::LocalServer;
-use crate::diagnostics;
-use crate::validation::{self, validate_claim_id};
 use crate::sanitization;
+use crate::validation::{self, validate_claim_id};
 use crate::AppState;
-use tauri::{command, State, AppHandle, Manager};
+use once_cell::sync::Lazy;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tracing::{info, warn, error, debug};
-use once_cell::sync::Lazy;
+use tauri::{command, AppHandle, Manager, State};
+use tracing::{error, info, warn};
 
 // ============================================================================
 // ERROR HANDLING AND LOGGING STRATEGY
@@ -62,10 +58,10 @@ const HLS_MASTER_PLAYLIST: &str = "master.m3u8";
 const DEFAULT_CDN_GATEWAY: &str = "https://cloud.odysee.live";
 
 /// CDN Gateway Configuration (Immutable after startup)
-/// 
+///
 /// This static variable holds the resolved CDN gateway URL, which is determined once
 /// at application initialization and remains immutable throughout the application lifecycle.
-/// 
+///
 /// # Initialization
 /// Gateway resolution occurs on first access (lazy initialization):
 /// 1. Read ODYSEE_CDN_GATEWAY environment variable
@@ -73,72 +69,78 @@ const DEFAULT_CDN_GATEWAY: &str = "https://cloud.odysee.live";
 /// 3. Fall back to DEFAULT_CDN_GATEWAY if invalid or not set
 /// 4. Log resolved gateway at INFO level
 /// 5. Store in immutable Arc<String> for thread-safe access
-/// 
+///
 /// # Security
 /// - Rejects HTTP gateways (HTTPS only)
 /// - Removes trailing slashes to prevent double-slash URLs
 /// - Validates URL format
 /// - Prevents mid-session gateway changes (immutable after initialization)
-/// 
+///
 /// # Determinism
 /// Gateway resolution happens once at startup, preventing mid-session inconsistency
 /// if environment variable changes during runtime.
 static CDN_GATEWAY: Lazy<Arc<String>> = Lazy::new(|| {
-    let gateway = std::env::var("ODYSEE_CDN_GATEWAY")
-        .unwrap_or_else(|_| DEFAULT_CDN_GATEWAY.to_string());
-    
+    let gateway =
+        std::env::var("ODYSEE_CDN_GATEWAY").unwrap_or_else(|_| DEFAULT_CDN_GATEWAY.to_string());
+
     // Validate and sanitize gateway
     let sanitized = sanitize_gateway(&gateway);
-    
+
     info!("CDN gateway resolved at startup: {}", sanitized);
     Arc::new(sanitized)
 });
 
 /// Sanitize and validate CDN gateway URL
-/// 
+///
 /// # Validation Rules
 /// - Must start with `https://` (reject http://)
 /// - Remove trailing slash to prevent double-slash in URLs
 /// - Reject malformed URLs
 /// - Log warning if invalid gateway provided, fall back to default
-/// 
+///
 /// # Arguments
 /// * `gateway` - The gateway URL to sanitize
-/// 
+///
 /// # Returns
 /// Sanitized gateway URL or default if invalid
-/// 
+///
 /// # Security
 /// Prevents malicious gateway injection and malformed URLs like
 /// `https://cloud.odysee.live//content/claim/master.m3u8`
 fn sanitize_gateway(gateway: &str) -> String {
     // Must start with https://
     if !gateway.starts_with("https://") {
-        warn!("Invalid gateway '{}', must use HTTPS. Falling back to default.", gateway);
+        warn!(
+            "Invalid gateway '{}', must use HTTPS. Falling back to default.",
+            gateway
+        );
         return DEFAULT_CDN_GATEWAY.to_string();
     }
-    
+
     // Remove trailing slash to prevent double-slash in URLs
     let sanitized = gateway.trim_end_matches('/');
-    
+
     // Validate URL format
     if let Err(e) = url::Url::parse(sanitized) {
-        warn!("Malformed gateway URL '{}': {}. Falling back to default.", gateway, e);
+        warn!(
+            "Malformed gateway URL '{}': {}. Falling back to default.",
+            gateway, e
+        );
         return DEFAULT_CDN_GATEWAY.to_string();
     }
-    
+
     sanitized.to_string()
 }
 
 /// Get the immutable CDN gateway URL
-/// 
+///
 /// This function returns a reference to the CDN gateway that was resolved at startup.
 /// The gateway is immutable after initialization, ensuring consistent behavior throughout
 /// the application lifecycle.
-/// 
+///
 /// # Returns
 /// Reference to the resolved CDN gateway URL
-/// 
+///
 /// # Example
 /// ```
 /// let gateway = get_cdn_gateway();
@@ -149,23 +151,23 @@ pub(crate) fn get_cdn_gateway() -> &'static str {
 }
 
 /// Build a deterministic CDN playback URL from claim_id
-/// 
+///
 /// This function constructs HLS master playlist URLs for Odysee content using the CDN gateway.
 /// The URL pattern is: {gateway}/content/{claim_id}/{HLS_MASTER_PLAYLIST}
-/// 
+///
 /// # Arguments
 /// * `claim_id` - The Odysee claim identifier
 /// * `gateway` - CDN gateway URL from immutable state (use get_cdn_gateway())
-/// 
+///
 /// # Returns
 /// A complete CDN playback URL string
-/// 
+///
 /// # Example
 /// ```
 /// let url = build_cdn_playback_url("abc123def456", get_cdn_gateway());
 /// // Returns: "https://cloud.odysee.live/content/abc123def456/master.m3u8"
 /// ```
-/// 
+///
 /// # Future Enhancement
 /// Future: Support multi-gateway fallback strategy for regional CDN failures
 pub(crate) fn build_cdn_playback_url(claim_id: &str, gateway: &str) -> String {
@@ -173,71 +175,47 @@ pub(crate) fn build_cdn_playback_url(claim_id: &str, gateway: &str) -> String {
 }
 
 /// Validate CDN reachability (development mode only, non-blocking)
-/// 
+///
 /// This function performs an optional HEAD request to validate that the constructed CDN URL
 /// is reachable. It is only active in development builds and does NOT block playback.
-/// 
+///
 /// # Purpose
 /// Provides early warning if CDN behavior changes (requires headers, returns 403, changes URL pattern)
 /// without breaking production playback.
-/// 
+///
 /// # Arguments
 /// * `url` - The CDN playback URL to validate
-/// 
+///
 /// # Behavior
 /// - Only active in development mode (`#[cfg(debug_assertions)]`)
 /// - Uses HEAD request with 1-2 second timeout
 /// - All results logged at DEBUG level (not ERROR)
 /// - Does NOT block playback URL construction or return
 /// - Timeout prevents dev server hangs if CDN is slow
-/// 
+///
 /// # Logging
 /// - DEBUG: CDN reachability OK (200 status)
 /// - DEBUG: CDN returned 403 (possible auth requirement)
 /// - DEBUG: CDN returned non-200 status
 /// - DEBUG: Request timeout or network error
 #[cfg(debug_assertions)]
-fn validate_cdn_reachability(url: &str) {
-    use std::time::Duration;
-    
-    // Use blocking client with short timeout
-    let client = match reqwest::blocking::Client::builder()
-        .timeout(Duration::from_secs(2))
-        .build() {
-        Ok(c) => c,
-        Err(e) => {
-            tracing::debug!("Failed to create HTTP client for CDN validation: {}", e);
-            return;
-        }
-    };
-    
-    match client.head(url).send() {
-        Ok(response) => {
-            let status = response.status();
-            if status.is_success() {
-                tracing::debug!("CDN reachability OK: {}", url);
-            } else if status == reqwest::StatusCode::FORBIDDEN {
-                tracing::debug!("CDN returned 403 for {}: possible auth requirement", url);
-            } else {
-                tracing::debug!("CDN returned {} for {}", status, url);
-            }
-        }
-        Err(e) => {
-            if e.is_timeout() {
-                tracing::debug!("CDN reachability check timed out for {}: {}", url, e);
-            } else {
-                tracing::debug!("CDN reachability check failed for {}: {}", url, e);
-            }
-        }
-    }
-}
 
 // Content discovery commands
 
 #[tauri::command]
 pub async fn test_connection() -> Result<String> {
     info!("🧪 TEST: test_connection called");
-    Ok("Backend is working!".to_string())
+    Ok("tauri-backend-alive".to_string())
+}
+
+#[tauri::command]
+pub fn build_cdn_playback_url_test(claim_id: String) -> String {
+    info!(
+        "🧪 TEST: build_cdn_playback_url_test called with claim_id: {}",
+        claim_id
+    );
+    let gateway = get_cdn_gateway();
+    build_cdn_playback_url(&claim_id, gateway)
 }
 
 #[tauri::command]
@@ -252,121 +230,139 @@ pub async fn fetch_channel_claims(
     state: State<'_, AppState>,
 ) -> Result<Vec<ContentItem>> {
     info!("🚀 DIAGNOSTIC: fetch_channel_claims called");
-    info!("   channel_id={}, tags={:?}, text={:?}, limit={:?}, stream_types={:?}, force_refresh={:?}",
-          channel_id, any_tags, text, limit, stream_types, force_refresh);
+    info!(
+        "   channel_id={}, tags={:?}, text={:?}, limit={:?}, stream_types={:?}, force_refresh={:?}",
+        channel_id, any_tags, text, limit, stream_types, force_refresh
+    );
 
     // Wrap entire function in error logging
     let result = async {
         // Validate channel_id
         info!("🔍 DIAGNOSTIC: Validating channel_id");
         let validated_channel_id = validation::validate_channel_id(&channel_id)?;
-        info!("✅ DIAGNOSTIC: Channel ID validated: {}", validated_channel_id);
+        info!(
+            "✅ DIAGNOSTIC: Channel ID validated: {}",
+            validated_channel_id
+        );
 
-    // Validate inputs
-    info!("🔍 DIAGNOSTIC: Validating inputs");
-    let validated_tags = if let Some(tags) = any_tags.as_ref() {
-        Some(validation::validate_tags(tags)?)
-    } else {
-        None
-    };
-
-    let validated_text = if let Some(t) = text.as_ref() {
-        Some(validation::validate_search_text(t)?)
-    } else {
-        None
-    };
-
-    let validated_limit = if let Some(l) = limit {
-        Some(sanitization::sanitize_limit(l)?)
-    } else {
-        None
-    };
-
-    let validated_page = if let Some(p) = page {
-        Some(sanitization::sanitize_offset(p)?)
-    } else {
-        None
-    };
-
-    let should_force_refresh = force_refresh.unwrap_or(false);
-    info!("✅ DIAGNOSTIC: All inputs validated");
-
-    // Skip cache if force_refresh is true
-    if !should_force_refresh {
-        info!("🔍 DIAGNOSTIC: Checking cache");
-        // First, try to get from local cache
-        let db = state.db.lock().await;
-        let query = CacheQuery {
-            tags: validated_tags.clone(),
-            text_search: validated_text.clone(),
-            limit: validated_limit,
-            offset: validated_page.map(|p| p * validated_limit.unwrap_or(50)),
-            order_by: Some("releaseTime DESC".to_string()),
+        // Validate inputs
+        info!("🔍 DIAGNOSTIC: Validating inputs");
+        let validated_tags = if let Some(tags) = any_tags.as_ref() {
+            Some(validation::validate_tags(tags)?)
+        } else {
+            None
         };
-        info!("🔍 DIAGNOSTIC: Calling db.get_cached_content");
-        let cached_items = db.get_cached_content(query).await?;
-        info!("🔍 DIAGNOSTIC: Cache returned {} items", cached_items.len());
 
-        // CRITICAL FIX: Return cache if we have ANY valid results, not just >= 6
-        // This fixes the hero_trailer issue where only 1 video exists
-        // The >= 6 threshold was arbitrary and broke single-item queries
-        if !cached_items.is_empty() && validated_text.is_none() {
-            info!("✅ DIAGNOSTIC: Returning {} items from cache", cached_items.len());
+        let validated_text = if let Some(t) = text.as_ref() {
+            Some(validation::validate_search_text(t)?)
+        } else {
+            None
+        };
+
+        let validated_limit = if let Some(l) = limit {
+            Some(sanitization::sanitize_limit(l)?)
+        } else {
+            None
+        };
+
+        let validated_page = if let Some(p) = page {
+            Some(sanitization::sanitize_offset(p)?)
+        } else {
+            None
+        };
+
+        let should_force_refresh = force_refresh.unwrap_or(false);
+        info!("✅ DIAGNOSTIC: All inputs validated");
+
+        // Skip cache if force_refresh is true
+        if !should_force_refresh {
+            info!("🔍 DIAGNOSTIC: Checking cache");
+            // First, try to get from local cache
+            let db = state.db.lock().await;
+            let query = CacheQuery {
+                tags: validated_tags.clone(),
+                text_search: validated_text.clone(),
+                limit: validated_limit,
+                offset: validated_page.map(|p| p * validated_limit.unwrap_or(50)),
+                order_by: Some("releaseTime DESC".to_string()),
+            };
+            info!("🔍 DIAGNOSTIC: Calling db.get_cached_content");
+            let cached_items = db.get_cached_content(query).await?;
+            info!("🔍 DIAGNOSTIC: Cache returned {} items", cached_items.len());
+
+            // CRITICAL FIX: Return cache if we have ANY valid results, not just >= 6
+            // This fixes the hero_trailer issue where only 1 video exists
+            // The >= 6 threshold was arbitrary and broke single-item queries
+            if !cached_items.is_empty() && validated_text.is_none() {
+                info!(
+                    "✅ DIAGNOSTIC: Returning {} items from cache",
+                    cached_items.len()
+                );
+                drop(db);
+                return Ok(cached_items);
+            }
+            info!("🔍 DIAGNOSTIC: Cache miss or text search, fetching from remote");
             drop(db);
-            return Ok(cached_items);
+        } else {
+            info!("🔍 DIAGNOSTIC: Force refresh enabled, skipping cache");
         }
-        info!("🔍 DIAGNOSTIC: Cache miss or text search, fetching from remote");
+
+        // Otherwise, fetch from remote
+        info!("🔍 DIAGNOSTIC: Acquiring gateway lock");
+        let mut gateway = state.gateway.lock().await;
+        info!("✅ DIAGNOSTIC: Gateway lock acquired");
+
+        let request = OdyseeRequest {
+            method: "claim_search".to_string(),
+            params: json!({
+                "channel": validated_channel_id,
+                "any_tags": validated_tags,
+                "text": validated_text,
+                "page_size": validated_limit.unwrap_or(50),
+                "page": validated_page.unwrap_or(1),
+                "order_by": ["release_time"],
+                "stream_types": stream_types
+            }),
+        };
+
+        info!("🌐 DIAGNOSTIC: Sending API request: {:?}", request);
+        info!("🔍 DIAGNOSTIC: Calling gateway.fetch_with_failover");
+        let response = gateway.fetch_with_failover(request).await?;
+        info!(
+            "📥 DIAGNOSTIC: Received API response: success={}, has_data={}",
+            response.success,
+            response.data.is_some()
+        );
+        info!("🔍 DIAGNOSTIC: Dropping gateway lock");
+        drop(gateway);
+
+        // Parse response and extract content items
+        info!("🔍 DIAGNOSTIC: Calling parse_claim_search_response");
+        let items = parse_claim_search_response(response)?;
+        info!("✅ DIAGNOSTIC: Parsed {} items", items.len());
+
+        // Store in cache
+        info!("🔍 DIAGNOSTIC: Acquiring database lock for caching");
+        let db = state.db.lock().await;
+        info!("🔍 DIAGNOSTIC: Storing items in cache");
+        db.store_content_items(items.clone()).await?;
+        info!("💾 DIAGNOSTIC: Stored {} items in cache", items.len());
         drop(db);
-    } else {
-        info!("🔍 DIAGNOSTIC: Force refresh enabled, skipping cache");
+
+        info!(
+            "🎯 DIAGNOSTIC: About to return {} items to frontend",
+            items.len()
+        );
+        Ok(items)
     }
-
-    // Otherwise, fetch from remote
-    info!("🔍 DIAGNOSTIC: Acquiring gateway lock");
-    let mut gateway = state.gateway.lock().await;
-    info!("✅ DIAGNOSTIC: Gateway lock acquired");
-
-    let request = OdyseeRequest {
-        method: "claim_search".to_string(),
-        params: json!({
-            "channel": validated_channel_id,
-            "any_tags": validated_tags,
-            "text": validated_text,
-            "page_size": validated_limit.unwrap_or(50),
-            "page": validated_page.unwrap_or(1),
-            "order_by": ["release_time"],
-            "stream_types": stream_types
-        }),
-    };
-
-    info!("🌐 DIAGNOSTIC: Sending API request: {:?}", request);
-    info!("🔍 DIAGNOSTIC: Calling gateway.fetch_with_failover");
-    let response = gateway.fetch_with_failover(request).await?;
-    info!("📥 DIAGNOSTIC: Received API response: success={}, has_data={}", 
-          response.success, response.data.is_some());
-    info!("🔍 DIAGNOSTIC: Dropping gateway lock");
-    drop(gateway);
-
-    // Parse response and extract content items
-    info!("🔍 DIAGNOSTIC: Calling parse_claim_search_response");
-    let items = parse_claim_search_response(response)?;
-    info!("✅ DIAGNOSTIC: Parsed {} items", items.len());
-
-    // Store in cache
-    info!("🔍 DIAGNOSTIC: Acquiring database lock for caching");
-    let db = state.db.lock().await;
-    info!("🔍 DIAGNOSTIC: Storing items in cache");
-    db.store_content_items(items.clone()).await?;
-    info!("💾 DIAGNOSTIC: Stored {} items in cache", items.len());
-    drop(db);
-
-    info!("🎯 DIAGNOSTIC: About to return {} items to frontend", items.len());
-    Ok(items)
-    }.await;
+    .await;
 
     match &result {
         Ok(items) => {
-            info!("✅ DIAGNOSTIC: fetch_channel_claims returning SUCCESS with {} items", items.len());
+            info!(
+                "✅ DIAGNOSTIC: fetch_channel_claims returning SUCCESS with {} items",
+                items.len()
+            );
         }
         Err(e) => {
             error!("❌ DIAGNOSTIC: fetch_channel_claims returning ERROR: {}", e);
@@ -375,7 +371,6 @@ pub async fn fetch_channel_claims(
 
     result
 }
-
 
 #[command]
 pub async fn fetch_playlists(
@@ -388,7 +383,7 @@ pub async fn fetch_playlists(
     let validated_channel_id = validation::validate_channel_id(&channel_id)?;
 
     let mut gateway = state.gateway.lock().await;
-    
+
     let request = OdyseeRequest {
         method: "playlist_search".to_string(),
         params: json!({
@@ -399,7 +394,7 @@ pub async fn fetch_playlists(
 
     let response = gateway.fetch_with_failover(request).await?;
     let playlists = parse_playlist_search_response(response)?;
-    
+
     info!("Fetched {} playlists", playlists.len());
     Ok(playlists)
 }
@@ -415,7 +410,7 @@ pub async fn resolve_claim(
     let validated_claim = validation::validate_claim_id(&claim_id_or_uri)?;
 
     let mut gateway = state.gateway.lock().await;
-    
+
     let request = OdyseeRequest {
         method: "get".to_string(),
         params: json!({
@@ -425,7 +420,7 @@ pub async fn resolve_claim(
 
     let response = gateway.fetch_with_failover(request).await?;
     let item = parse_resolve_response(response)?;
-    
+
     info!("Resolved claim: {}", item.title);
     Ok(item)
 }
@@ -448,7 +443,7 @@ pub async fn download_movie_quality(
     let validated_url = validation::validate_download_url(&url)?;
 
     let download_manager = state.download_manager.lock().await;
-    
+
     // Check if encryption is enabled
     let db = state.db.lock().await;
     let encrypt_setting = db.get_setting("encrypt_downloads").await?;
@@ -461,33 +456,48 @@ pub async fn download_movie_quality(
         url: validated_url,
     };
 
-    match download_manager.download_content(request, app_handle.clone(), encrypt).await {
+    match download_manager
+        .download_content(request, app_handle.clone(), encrypt)
+        .await
+    {
         Ok(metadata) => {
             // Store offline metadata in database
             let db = state.db.lock().await;
             db.save_offline_metadata(metadata.clone()).await?;
-            
-            info!("Download completed successfully: {} ({})", validated_claim_id, validated_quality);
+
+            info!(
+                "Download completed successfully: {} ({})",
+                validated_claim_id, validated_quality
+            );
             Ok(())
         }
         Err(e) => {
-            error!("Download failed: {} ({}) - {}", validated_claim_id, validated_quality, e);
-            
+            error!(
+                "Download failed: {} ({}) - {}",
+                validated_claim_id, validated_quality, e
+            );
+
             // Clean up any partial files from the failed download
-            if let Err(cleanup_err) = download_manager.cleanup_failed_download(&validated_claim_id, &validated_quality).await {
+            if let Err(cleanup_err) = download_manager
+                .cleanup_failed_download(&validated_claim_id, &validated_quality)
+                .await
+            {
                 warn!("Failed to clean up after download error: {}", cleanup_err);
             }
-            
+
             // Emit detailed error event
-            let _ = app_handle.emit_all("download-error", json!({
-                "claimId": validated_claim_id,
-                "quality": validated_quality,
-                "error": e.to_string(),
-                "errorCategory": e.category(),
-                "userMessage": e.user_message(),
-                "recoverable": e.is_recoverable(),
-            }));
-            
+            let _ = app_handle.emit_all(
+                "download-error",
+                json!({
+                    "claimId": validated_claim_id,
+                    "quality": validated_quality,
+                    "error": e.to_string(),
+                    "errorCategory": e.category(),
+                    "userMessage": e.user_message(),
+                    "recoverable": e.is_recoverable(),
+                }),
+            );
+
             Err(e)
         }
     }
@@ -508,22 +518,30 @@ pub async fn stream_offline(
 
     // Get offline metadata
     let db = state.db.lock().await;
-    let metadata = db.get_offline_metadata(&validated_claim_id, &validated_quality).await?
-        .ok_or_else(|| KiyyaError::ContentNotFound { claim_id: validated_claim_id.clone() })?;
+    let metadata = db
+        .get_offline_metadata(&validated_claim_id, &validated_quality)
+        .await?
+        .ok_or_else(|| KiyyaError::ContentNotFound {
+            claim_id: validated_claim_id.clone(),
+        })?;
     drop(db);
 
     // Get file path
     let download_manager = state.download_manager.lock().await;
-    let file_path = download_manager.get_content_path(&metadata.filename).await?;
+    let file_path = download_manager
+        .get_content_path(&metadata.filename)
+        .await?;
     drop(download_manager);
 
     // Start local server if not running
     let mut server = state.local_server.lock().await;
     let port = server.start().await?;
-    
+
     // Register content for streaming
     let uuid = format!("{}-{}", validated_claim_id, validated_quality);
-    server.register_content(&uuid, file_path, metadata.encrypted).await?;
+    server
+        .register_content(&uuid, file_path, metadata.encrypted)
+        .await?;
     drop(server);
 
     let response = StreamOfflineResponse {
@@ -532,10 +550,13 @@ pub async fn stream_offline(
     };
 
     // Emit server started event
-    let _ = app_handle.emit_all("local-server-started", json!({
-        "port": port,
-        "url": response.url
-    }));
+    let _ = app_handle.emit_all(
+        "local-server-started",
+        json!({
+            "port": port,
+            "url": response.url
+        }),
+    );
 
     info!("Offline stream ready: {}", response.url);
     Ok(response)
@@ -555,23 +576,33 @@ pub async fn delete_offline(
 
     // Get metadata
     let db = state.db.lock().await;
-    let metadata = db.get_offline_metadata(&validated_claim_id, &validated_quality).await?
-        .ok_or_else(|| KiyyaError::ContentNotFound { claim_id: validated_claim_id.clone() })?;
-    
+    let metadata = db
+        .get_offline_metadata(&validated_claim_id, &validated_quality)
+        .await?
+        .ok_or_else(|| KiyyaError::ContentNotFound {
+            claim_id: validated_claim_id.clone(),
+        })?;
+
     // Delete from database
-    db.delete_offline_metadata(&validated_claim_id, &validated_quality).await?;
+    db.delete_offline_metadata(&validated_claim_id, &validated_quality)
+        .await?;
     drop(db);
 
     // Delete file
     let download_manager = state.download_manager.lock().await;
-    download_manager.delete_content(&validated_claim_id, &validated_quality, &metadata.filename).await?;
+    download_manager
+        .delete_content(&validated_claim_id, &validated_quality, &metadata.filename)
+        .await?;
 
     // Unregister from server
     let server = state.local_server.lock().await;
     let uuid = format!("{}-{}", validated_claim_id, validated_quality);
     server.unregister_content(&uuid).await?;
 
-    info!("Deleted offline content: {} ({})", validated_claim_id, validated_quality);
+    info!(
+        "Deleted offline content: {} ({})",
+        validated_claim_id, validated_quality
+    );
     Ok(())
 }
 
@@ -598,7 +629,7 @@ pub async fn save_progress(
 
     let db = state.db.lock().await;
     db.save_progress(progress).await?;
-    
+
     Ok(())
 }
 
@@ -640,15 +671,12 @@ pub async fn save_favorite(
 
     let db = state.db.lock().await;
     db.save_favorite(favorite).await?;
-    
+
     Ok(())
 }
 
 #[command]
-pub async fn remove_favorite(
-    claim_id: String,
-    state: State<'_, AppState>,
-) -> Result<()> {
+pub async fn remove_favorite(claim_id: String, state: State<'_, AppState>) -> Result<()> {
     // Validate input
     let validated_claim_id = validation::validate_claim_id(&claim_id)?;
 
@@ -658,21 +686,16 @@ pub async fn remove_favorite(
 }
 
 #[command]
-pub async fn get_favorites(
-    state: State<'_, AppState>,
-) -> Result<Vec<FavoriteItem>> {
+pub async fn get_favorites(state: State<'_, AppState>) -> Result<Vec<FavoriteItem>> {
     let db = state.db.lock().await;
     let favorites = db.get_favorites().await?;
     Ok(favorites)
 }
 
 #[command]
-pub async fn is_favorite(
-    claim_id: String,
-    state: State<'_, AppState>,
-) -> Result<bool> {
+pub async fn is_favorite(claim_id: String, state: State<'_, AppState>) -> Result<bool> {
     let validated_claim_id = validate_claim_id(&claim_id)?;
-    
+
     let db = state.db.lock().await;
     let is_fav = db.is_favorite(&validated_claim_id).await?;
     Ok(is_fav)
@@ -681,20 +704,45 @@ pub async fn is_favorite(
 // Configuration and diagnostics
 
 #[command]
-pub async fn get_app_config(
-    state: State<'_, AppState>,
-) -> Result<AppConfig> {
+pub async fn get_app_config(state: State<'_, AppState>) -> Result<AppConfig> {
     let db = state.db.lock().await;
-    
-    let theme = db.get_setting("theme").await?.unwrap_or_else(|| "dark".to_string());
-    let last_used_quality = db.get_setting("last_used_quality").await?.unwrap_or_else(|| "master".to_string());
-    let encrypt_downloads = db.get_setting("encrypt_downloads").await?.unwrap_or_else(|| "false".to_string()) == "true";
-    let auto_upgrade_quality = db.get_setting("auto_upgrade_quality").await?.unwrap_or_else(|| "true".to_string()) == "true";
-    let cache_ttl_minutes = db.get_setting("cache_ttl_minutes").await?.unwrap_or_else(|| "30".to_string()).parse().unwrap_or(30);
-    let max_cache_items = db.get_setting("max_cache_items").await?.unwrap_or_else(|| "200".to_string()).parse().unwrap_or(200);
+
+    let theme = db
+        .get_setting("theme")
+        .await?
+        .unwrap_or_else(|| "dark".to_string());
+    let last_used_quality = db
+        .get_setting("last_used_quality")
+        .await?
+        .unwrap_or_else(|| "master".to_string());
+    let encrypt_downloads = db
+        .get_setting("encrypt_downloads")
+        .await?
+        .unwrap_or_else(|| "false".to_string())
+        == "true";
+    let auto_upgrade_quality = db
+        .get_setting("auto_upgrade_quality")
+        .await?
+        .unwrap_or_else(|| "true".to_string())
+        == "true";
+    let cache_ttl_minutes = db
+        .get_setting("cache_ttl_minutes")
+        .await?
+        .unwrap_or_else(|| "30".to_string())
+        .parse()
+        .unwrap_or(30);
+    let max_cache_items = db
+        .get_setting("max_cache_items")
+        .await?
+        .unwrap_or_else(|| "200".to_string())
+        .parse()
+        .unwrap_or(200);
 
     let download_manager = state.download_manager.lock().await;
-    let vault_path = download_manager.get_vault_path().to_string_lossy().to_string();
+    let vault_path = download_manager
+        .get_vault_path()
+        .to_string_lossy()
+        .to_string();
     drop(download_manager);
 
     let config = AppConfig {
@@ -722,30 +770,30 @@ pub async fn update_settings(
     state: State<'_, AppState>,
 ) -> Result<()> {
     let db = state.db.lock().await;
-    
+
     for (key, value) in settings {
         // Validate setting key and value
         let validated_key = validation::validate_setting_key(&key)?;
         let validated_value = validation::validate_setting_value(&validated_key, &value)?;
-        
+
         db.set_setting(&validated_key, &validated_value).await?;
     }
-    
+
     Ok(())
 }
 
 #[command]
-pub async fn get_diagnostics(
-    state: State<'_, AppState>,
-) -> Result<DiagnosticsData> {
+pub async fn get_diagnostics(state: State<'_, AppState>) -> Result<DiagnosticsData> {
     let gateway = state.gateway.lock().await;
     let server = state.local_server.lock().await;
     let db = state.db.lock().await;
     let download_manager = state.download_manager.lock().await;
-    
+
     let vault_path = download_manager.get_vault_path();
-    let diagnostics = diagnostics::collect_diagnostics(&*gateway, &*server, &*db, vault_path, &*download_manager).await?;
-    
+    let diagnostics =
+        diagnostics::collect_diagnostics(&*gateway, &*server, &*db, vault_path, &*download_manager)
+            .await?;
+
     Ok(diagnostics)
 }
 
@@ -755,21 +803,22 @@ pub async fn collect_debug_package(
     app_handle: AppHandle,
 ) -> Result<String> {
     info!("Collecting debug package");
-    
+
     let db = state.db.lock().await;
     let download_manager = state.download_manager.lock().await;
     let vault_path = download_manager.get_vault_path();
-    
+
     // Get app data directory
-    let app_data_path = app_handle.path_resolver()
-        .app_data_dir()
-        .ok_or_else(|| KiyyaError::Io(std::io::Error::new(
+    let app_data_path = app_handle.path_resolver().app_data_dir().ok_or_else(|| {
+        KiyyaError::Io(std::io::Error::new(
             std::io::ErrorKind::NotFound,
-            "Could not determine app data directory"
-        )))?;
-    
-    let debug_package_path = diagnostics::collect_debug_package(&*db, vault_path, &app_data_path).await?;
-    
+            "Could not determine app data directory",
+        ))
+    })?;
+
+    let debug_package_path =
+        diagnostics::collect_debug_package(&*db, vault_path, &app_data_path).await?;
+
     info!("Debug package created at: {:?}", debug_package_path);
     Ok(debug_package_path.to_string_lossy().to_string())
 }
@@ -779,38 +828,34 @@ pub async fn collect_debug_package(
 #[command]
 pub async fn get_recent_crashes(limit: usize) -> Result<Vec<crate::crash_reporting::CrashReport>> {
     info!("Getting recent crashes (limit: {})", limit);
-    
-    let crashes = crate::crash_reporting::get_recent_crashes(limit)
-        .map_err(|e| KiyyaError::Io(e))?;
-    
+
+    let crashes =
+        crate::crash_reporting::get_recent_crashes(limit).map_err(|e| KiyyaError::Io(e))?;
+
     Ok(crashes)
 }
 
 #[command]
 pub async fn clear_crash_log() -> Result<()> {
     info!("Clearing crash log");
-    
-    crate::crash_reporting::clear_crash_log()
-        .map_err(|e| KiyyaError::Io(e))?;
-    
+
+    crate::crash_reporting::clear_crash_log().map_err(|e| KiyyaError::Io(e))?;
+
     Ok(())
 }
 
 // Cache management commands
 
 #[command]
-pub async fn invalidate_cache_item(
-    claim_id: String,
-    state: State<'_, AppState>,
-) -> Result<bool> {
+pub async fn invalidate_cache_item(claim_id: String, state: State<'_, AppState>) -> Result<bool> {
     info!("Invalidating cache for item: {}", claim_id);
-    
+
     // Validate input
     let validated_claim_id = validation::validate_claim_id(&claim_id)?;
-    
+
     let db = state.db.lock().await;
     let invalidated = db.invalidate_cache_item(&validated_claim_id).await?;
-    
+
     Ok(invalidated)
 }
 
@@ -820,70 +865,60 @@ pub async fn invalidate_cache_by_tags(
     state: State<'_, AppState>,
 ) -> Result<u32> {
     info!("Invalidating cache for tags: {:?}", tags);
-    
+
     // Validate tags
     let validated_tags = validation::validate_tags(&tags)?;
-    
+
     let db = state.db.lock().await;
     let count = db.invalidate_cache_by_tags(validated_tags).await?;
-    
+
     info!("Invalidated {} cache items", count);
     Ok(count)
 }
 
 #[command]
-pub async fn clear_all_cache(
-    state: State<'_, AppState>,
-) -> Result<u32> {
+pub async fn clear_all_cache(state: State<'_, AppState>) -> Result<u32> {
     info!("Clearing all cache");
-    
+
     let db = state.db.lock().await;
     let count = db.clear_all_cache().await?;
-    
+
     info!("Cleared {} cache items", count);
     Ok(count)
 }
 
 #[command]
-pub async fn cleanup_expired_cache(
-    state: State<'_, AppState>,
-) -> Result<u32> {
+pub async fn cleanup_expired_cache(state: State<'_, AppState>) -> Result<u32> {
     info!("Cleaning up expired cache");
-    
+
     let db = state.db.lock().await;
     let count = db.cleanup_expired_cache().await?;
-    
+
     info!("Cleaned up {} expired cache items", count);
     Ok(count)
 }
 
 #[command]
-pub async fn get_cache_stats(
-    state: State<'_, AppState>,
-) -> Result<CacheStats> {
+pub async fn get_cache_stats(state: State<'_, AppState>) -> Result<CacheStats> {
     let db = state.db.lock().await;
     let stats = db.get_cache_stats().await?;
-    
+
     Ok(stats)
 }
 
 #[command]
-pub async fn get_memory_stats(
-    state: State<'_, AppState>,
-) -> Result<MemoryStats> {
+pub async fn get_memory_stats(state: State<'_, AppState>) -> Result<MemoryStats> {
     let db = state.db.lock().await;
     let stats = db.get_memory_stats().await?;
-    
+
     Ok(stats)
 }
 
 #[command]
-pub async fn optimize_database_memory(
-    state: State<'_, AppState>,
-) -> Result<()> {
+pub async fn optimize_database_memory(state: State<'_, AppState>) -> Result<()> {
     let db = state.db.lock().await;
     db.optimize_memory().await?;
-    
+
     info!("Database memory optimization completed");
     Ok(())
 }
@@ -892,7 +927,7 @@ pub async fn optimize_database_memory(
 pub async fn open_external(url: String) -> Result<()> {
     // Validate URL for security
     let validated_url = validation::validate_external_url(&url)?;
-    
+
     // Use tauri shell API to open URL in default browser
     std::process::Command::new("cmd")
         .args(&["/c", "start", &validated_url])
@@ -914,49 +949,79 @@ pub fn parse_claim_search_response(response: OdyseeResponse) -> Result<Vec<Conte
     info!("✅ DIAGNOSTIC: Response has data field");
 
     // 🔍 STEP 2: Verify items array exists
-    let items = data.get("items").and_then(|v| v.as_array()).ok_or_else(|| {
-        error!("❌ DIAGNOSTIC: No items array in response. Data keys: {:?}", data.as_object().map(|o| o.keys().collect::<Vec<_>>()));
-        KiyyaError::ContentParsing {
-            message: "No items array in response".to_string(),
-        }
-    })?;
-    info!("✅ DIAGNOSTIC: Found items array with {} claims", items.len());
+    let items = data
+        .get("items")
+        .and_then(|v| v.as_array())
+        .ok_or_else(|| {
+            error!(
+                "❌ DIAGNOSTIC: No items array in response. Data keys: {:?}",
+                data.as_object().map(|o| o.keys().collect::<Vec<_>>())
+            );
+            KiyyaError::ContentParsing {
+                message: "No items array in response".to_string(),
+            }
+        })?;
+    info!(
+        "✅ DIAGNOSTIC: Found items array with {} claims",
+        items.len()
+    );
 
     // 🔍 STEP 3: Log raw claims for inspection
     for (idx, item) in items.iter().enumerate() {
-        let claim_id = item.get("claim_id").and_then(|v| v.as_str()).unwrap_or("missing");
-        let value_type = item.get("value_type").and_then(|v| v.as_str()).unwrap_or("missing");
-        let tags = item.get("value")
+        let claim_id = item
+            .get("claim_id")
+            .and_then(|v| v.as_str())
+            .unwrap_or("missing");
+        let value_type = item
+            .get("value_type")
+            .and_then(|v| v.as_str())
+            .unwrap_or("missing");
+        let tags = item
+            .get("value")
             .and_then(|v| v.get("tags"))
             .and_then(|t| t.as_array())
             .map(|arr| arr.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>())
             .unwrap_or_default();
-        info!("  📦 DIAGNOSTIC: Claim[{}]: id={}, type={}, tags={:?}", idx, claim_id, value_type, tags);
+        info!(
+            "  📦 DIAGNOSTIC: Claim[{}]: id={}, type={}, tags={:?}",
+            idx, claim_id, value_type, tags
+        );
     }
 
     let mut content_items = Vec::new();
     let mut skipped_count = 0;
-    
+
     // 🔍 STEP 4: Parse each claim and track results
     for (idx, item) in items.iter().enumerate() {
         match parse_claim_item(item) {
             Ok(content_item) => {
-                info!("  ✅ DIAGNOSTIC: Claim[{}] parsed successfully: id={}", idx, content_item.claim_id);
+                info!(
+                    "  ✅ DIAGNOSTIC: Claim[{}] parsed successfully: id={}",
+                    idx, content_item.claim_id
+                );
                 content_items.push(content_item);
-            },
+            }
             Err(e) => {
                 skipped_count += 1;
-                let claim_id = item.get("claim_id")
+                let claim_id = item
+                    .get("claim_id")
                     .and_then(|v| v.as_str())
                     .unwrap_or("unknown");
-                warn!("  ⚠️ DIAGNOSTIC: Claim[{}] SKIPPED: id={}, reason={}", idx, claim_id, e);
+                warn!(
+                    "  ⚠️ DIAGNOSTIC: Claim[{}] SKIPPED: id={}, reason={}",
+                    idx, claim_id, e
+                );
                 // Continue processing other items (partial success)
             }
         }
     }
 
-    info!("📊 DIAGNOSTIC: Parsing complete - Valid: {}, Skipped: {}, Total: {}", 
-          content_items.len(), skipped_count, items.len());
+    info!(
+        "📊 DIAGNOSTIC: Parsing complete - Valid: {}, Skipped: {}, Total: {}",
+        content_items.len(),
+        skipped_count,
+        items.len()
+    );
 
     Ok(content_items)
 }
@@ -966,12 +1031,15 @@ pub fn parse_playlist_search_response(response: OdyseeResponse) -> Result<Vec<Pl
         message: "No data in response".to_string(),
     })?;
 
-    let items = data.get("items").and_then(|v| v.as_array()).ok_or_else(|| KiyyaError::ContentParsing {
-        message: "No items array in response".to_string(),
-    })?;
+    let items = data
+        .get("items")
+        .and_then(|v| v.as_array())
+        .ok_or_else(|| KiyyaError::ContentParsing {
+            message: "No items array in response".to_string(),
+        })?;
 
     let mut playlists = Vec::new();
-    
+
     for item in items {
         match parse_playlist_item(item) {
             Ok(playlist) => playlists.push(playlist),
@@ -996,25 +1064,31 @@ pub fn parse_claim_item(item: &Value) -> Result<ContentItem> {
     // Defensive parsing - handle multiple possible field locations
     // Log raw item for debugging if parsing fails
     let claim_id = extract_claim_id(item).map_err(|e| {
-        warn!("Failed to extract claim_id from item: {} - Raw: {}", e, item);
+        warn!(
+            "Failed to extract claim_id from item: {} - Raw: {}",
+            e, item
+        );
         e
     })?;
-    
+
     let title = extract_title(item)?;
     let description = extract_description(item);
     let tags = extract_tags(item);
     let thumbnail_url = extract_thumbnail_url(item);
     let duration = extract_duration(item);
     let release_time = extract_release_time(item);
-    
+
     // Extract video URLs with enhanced error context
     let video_urls = extract_video_urls(item).map_err(|e| {
-        warn!("Failed to extract video URLs for claim {}: {} - Raw: {}", claim_id, e, item);
+        warn!(
+            "Failed to extract video URLs for claim {}: {} - Raw: {}",
+            claim_id, e, item
+        );
         e
     })?;
-    
+
     let compatibility = assess_compatibility(&video_urls);
-    
+
     // Store raw JSON for debugging purposes
     let raw_json = serde_json::to_string(item).ok();
 
@@ -1032,16 +1106,17 @@ pub fn parse_claim_item(item: &Value) -> Result<ContentItem> {
         content_hash: None,
         raw_json,
     };
-    
+
     // Compute content hash
     content_item.update_content_hash();
-    
+
     Ok(content_item)
 }
 
 pub fn parse_playlist_item(item: &Value) -> Result<Playlist> {
     // Defensive parsing with validation
-    let id = item.get("claim_id")
+    let id = item
+        .get("claim_id")
         .and_then(|v| v.as_str())
         .filter(|s| !s.is_empty())
         .map(|s| s.to_string())
@@ -1051,22 +1126,23 @@ pub fn parse_playlist_item(item: &Value) -> Result<Playlist> {
                 message: "Missing or empty claim_id in playlist item".to_string(),
             }
         })?;
-    
+
     // Extract title with fallback to empty string, then validate
-    let title = item.get("value")
+    let title = item
+        .get("value")
         .and_then(|v| v.get("title"))
         .and_then(|v| v.as_str())
         .or_else(|| item.get("title").and_then(|v| v.as_str()))
         .unwrap_or("")
         .to_string();
-    
+
     // Validate title is not empty
     if title.is_empty() {
         warn!("Empty title in playlist item {} - Raw: {}", id, item);
     }
-    
+
     let claim_id = id.clone();
-    
+
     // Parse season number from title if possible
     let season_number = extract_season_number_from_title(&title);
     let series_key = extract_series_key_from_title(&title);
@@ -1094,7 +1170,8 @@ fn extract_claim_id(item: &Value) -> Result<String> {
 
 fn extract_title(item: &Value) -> Result<String> {
     // Try multiple locations for title
-    let title = item.get("value")
+    let title = item
+        .get("value")
         .and_then(|v| v.get("title"))
         .and_then(|v| v.as_str())
         .or_else(|| item.get("title").and_then(|v| v.as_str()))
@@ -1114,7 +1191,8 @@ fn extract_description(item: &Value) -> Option<String> {
 
 fn extract_tags(item: &Value) -> Vec<String> {
     // Try multiple locations for tags
-    let tags = item.get("value")
+    let tags = item
+        .get("value")
         .and_then(|v| v.get("tags"))
         .and_then(|v| v.as_array())
         .or_else(|| item.get("tags").and_then(|v| v.as_array()))
@@ -1126,7 +1204,7 @@ fn extract_tags(item: &Value) -> Vec<String> {
                 .collect::<Vec<String>>()
         })
         .unwrap_or_default();
-    
+
     // Remove duplicates while preserving order
     let mut seen = std::collections::HashSet::new();
     tags.into_iter()
@@ -1239,7 +1317,8 @@ fn extract_release_time(item: &Value) -> i64 {
 /// Future: Support multi-gateway fallback strategy for regional CDN failures.
 /// Error structure includes claim_id context to enable future CDN failover implementation.
 fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
-    let claim_id_for_logging = item.get("claim_id")
+    let claim_id_for_logging = item
+        .get("claim_id")
         .and_then(|v| v.as_str())
         .unwrap_or("unknown");
 
@@ -1247,17 +1326,30 @@ fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
     // Task 3.1: Add claim type validation (CRITICAL)
     // Primary check: Validate claim.value_type == "stream"
     if let Some(value_type) = item.get("value_type").and_then(|v| v.as_str()) {
-        info!("    🔍 DIAGNOSTIC: Claim {} has value_type={}", claim_id_for_logging, value_type);
+        info!(
+            "    🔍 DIAGNOSTIC: Claim {} has value_type={}",
+            claim_id_for_logging, value_type
+        );
         if value_type != "stream" {
-            warn!("    ❌ DIAGNOSTIC: Rejecting non-stream claim {}: type={}", claim_id_for_logging, value_type);
+            warn!(
+                "    ❌ DIAGNOSTIC: Rejecting non-stream claim {}: type={}",
+                claim_id_for_logging, value_type
+            );
             return Err(KiyyaError::ContentParsing {
-                message: format!("Non-stream claim {} type: {}", claim_id_for_logging, value_type),
+                message: format!(
+                    "Non-stream claim {} type: {}",
+                    claim_id_for_logging, value_type
+                ),
             });
         }
-        info!("    ✅ DIAGNOSTIC: Claim {} is stream type", claim_id_for_logging);
+        info!(
+            "    ✅ DIAGNOSTIC: Claim {} is stream type",
+            claim_id_for_logging
+        );
     } else {
         // Fallback inference: If value_type is missing, infer stream by presence of value.source.sd_hash
-        let has_source = item.get("value")
+        let has_source = item
+            .get("value")
             .and_then(|v| v.get("source"))
             .and_then(|s| s.get("sd_hash"))
             .is_some();
@@ -1265,9 +1357,15 @@ fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
         if has_source {
             warn!("    ⚠️ DIAGNOSTIC: Claim {} missing value_type but has source.sd_hash, inferring stream", claim_id_for_logging);
         } else {
-            warn!("    ❌ DIAGNOSTIC: Claim {} missing value_type and no source.sd_hash", claim_id_for_logging);
+            warn!(
+                "    ❌ DIAGNOSTIC: Claim {} missing value_type and no source.sd_hash",
+                claim_id_for_logging
+            );
             return Err(KiyyaError::ContentParsing {
-                message: format!("Cannot determine if claim {} is stream type", claim_id_for_logging),
+                message: format!(
+                    "Cannot determine if claim {} is stream type",
+                    claim_id_for_logging
+                ),
             });
         }
     }
@@ -1275,7 +1373,8 @@ fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
     // 🔍 STEP 2: Extract and validate claim_id
     // Task 3.3: Implement CDN-only URL construction
     // Extract claim_id from item
-    let claim_id = item.get("claim_id")
+    let claim_id = item
+        .get("claim_id")
         .and_then(|v| v.as_str())
         .map(|s| s.trim())
         .filter(|s| !s.is_empty())
@@ -1311,7 +1410,6 @@ fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
 
     Ok(video_urls)
 }
-
 
 fn assess_compatibility(video_urls: &HashMap<String, VideoUrl>) -> CompatibilityInfo {
     // Simple compatibility assessment
@@ -1354,8 +1452,11 @@ mod tests {
     fn test_build_cdn_playback_url_with_default_gateway() {
         let claim_id = "abc123def456";
         let url = build_cdn_playback_url(claim_id, DEFAULT_CDN_GATEWAY);
-        
-        assert_eq!(url, "https://cloud.odysee.live/content/abc123def456/master.m3u8");
+
+        assert_eq!(
+            url,
+            "https://cloud.odysee.live/content/abc123def456/master.m3u8"
+        );
         assert!(url.contains(claim_id));
         assert!(url.contains(HLS_MASTER_PLAYLIST));
         assert!(url.starts_with(DEFAULT_CDN_GATEWAY));
@@ -1366,8 +1467,11 @@ mod tests {
         let claim_id = "xyz789abc123";
         let custom_gateway = "https://custom-cdn.example.com";
         let url = build_cdn_playback_url(claim_id, custom_gateway);
-        
-        assert_eq!(url, "https://custom-cdn.example.com/content/xyz789abc123/master.m3u8");
+
+        assert_eq!(
+            url,
+            "https://custom-cdn.example.com/content/xyz789abc123/master.m3u8"
+        );
         assert!(url.contains(claim_id));
         assert!(url.contains(HLS_MASTER_PLAYLIST));
         assert!(url.starts_with(custom_gateway));
@@ -1377,9 +1481,12 @@ mod tests {
     fn test_build_cdn_playback_url_format() {
         let claim_id = "test-claim-id";
         let url = build_cdn_playback_url(claim_id, DEFAULT_CDN_GATEWAY);
-        
+
         // Verify URL format matches pattern: {gateway}/content/{claim_id}/{HLS_MASTER_PLAYLIST}
-        let expected_pattern = format!("{}/content/{}/{}", DEFAULT_CDN_GATEWAY, claim_id, HLS_MASTER_PLAYLIST);
+        let expected_pattern = format!(
+            "{}/content/{}/{}",
+            DEFAULT_CDN_GATEWAY, claim_id, HLS_MASTER_PLAYLIST
+        );
         assert_eq!(url, expected_pattern);
     }
 
@@ -1388,9 +1495,15 @@ mod tests {
         // Test with claim_id containing special characters (should be handled by caller validation)
         let claim_id = "claim-with-dashes_and_underscores123";
         let url = build_cdn_playback_url(claim_id, DEFAULT_CDN_GATEWAY);
-        
+
         assert!(url.contains(claim_id));
-        assert_eq!(url, format!("{}/content/{}/{}", DEFAULT_CDN_GATEWAY, claim_id, HLS_MASTER_PLAYLIST));
+        assert_eq!(
+            url,
+            format!(
+                "{}/content/{}/{}",
+                DEFAULT_CDN_GATEWAY, claim_id, HLS_MASTER_PLAYLIST
+            )
+        );
     }
 
     #[test]
@@ -1398,42 +1511,24 @@ mod tests {
         // Test that calling the function multiple times with same inputs produces same output
         let claim_id = "idempotent-test-claim";
         let gateway = "https://test-gateway.com";
-        
+
         let url1 = build_cdn_playback_url(claim_id, gateway);
         let url2 = build_cdn_playback_url(claim_id, gateway);
         let url3 = build_cdn_playback_url(claim_id, gateway);
-        
+
         assert_eq!(url1, url2);
         assert_eq!(url2, url3);
     }
 
     #[test]
     #[cfg(debug_assertions)]
-    fn test_validate_cdn_reachability_does_not_panic() {
-        // Test that validation function doesn't panic with various URLs
-        // This test only runs in debug mode where the function is active
-        
-        // Valid URL format
-        validate_cdn_reachability("https://cloud.odysee.live/content/test-claim/master.m3u8");
-        
-        // Invalid URL (should log but not panic)
-        validate_cdn_reachability("https://invalid-domain-that-does-not-exist-12345.com/test");
-        
-        // Malformed URL (should log but not panic)
-        validate_cdn_reachability("not-a-valid-url");
-        
-        // Empty URL (should log but not panic)
-        validate_cdn_reachability("");
-        
-        // Test passes if no panic occurs
-    }
 
     #[test]
     fn test_extract_claim_id() {
         let item = json!({
             "claim_id": "test-claim-123"
         });
-        
+
         let result = extract_claim_id(&item);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), "test-claim-123");
@@ -1444,7 +1539,7 @@ mod tests {
         let item = json!({
             "title": "Test"
         });
-        
+
         let result = extract_claim_id(&item);
         assert!(result.is_err());
     }
@@ -1486,13 +1581,19 @@ mod tests {
                 "description": "Test description"
             }
         });
-        assert_eq!(extract_description(&item1), Some("Test description".to_string()));
+        assert_eq!(
+            extract_description(&item1),
+            Some("Test description".to_string())
+        );
 
         // Test description in description field
         let item2 = json!({
             "description": "Another description"
         });
-        assert_eq!(extract_description(&item2), Some("Another description".to_string()));
+        assert_eq!(
+            extract_description(&item2),
+            Some("Another description".to_string())
+        );
 
         // Test missing description
         let item3 = json!({
@@ -1525,7 +1626,7 @@ mod tests {
         });
         let tags3 = extract_tags(&item3);
         assert_eq!(tags3, Vec::<String>::new());
-        
+
         // Test tags with empty strings (should be filtered out)
         let item4 = json!({
             "value": {
@@ -1534,7 +1635,7 @@ mod tests {
         });
         let tags4 = extract_tags(&item4);
         assert_eq!(tags4, vec!["movie", "action"]);
-        
+
         // Test tags with whitespace (should be trimmed and normalized)
         let item5 = json!({
             "value": {
@@ -1543,7 +1644,7 @@ mod tests {
         });
         let tags5 = extract_tags(&item5);
         assert_eq!(tags5, vec!["movie", "action", "comedy"]);
-        
+
         // Test tags with duplicates (should be removed)
         let item6 = json!({
             "value": {
@@ -1564,7 +1665,10 @@ mod tests {
                 }
             }
         });
-        assert_eq!(extract_thumbnail_url(&item1), Some("https://example.com/thumb1.jpg".to_string()));
+        assert_eq!(
+            extract_thumbnail_url(&item1),
+            Some("https://example.com/thumb1.jpg".to_string())
+        );
 
         // Test thumbnail in value.thumbnail (string)
         let item2 = json!({
@@ -1572,20 +1676,26 @@ mod tests {
                 "thumbnail": "https://example.com/thumb2.jpg"
             }
         });
-        assert_eq!(extract_thumbnail_url(&item2), Some("https://example.com/thumb2.jpg".to_string()));
+        assert_eq!(
+            extract_thumbnail_url(&item2),
+            Some("https://example.com/thumb2.jpg".to_string())
+        );
 
         // Test thumbnail in thumbnail field
         let item3 = json!({
             "thumbnail": "https://example.com/thumb3.jpg"
         });
-        assert_eq!(extract_thumbnail_url(&item3), Some("https://example.com/thumb3.jpg".to_string()));
+        assert_eq!(
+            extract_thumbnail_url(&item3),
+            Some("https://example.com/thumb3.jpg".to_string())
+        );
 
         // Test missing thumbnail
         let item4 = json!({
             "claim_id": "test"
         });
         assert_eq!(extract_thumbnail_url(&item4), None);
-        
+
         // Test empty thumbnail URL (should be filtered out)
         let item5 = json!({
             "value": {
@@ -1593,7 +1703,7 @@ mod tests {
             }
         });
         assert_eq!(extract_thumbnail_url(&item5), None);
-        
+
         // Test invalid thumbnail URL (not starting with http)
         let item6 = json!({
             "value": {
@@ -1601,7 +1711,7 @@ mod tests {
             }
         });
         assert_eq!(extract_thumbnail_url(&item6), None);
-        
+
         // Test alternative field names (cover)
         let item7 = json!({
             "value": {
@@ -1610,15 +1720,21 @@ mod tests {
                 }
             }
         });
-        assert_eq!(extract_thumbnail_url(&item7), Some("https://example.com/cover.jpg".to_string()));
-        
+        assert_eq!(
+            extract_thumbnail_url(&item7),
+            Some("https://example.com/cover.jpg".to_string())
+        );
+
         // Test alternative field names (image)
         let item8 = json!({
             "value": {
                 "image": "https://example.com/image.jpg"
             }
         });
-        assert_eq!(extract_thumbnail_url(&item8), Some("https://example.com/image.jpg".to_string()));
+        assert_eq!(
+            extract_thumbnail_url(&item8),
+            Some("https://example.com/image.jpg".to_string())
+        );
     }
 
     #[test]
@@ -1630,7 +1746,7 @@ mod tests {
                 }
             }
         });
-        
+
         assert_eq!(extract_duration(&item), Some(3600));
 
         // Test missing duration
@@ -1638,7 +1754,7 @@ mod tests {
             "claim_id": "test"
         });
         assert_eq!(extract_duration(&item2), None);
-        
+
         // Test duration in direct field
         let item3 = json!({
             "value": {
@@ -1646,7 +1762,7 @@ mod tests {
             }
         });
         assert_eq!(extract_duration(&item3), Some(7200));
-        
+
         // Test duration as string
         let item4 = json!({
             "value": {
@@ -1656,7 +1772,7 @@ mod tests {
             }
         });
         assert_eq!(extract_duration(&item4), Some(1800));
-        
+
         // Test length field as alternative
         let item5 = json!({
             "value": {
@@ -1811,26 +1927,32 @@ mod tests {
     #[test]
     fn test_assess_compatibility() {
         let mut video_urls = HashMap::new();
-        
+
         // Test with MP4
-        video_urls.insert("master".to_string(), VideoUrl {
-            url: "https://example.com/video.mp4".to_string(),
-            quality: "master".to_string(),
-            url_type: "mp4".to_string(),
-            codec: None,
-        });
+        video_urls.insert(
+            "master".to_string(),
+            VideoUrl {
+                url: "https://example.com/video.mp4".to_string(),
+                quality: "master".to_string(),
+                url_type: "mp4".to_string(),
+                codec: None,
+            },
+        );
         let compat1 = assess_compatibility(&video_urls);
         assert!(compat1.compatible);
         assert!(!compat1.fallback_available);
 
         // Test with HLS only
         video_urls.clear();
-        video_urls.insert("master".to_string(), VideoUrl {
-            url: "https://example.com/video.m3u8".to_string(),
-            quality: "master".to_string(),
-            url_type: "hls".to_string(),
-            codec: None,
-        });
+        video_urls.insert(
+            "master".to_string(),
+            VideoUrl {
+                url: "https://example.com/video.m3u8".to_string(),
+                quality: "master".to_string(),
+                url_type: "hls".to_string(),
+                codec: None,
+            },
+        );
         let compat2 = assess_compatibility(&video_urls);
         assert!(compat2.compatible);
         assert!(compat2.fallback_available);
@@ -1844,8 +1966,14 @@ mod tests {
 
     #[test]
     fn test_extract_season_number_from_title() {
-        assert_eq!(extract_season_number_from_title("Breaking Bad – Season 1"), Some(1));
-        assert_eq!(extract_season_number_from_title("Game of Thrones - Season 8"), Some(8));
+        assert_eq!(
+            extract_season_number_from_title("Breaking Bad – Season 1"),
+            Some(1)
+        );
+        assert_eq!(
+            extract_season_number_from_title("Game of Thrones - Season 8"),
+            Some(8)
+        );
         assert_eq!(extract_season_number_from_title("No Season Here"), None);
     }
 
@@ -1883,13 +2011,16 @@ mod tests {
 
         let result = parse_claim_item(&item);
         assert!(result.is_ok());
-        
+
         let content = result.unwrap();
         assert_eq!(content.claim_id, "test-claim-123");
         assert_eq!(content.title, "Test Movie");
         assert_eq!(content.description, Some("A test movie".to_string()));
         assert_eq!(content.tags, vec!["movie", "action"]);
-        assert_eq!(content.thumbnail_url, Some("https://example.com/thumb.jpg".to_string()));
+        assert_eq!(
+            content.thumbnail_url,
+            Some("https://example.com/thumb.jpg".to_string())
+        );
         assert_eq!(content.duration, Some(7200));
         assert_eq!(content.release_time, 1234567890);
         assert!(content.video_urls.contains_key("master"));
@@ -1910,7 +2041,7 @@ mod tests {
 
         let result = parse_claim_item(&item);
         assert!(result.is_ok());
-        
+
         let content = result.unwrap();
         assert_eq!(content.claim_id, "minimal-claim");
         assert_eq!(content.title, "Minimal");
@@ -1973,7 +2104,7 @@ mod tests {
 
         let result = parse_claim_search_response(response);
         assert!(result.is_ok());
-        
+
         let items = result.unwrap();
         assert_eq!(items.len(), 2);
         assert_eq!(items[0].claim_id, "claim-1");
@@ -2044,7 +2175,7 @@ mod tests {
 
         let result = parse_claim_search_response(response);
         assert!(result.is_ok());
-        
+
         let items = result.unwrap();
         // Should have 2 valid items (malformed one skipped)
         assert_eq!(items.len(), 2);
@@ -2063,7 +2194,7 @@ mod tests {
 
         let result = parse_playlist_item(&item);
         assert!(result.is_ok());
-        
+
         let playlist = result.unwrap();
         assert_eq!(playlist.id, "playlist-123");
         assert_eq!(playlist.title, "Breaking Bad – Season 1");
@@ -2082,7 +2213,7 @@ mod tests {
 
         let result = parse_playlist_item(&item);
         assert!(result.is_ok());
-        
+
         let playlist = result.unwrap();
         assert_eq!(playlist.id, "playlist-456");
         assert_eq!(playlist.title, "Random Playlist");
@@ -2115,7 +2246,7 @@ mod tests {
 
         let result = parse_playlist_search_response(response);
         assert!(result.is_ok());
-        
+
         let playlists = result.unwrap();
         assert_eq!(playlists.len(), 2);
         assert_eq!(playlists[0].id, "playlist-1");
@@ -2136,7 +2267,7 @@ mod tests {
 
         let result = parse_playlist_search_response(response);
         assert!(result.is_ok());
-        
+
         let playlists = result.unwrap();
         assert_eq!(playlists.len(), 0);
     }
@@ -2184,7 +2315,7 @@ mod tests {
 
         let result = parse_playlist_search_response(response);
         assert!(result.is_ok());
-        
+
         let playlists = result.unwrap();
         // Should have 2 valid playlists (malformed one skipped)
         assert_eq!(playlists.len(), 2);
@@ -2195,41 +2326,23 @@ mod tests {
     }
 
     #[test]
-
     #[test]
-
     #[test]
-
     #[test]
-
     #[test]
-
     #[test]
-
     #[test]
-    
     #[test]
-    
     #[test]
-    
     #[test]
-    
     #[test]
-    
     #[test]
-    
     #[test]
-    
     #[test]
-    
     #[test]
-    
     #[test]
-    
     #[test]
-
     // Gateway Configuration Tests
-
     #[test]
     fn test_sanitize_gateway_valid_https() {
         let gateway = "https://custom-cdn.example.com";
@@ -2242,7 +2355,7 @@ mod tests {
         let gateway = "https://custom-cdn.example.com/";
         let result = sanitize_gateway(gateway);
         assert_eq!(result, "https://custom-cdn.example.com");
-        
+
         // Test multiple trailing slashes
         let gateway2 = "https://custom-cdn.example.com///";
         let result2 = sanitize_gateway(gateway2);
@@ -2261,12 +2374,12 @@ mod tests {
         let gateway = "not-a-valid-url";
         let result = sanitize_gateway(gateway);
         assert_eq!(result, DEFAULT_CDN_GATEWAY);
-        
+
         // Test empty string
         let gateway2 = "";
         let result2 = sanitize_gateway(gateway2);
         assert_eq!(result2, DEFAULT_CDN_GATEWAY);
-        
+
         // Test invalid scheme
         let gateway3 = "ftp://cdn.example.com";
         let result3 = sanitize_gateway(gateway3);
@@ -2304,23 +2417,23 @@ mod tests {
         let gateway1 = get_cdn_gateway();
         let gateway2 = get_cdn_gateway();
         let gateway3 = get_cdn_gateway();
-        
+
         assert_eq!(gateway1, gateway2);
         assert_eq!(gateway2, gateway3);
     }
 
     // Gateway Configuration Tests (Requirements 2.1, 2.2, 2.3, 2.4, 2.5)
-    
+
     #[test]
     fn test_gateway_configuration_with_env_var_set() {
         // This test verifies the behavior when ODYSEE_CDN_GATEWAY is set
         // Note: The CDN_GATEWAY static is initialized once at first access,
         // so we test the initialization logic through sanitize_gateway
-        
+
         // Simulate valid custom gateway from environment variable
         let custom_gateway = "https://custom-cdn.odysee.com";
         let result = sanitize_gateway(custom_gateway);
-        
+
         // Should return the sanitized custom gateway
         assert_eq!(result, "https://custom-cdn.odysee.com");
         assert!(result.starts_with("https://"));
@@ -2331,16 +2444,16 @@ mod tests {
     fn test_gateway_configuration_with_env_var_not_set() {
         // This test verifies the behavior when ODYSEE_CDN_GATEWAY is not set
         // The system should fall back to DEFAULT_CDN_GATEWAY
-        
+
         // When no environment variable is set, the default is used
         // We can verify this by checking that get_cdn_gateway returns a valid URL
         let gateway = get_cdn_gateway();
-        
+
         // Should return a valid HTTPS URL (either custom or default)
         assert!(!gateway.is_empty());
         assert!(gateway.starts_with("https://"));
         assert!(!gateway.ends_with('/'));
-        
+
         // The gateway should be one of the valid options
         // (either the default or a custom one set via environment variable)
         assert!(gateway == DEFAULT_CDN_GATEWAY || gateway.starts_with("https://"));
@@ -2351,17 +2464,26 @@ mod tests {
         // Test that gateway configuration validates HTTPS requirement (Requirement 2.4)
         let http_gateway = "http://insecure.example.com";
         let result = sanitize_gateway(http_gateway);
-        assert_eq!(result, DEFAULT_CDN_GATEWAY, "HTTP gateways should be rejected");
-        
+        assert_eq!(
+            result, DEFAULT_CDN_GATEWAY,
+            "HTTP gateways should be rejected"
+        );
+
         // Test that trailing slashes are removed (Requirement 2.4)
         let gateway_with_slash = "https://cdn.example.com/";
         let result = sanitize_gateway(gateway_with_slash);
-        assert_eq!(result, "https://cdn.example.com", "Trailing slashes should be removed");
-        
+        assert_eq!(
+            result, "https://cdn.example.com",
+            "Trailing slashes should be removed"
+        );
+
         // Test that malformed URLs fall back to default (Requirement 2.5)
         let malformed = "not-a-url";
         let result = sanitize_gateway(malformed);
-        assert_eq!(result, DEFAULT_CDN_GATEWAY, "Malformed URLs should fall back to default");
+        assert_eq!(
+            result, DEFAULT_CDN_GATEWAY,
+            "Malformed URLs should fall back to default"
+        );
     }
 
     #[test]
@@ -2370,11 +2492,11 @@ mod tests {
         let gateway1 = get_cdn_gateway();
         let gateway2 = get_cdn_gateway();
         let gateway3 = get_cdn_gateway();
-        
+
         // All calls should return the same reference (immutable)
         assert_eq!(gateway1, gateway2);
         assert_eq!(gateway2, gateway3);
-        
+
         // Verify it's a valid HTTPS URL
         assert!(gateway1.starts_with("https://"));
         assert!(!gateway1.ends_with('/'));
@@ -2383,15 +2505,15 @@ mod tests {
     #[test]
     fn test_gateway_configuration_default_fallback() {
         // Test that invalid gateways fall back to default (Requirement 2.5)
-        
+
         // Empty string should fall back to default
         let result = sanitize_gateway("");
         assert_eq!(result, DEFAULT_CDN_GATEWAY);
-        
+
         // Invalid scheme should fall back to default
         let result = sanitize_gateway("ftp://cdn.example.com");
         assert_eq!(result, DEFAULT_CDN_GATEWAY);
-        
+
         // Missing scheme should fall back to default
         let result = sanitize_gateway("cdn.example.com");
         assert_eq!(result, DEFAULT_CDN_GATEWAY);
@@ -2400,17 +2522,17 @@ mod tests {
     #[test]
     fn test_gateway_configuration_with_custom_valid_gateway() {
         // Test that valid custom gateways are accepted (Requirement 2.1, 2.2)
-        
+
         // Custom gateway with subdomain
         let custom1 = "https://cdn.custom.odysee.com";
         let result1 = sanitize_gateway(custom1);
         assert_eq!(result1, "https://cdn.custom.odysee.com");
-        
+
         // Custom gateway with port
         let custom2 = "https://cdn.example.com:8443";
         let result2 = sanitize_gateway(custom2);
         assert_eq!(result2, "https://cdn.example.com:8443");
-        
+
         // Custom gateway with path
         let custom3 = "https://cdn.example.com/v1";
         let result3 = sanitize_gateway(custom3);
@@ -2441,23 +2563,41 @@ mod tests {
         });
 
         let result = parse_claim_item(&item);
-        assert!(result.is_ok(), "Should successfully parse claim with all fields");
-        
+        assert!(
+            result.is_ok(),
+            "Should successfully parse claim with all fields"
+        );
+
         let content = result.unwrap();
         assert_eq!(content.claim_id, "full-claim-123");
         assert_eq!(content.title, "Complete Movie");
-        assert_eq!(content.description, Some("A movie with all metadata".to_string()));
+        assert_eq!(
+            content.description,
+            Some("A movie with all metadata".to_string())
+        );
         assert_eq!(content.tags, vec!["movie", "action", "thriller"]);
-        assert_eq!(content.thumbnail_url, Some("https://example.com/thumb.jpg".to_string()));
+        assert_eq!(
+            content.thumbnail_url,
+            Some("https://example.com/thumb.jpg".to_string())
+        );
         assert_eq!(content.duration, Some(7200));
         assert_eq!(content.release_time, 1234567890);
-        
+
         // Verify CDN URL is constructed
-        assert!(content.video_urls.contains_key("master"), "Should have master quality entry");
+        assert!(
+            content.video_urls.contains_key("master"),
+            "Should have master quality entry"
+        );
         let master_url = &content.video_urls.get("master").unwrap().url;
-        assert!(master_url.contains("full-claim-123"), "CDN URL should contain claim_id");
-        assert!(master_url.ends_with("/master.m3u8"), "CDN URL should end with master.m3u8");
-        
+        assert!(
+            master_url.contains("full-claim-123"),
+            "CDN URL should contain claim_id"
+        );
+        assert!(
+            master_url.ends_with("/master.m3u8"),
+            "CDN URL should end with master.m3u8"
+        );
+
         // Verify compatibility assessment
         assert!(content.compatibility.compatible);
     }
@@ -2474,22 +2614,31 @@ mod tests {
         });
 
         let result = parse_claim_item(&item);
-        assert!(result.is_ok(), "Should successfully parse claim with minimal fields");
-        
+        assert!(
+            result.is_ok(),
+            "Should successfully parse claim with minimal fields"
+        );
+
         let content = result.unwrap();
         assert_eq!(content.claim_id, "minimal-claim-456");
         assert_eq!(content.title, "Minimal Video");
-        
+
         // Optional fields should be None or empty
         assert_eq!(content.description, None);
         assert_eq!(content.tags.len(), 0);
         assert_eq!(content.thumbnail_url, None);
         assert_eq!(content.duration, None);
-        
+
         // CDN URL should still be constructed
-        assert!(content.video_urls.contains_key("master"), "Should have master quality entry");
+        assert!(
+            content.video_urls.contains_key("master"),
+            "Should have master quality entry"
+        );
         let master_url = &content.video_urls.get("master").unwrap().url;
-        assert!(master_url.contains("minimal-claim-456"), "CDN URL should contain claim_id");
+        assert!(
+            master_url.contains("minimal-claim-456"),
+            "CDN URL should contain claim_id"
+        );
     }
 
     #[test]
@@ -2503,10 +2652,16 @@ mod tests {
         });
 
         let result = parse_claim_item(&item);
-        assert!(result.is_err(), "Should return error when claim_id is missing");
-        
+        assert!(
+            result.is_err(),
+            "Should return error when claim_id is missing"
+        );
+
         let error = result.unwrap_err();
-        assert!(error.to_string().contains("claim_id"), "Error should mention claim_id");
+        assert!(
+            error.to_string().contains("claim_id"),
+            "Error should mention claim_id"
+        );
     }
 
     #[test]
@@ -2521,7 +2676,10 @@ mod tests {
         });
 
         let result = parse_claim_item(&item);
-        assert!(result.is_err(), "Should return error when claim_id is empty");
+        assert!(
+            result.is_err(),
+            "Should return error when claim_id is empty"
+        );
     }
 
     #[test]
@@ -2536,12 +2694,17 @@ mod tests {
         });
 
         let result = parse_claim_item(&item);
-        assert!(result.is_err(), "Should return error for channel claim type");
-        
+        assert!(
+            result.is_err(),
+            "Should return error for channel claim type"
+        );
+
         let error = result.unwrap_err();
         let error_msg = error.to_string();
-        assert!(error_msg.contains("stream") || error_msg.contains("channel"), 
-                "Error should indicate non-stream type");
+        assert!(
+            error_msg.contains("stream") || error_msg.contains("channel"),
+            "Error should indicate non-stream type"
+        );
     }
 
     #[test]
@@ -2571,7 +2734,10 @@ mod tests {
         });
 
         let result = parse_claim_item(&item);
-        assert!(result.is_err(), "Should return error for collection claim type");
+        assert!(
+            result.is_err(),
+            "Should return error for collection claim type"
+        );
     }
 
     #[test]
@@ -2584,10 +2750,16 @@ mod tests {
         });
 
         let result = parse_claim_item(&item);
-        assert!(result.is_ok(), "Should succeed with default title when title is missing");
-        
+        assert!(
+            result.is_ok(),
+            "Should succeed with default title when title is missing"
+        );
+
         let content = result.unwrap();
-        assert_eq!(content.title, "Untitled", "Should default to 'Untitled' when title is missing");
+        assert_eq!(
+            content.title, "Untitled",
+            "Should default to 'Untitled' when title is missing"
+        );
     }
 
     #[test]
@@ -2608,25 +2780,40 @@ mod tests {
 
         let result = parse_claim_item(&item);
         assert!(result.is_ok(), "Should successfully parse claim");
-        
+
         let content = result.unwrap();
-        
+
         // Verify all required fields are present
         assert!(!content.claim_id.is_empty(), "claim_id should be non-empty");
         assert!(!content.title.is_empty(), "title should be non-empty");
-        assert!(!content.video_urls.is_empty(), "video_urls should not be empty");
-        assert!(content.video_urls.contains_key("master"), "Should have master quality entry");
-        
+        assert!(
+            !content.video_urls.is_empty(),
+            "video_urls should not be empty"
+        );
+        assert!(
+            content.video_urls.contains_key("master"),
+            "Should have master quality entry"
+        );
+
         // Verify playback_url is accessible
         let playback_url = content.video_urls.get("master").map(|v| &v.url);
-        assert!(playback_url.is_some(), "playback_url should be accessible via video_urls");
-        assert!(!playback_url.unwrap().is_empty(), "playback_url should be non-empty");
-        
+        assert!(
+            playback_url.is_some(),
+            "playback_url should be accessible via video_urls"
+        );
+        assert!(
+            !playback_url.unwrap().is_empty(),
+            "playback_url should be non-empty"
+        );
+
         // Verify tags array exists (may be empty)
         assert!(content.tags.len() > 0, "tags should be present");
-        
+
         // Verify thumbnail_url is present (may be None)
-        assert!(content.thumbnail_url.is_some(), "thumbnail_url should be present");
+        assert!(
+            content.thumbnail_url.is_some(),
+            "thumbnail_url should be present"
+        );
     }
 
     #[test]
@@ -2642,16 +2829,28 @@ mod tests {
 
         let result = parse_claim_item(&item);
         assert!(result.is_ok(), "Should successfully parse claim");
-        
+
         let content = result.unwrap();
         let master_url = &content.video_urls.get("master").unwrap().url;
-        
+
         // Verify CDN URL format: {gateway}/content/{claim_id}/master.m3u8
-        assert!(master_url.starts_with("https://"), "CDN URL should start with https://");
-        assert!(master_url.contains("/content/"), "CDN URL should contain /content/");
-        assert!(master_url.contains("cdn-format-test"), "CDN URL should contain claim_id");
-        assert!(master_url.ends_with("/master.m3u8"), "CDN URL should end with /master.m3u8");
-        
+        assert!(
+            master_url.starts_with("https://"),
+            "CDN URL should start with https://"
+        );
+        assert!(
+            master_url.contains("/content/"),
+            "CDN URL should contain /content/"
+        );
+        assert!(
+            master_url.contains("cdn-format-test"),
+            "CDN URL should contain claim_id"
+        );
+        assert!(
+            master_url.ends_with("/master.m3u8"),
+            "CDN URL should end with /master.m3u8"
+        );
+
         // Verify VideoUrl structure
         let video_url = content.video_urls.get("master").unwrap();
         assert_eq!(video_url.quality, "master", "quality should be 'master'");
@@ -2679,20 +2878,36 @@ mod tests {
         });
 
         let result = parse_claim_item(&item);
-        assert!(result.is_ok(), "Should successfully parse claim even with direct URLs present");
-        
+        assert!(
+            result.is_ok(),
+            "Should successfully parse claim even with direct URLs present"
+        );
+
         let content = result.unwrap();
-        
+
         // Should only have master quality entry (CDN URL)
-        assert_eq!(content.video_urls.len(), 1, "Should only have one video URL entry");
-        assert!(content.video_urls.contains_key("master"), "Should only have master quality");
-        
+        assert_eq!(
+            content.video_urls.len(),
+            1,
+            "Should only have one video URL entry"
+        );
+        assert!(
+            content.video_urls.contains_key("master"),
+            "Should only have master quality"
+        );
+
         // CDN URL should be used, not direct URLs
         let master_url = &content.video_urls.get("master").unwrap().url;
         assert!(!master_url.contains("hd.mp4"), "Should not use hd_url");
         assert!(!master_url.contains("sd.mp4"), "Should not use sd_url");
-        assert!(!master_url.contains("720p.mp4"), "Should not use streams array");
-        assert!(master_url.contains("ignore-direct-urls"), "Should use CDN URL with claim_id");
+        assert!(
+            !master_url.contains("720p.mp4"),
+            "Should not use streams array"
+        );
+        assert!(
+            master_url.contains("ignore-direct-urls"),
+            "Should use CDN URL with claim_id"
+        );
     }
 
     #[test]
@@ -2710,11 +2925,81 @@ mod tests {
 
         let result = parse_claim_item(&item);
         // Should succeed because sd_hash presence infers stream type
-        assert!(result.is_ok(), "Should infer stream type from sd_hash presence");
-        
+        assert!(
+            result.is_ok(),
+            "Should infer stream type from sd_hash presence"
+        );
+
         let content = result.unwrap();
         assert_eq!(content.claim_id, "inferred-stream");
-        assert!(content.video_urls.contains_key("master"), "Should have CDN URL");
+        assert!(
+            content.video_urls.contains_key("master"),
+            "Should have CDN URL"
+        );
+    }
+
+    // Safety command tests
+    #[tokio::test]
+    async fn test_test_connection_returns_expected_message() {
+        let result = test_connection().await;
+        assert!(result.is_ok(), "test_connection should succeed");
+        assert_eq!(
+            result.unwrap(),
+            "tauri-backend-alive",
+            "Should return expected message"
+        );
+    }
+
+    #[test]
+    fn test_build_cdn_playback_url_test_command() {
+        let claim_id = "test-claim-123".to_string();
+        let url = build_cdn_playback_url_test(claim_id.clone());
+
+        // Verify URL format
+        assert!(url.contains(&claim_id), "URL should contain claim_id");
+        assert!(
+            url.contains("/content/"),
+            "URL should contain /content/ path"
+        );
+        assert!(
+            url.contains("/master.m3u8"),
+            "URL should contain master.m3u8"
+        );
+        assert!(
+            url.starts_with("https://"),
+            "URL should start with https://"
+        );
+
+        // Verify it uses the default gateway
+        let expected_url = format!("{}/content/{}/master.m3u8", DEFAULT_CDN_GATEWAY, claim_id);
+        assert_eq!(url, expected_url, "URL should match expected format");
+    }
+
+    #[test]
+    fn test_build_cdn_playback_url_test_with_various_claim_ids() {
+        let test_cases = vec![
+            "simple-claim",
+            "claim-with-dashes",
+            "claim_with_underscores",
+            "ClaimWithMixedCase123",
+            "a1b2c3d4e5f6",
+        ];
+
+        for claim_id in test_cases {
+            let url = build_cdn_playback_url_test(claim_id.to_string());
+            assert!(
+                url.contains(claim_id),
+                "URL should contain claim_id: {}",
+                claim_id
+            );
+            assert!(
+                url.starts_with(DEFAULT_CDN_GATEWAY),
+                "URL should start with default gateway"
+            );
+            assert!(
+                url.ends_with("/master.m3u8"),
+                "URL should end with /master.m3u8"
+            );
+        }
     }
 }
-

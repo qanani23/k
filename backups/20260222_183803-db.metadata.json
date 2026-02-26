@@ -1,0 +1,11 @@
+﻿{
+    "hostname":  "DESKTOP-F58NA0F",
+    "checksum_algorithm":  "SHA256",
+    "platform":  "Windows",
+    "checksum":  "e3437c010ff607f4099702dd4a36a6cbbde949a4d88847087fbb4963866d7177",
+    "backup_path":  ".\\backups\\20260222_183803-db.sqlite",
+    "pii_warning":  "This backup may contain Personally Identifiable Information. Handle securely.",
+    "timestamp":  "2026-02-23T02:38:03Z",
+    "file_size_bytes":  1016,
+    "source_path":  "C:\\Users\\hp\\AppData\\Local\\Temp\\kiyya-backup-test-1771814282003\\original.db"
+}

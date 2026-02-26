@@ -11,9 +11,9 @@
 
 #[cfg(test)]
 mod tests {
-    use crate::validation;
-    use crate::path_security;
     use crate::encryption::EncryptionManager;
+    use crate::path_security;
+    use crate::validation;
 
     // ========== Network Restrictions Tests ==========
 
@@ -56,11 +56,7 @@ mod tests {
 
         for url in blocked_urls {
             let result = validation::validate_external_url(url);
-            assert!(
-                result.is_err(),
-                "Unapproved URL should be blocked: {}",
-                url
-            );
+            assert!(result.is_err(), "Unapproved URL should be blocked: {}", url);
         }
     }
 
@@ -119,11 +115,7 @@ mod tests {
 
         for path in valid_paths {
             let result = path_security::validate_path(path);
-            assert!(
-                result.is_ok(),
-                "Valid app data path should pass: {}",
-                path
-            );
+            assert!(result.is_ok(), "Valid app data path should pass: {}", path);
         }
     }
 
@@ -203,10 +195,7 @@ mod tests {
             load_result.is_ok(),
             "Should be able to load key from keystore"
         );
-        assert!(
-            load_result.unwrap(),
-            "Key should be found in keystore"
-        );
+        assert!(load_result.unwrap(), "Key should be found in keystore");
 
         // Clean up
         let _ = manager2.disable_encryption();
@@ -228,13 +217,13 @@ mod tests {
             enable_result.is_ok(),
             "Encryption should be enabled successfully"
         );
-        
+
         // Verify encryption is enabled in the current manager
         assert!(
             manager.is_encryption_enabled(),
             "Encryption should be enabled in current manager"
         );
-        
+
         // Now disable encryption
         let disable_result = manager.disable_encryption();
         assert!(
@@ -258,7 +247,7 @@ mod tests {
             !load_result.unwrap(),
             "Key should not be found after removal"
         );
-        
+
         // Final cleanup to ensure no keys are left
         let _ = manager2.disable_encryption();
     }
@@ -460,7 +449,7 @@ mod tests {
             "'; DROP TABLE--",
             // Old quality-specific values are no longer valid
             "240p",
-            "360p", 
+            "360p",
             "480p",
             "720p",
             "1080p",
@@ -565,11 +554,7 @@ mod tests {
 
         for tag in valid_tags {
             let result = crate::sanitization::sanitize_tag(tag);
-            assert!(
-                result.is_ok(),
-                "Valid tag should be accepted: {}",
-                tag
-            );
+            assert!(result.is_ok(), "Valid tag should be accepted: {}", tag);
         }
 
         // Invalid tag formats should be rejected
@@ -584,11 +569,7 @@ mod tests {
 
         for tag in invalid_tags {
             let result = crate::sanitization::sanitize_tag(tag);
-            assert!(
-                result.is_err(),
-                "Invalid tag should be rejected: {}",
-                tag
-            );
+            assert!(result.is_err(), "Invalid tag should be rejected: {}", tag);
         }
     }
 }

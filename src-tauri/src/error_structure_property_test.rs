@@ -1,20 +1,20 @@
 /// Property-Based Tests for Error Structure
-/// 
+///
 /// **Feature: odysee-cdn-playback-standardization, Property 6: Error Details Are Structured**
-/// 
+///
 /// For any error condition (missing claim_id, non-stream type, malformed JSON), the error should contain:
 /// - Error type/category
 /// - Contextual information (which claim failed)
 /// - Human-readable message
-/// 
+///
 /// **Validates: Requirements 4.6**
 
 #[cfg(test)]
 mod error_structure_property_tests {
     use crate::commands::parse_claim_item;
     use crate::error::KiyyaError;
-    use serde_json::json;
     use proptest::prelude::*;
+    use serde_json::json;
 
     /// Strategy for generating valid claim IDs
     fn claim_id_strategy() -> impl Strategy<Value = String> {
@@ -54,10 +54,7 @@ mod error_structure_property_tests {
 
         // Property 2: Error has a human-readable message
         let message = error.to_string();
-        assert!(
-            !message.is_empty(),
-            "Error should have a non-empty message"
-        );
+        assert!(!message.is_empty(), "Error should have a non-empty message");
 
         // Property 3: Error message contains contextual information
         if !expected_context.is_empty() {

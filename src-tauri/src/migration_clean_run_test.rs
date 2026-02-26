@@ -1,5 +1,5 @@
 /// Tests to verify that database migrations run cleanly
-/// 
+///
 /// These tests ensure that:
 /// 1. Migrations run successfully on a fresh database
 /// 2. Migrations run successfully on an existing database
@@ -12,8 +12,8 @@ mod migration_clean_run_tests {
     use crate::database::Database;
     use crate::migrations::MigrationRunner;
     use rusqlite::Connection;
-    use tempfile::TempDir;
     use std::path::PathBuf;
+    use tempfile::TempDir;
 
     /// Helper function to create a test database
     async fn create_test_db() -> (Database, TempDir, PathBuf) {
@@ -28,11 +28,7 @@ mod migration_clean_run_tests {
     /// Helper function to get migration count from database
     fn get_migration_count(db_path: &PathBuf) -> Result<u32, rusqlite::Error> {
         let conn = Connection::open(db_path)?;
-        let count: u32 = conn.query_row(
-            "SELECT COUNT(*) FROM migrations",
-            [],
-            |row| row.get(0)
-        )?;
+        let count: u32 = conn.query_row("SELECT COUNT(*) FROM migrations", [], |row| row.get(0))?;
         Ok(count)
     }
 
@@ -42,7 +38,7 @@ mod migration_clean_run_tests {
         let exists: bool = conn.query_row(
             "SELECT COUNT(*) > 0 FROM sqlite_master WHERE type='table' AND name=?1",
             [table_name],
-            |row| row.get(0)
+            |row| row.get(0),
         )?;
         Ok(exists)
     }
@@ -50,10 +46,10 @@ mod migration_clean_run_tests {
     /// Helper function to get all table names
     fn get_all_tables(db_path: &PathBuf) -> Result<Vec<String>, rusqlite::Error> {
         let conn = Connection::open(db_path)?;
-        let mut stmt = conn.prepare(
-            "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
-        )?;
-        let tables = stmt.query_map([], |row| row.get(0))?
+        let mut stmt =
+            conn.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")?;
+        let tables = stmt
+            .query_map([], |row| row.get(0))?
             .collect::<Result<Vec<String>, _>>()?;
         Ok(tables)
     }
@@ -82,9 +78,8 @@ mod migration_clean_run_tests {
             .expect("Migrations should run successfully on fresh database");
 
         // Verify migrations were applied
-        let migration_count = get_migration_count(&db_path)
-            .expect("Failed to get migration count");
-        
+        let migration_count = get_migration_count(&db_path).expect("Failed to get migration count");
+
         assert!(
             migration_count > 0,
             "At least one migration should be applied. Found: {}",
@@ -136,16 +131,14 @@ mod migration_clean_run_tests {
             .await
             .expect("First migration run should succeed");
 
-        let first_count = get_migration_count(&db_path)
-            .expect("Failed to get migration count");
+        let first_count = get_migration_count(&db_path).expect("Failed to get migration count");
 
         // Run migrations second time (should be no-op)
         db.run_migrations()
             .await
             .expect("Second migration run should succeed");
 
-        let second_count = get_migration_count(&db_path)
-            .expect("Failed to get migration count");
+        let second_count = get_migration_count(&db_path).expect("Failed to get migration count");
 
         assert_eq!(
             first_count, second_count,
@@ -157,8 +150,7 @@ mod migration_clean_run_tests {
             .await
             .expect("Third migration run should succeed");
 
-        let third_count = get_migration_count(&db_path)
-            .expect("Failed to get migration count");
+        let third_count = get_migration_count(&db_path).expect("Failed to get migration count");
 
         assert_eq!(
             first_count, third_count,
@@ -178,17 +170,14 @@ mod migration_clean_run_tests {
             .expect("Migrations should run successfully");
 
         // Verify migration history is tracked
-        let conn = Connection::open(&db_path)
-            .expect("Failed to open database");
+        let conn = Connection::open(&db_path).expect("Failed to open database");
 
         let runner = MigrationRunner::new();
-        let history = runner.get_migration_history(&conn)
+        let history = runner
+            .get_migration_history(&conn)
             .expect("Failed to get migration history");
 
-        assert!(
-            !history.is_empty(),
-            "Migration history should not be empty"
-        );
+        assert!(!history.is_empty(), "Migration history should not be empty");
 
         // Verify each migration has required fields
         for migration_info in history {
@@ -210,6 +199,232 @@ mod migration_clean_run_tests {
     }
 
     #[tokio::test]
+    async fn test_is_migration_applied_function() {
+        let (db, _temp_dir, db_path) = create_test_db().await;
+
+        // Run migrations
+        db.run_migrations()
+            .await
+            .expect("Migrations should run successfully");
+
+        // Open connection and create runner
+        let conn = Connection::open(&db_path).expect("Failed to open database");
+        let runner = MigrationRunner::new();
+
+        // Get the list of applied migrations
+        let history = runner
+            .get_migration_history(&conn)
+            .expect("Failed to get migration history");
+
+        // Verify is_migration_applied returns true for all applied migrations
+        for migration_info in &history {
+            let is_applied = runner
+                .is_migration_applied(&conn, migration_info.version)
+                .expect("Failed to check if migration is applied");
+
+            assert!(
+                is_applied,
+                "Migration {} should be marked as applied",
+                migration_info.version
+            );
+        }
+
+        // Verify is_migration_applied returns false for non-existent migration
+        let non_existent_version = 99999;
+        let is_applied = runner
+            .is_migration_applied(&conn, non_existent_version)
+            .expect("Failed to check if migration is applied");
+
+        assert!(
+            !is_applied,
+            "Non-existent migration {} should not be marked as applied",
+            non_existent_version
+        );
+
+        println!("✓ is_migration_applied() correctly identifies applied migrations");
+    }
+
+    #[tokio::test]
+    async fn test_duplicate_migration_execution_prevented() {
+        let (db, _temp_dir, db_path) = create_test_db().await;
+
+        // Run migrations first time
+        db.run_migrations()
+            .await
+            .expect("First migration run should succeed");
+
+        let conn = Connection::open(&db_path).expect("Failed to open database");
+        let runner = MigrationRunner::new();
+
+        // Get initial migration count and history
+        let initial_count = get_migration_count(&db_path).expect("Failed to get migration count");
+        let initial_history = runner
+            .get_migration_history(&conn)
+            .expect("Failed to get migration history");
+
+        // Verify all migrations are marked as applied
+        for migration_info in &initial_history {
+            let is_applied = runner
+                .is_migration_applied(&conn, migration_info.version)
+                .expect("Failed to check if migration is applied");
+
+            assert!(
+                is_applied,
+                "Migration {} should be marked as applied after first run",
+                migration_info.version
+            );
+        }
+
+        // Run migrations second time
+        db.run_migrations()
+            .await
+            .expect("Second migration run should succeed");
+
+        // Verify migration count hasn't changed
+        let second_count = get_migration_count(&db_path).expect("Failed to get migration count");
+        assert_eq!(
+            initial_count, second_count,
+            "Migration count should not change on second run"
+        );
+
+        // Verify migration history hasn't changed (no duplicate entries)
+        let second_history = runner
+            .get_migration_history(&conn)
+            .expect("Failed to get migration history");
+
+        assert_eq!(
+            initial_history.len(),
+            second_history.len(),
+            "Migration history length should not change on second run"
+        );
+
+        // Verify each migration version appears only once
+        for migration_info in &second_history {
+            let count: i64 = conn
+                .query_row(
+                    "SELECT COUNT(*) FROM migrations WHERE version = ?1",
+                    [migration_info.version],
+                    |row| row.get(0),
+                )
+                .expect("Failed to count migration entries");
+
+            assert_eq!(
+                count, 1,
+                "Migration {} should appear exactly once in migrations table",
+                migration_info.version
+            );
+        }
+
+        // Run migrations third time to ensure continued idempotency
+        db.run_migrations()
+            .await
+            .expect("Third migration run should succeed");
+
+        let third_count = get_migration_count(&db_path).expect("Failed to get migration count");
+        assert_eq!(
+            initial_count, third_count,
+            "Migration count should not change on third run"
+        );
+
+        println!("✓ Duplicate migration execution is prevented by idempotency check");
+    }
+
+    #[tokio::test]
+    async fn test_migrations_table_tracks_versions_correctly() {
+        let (db, _temp_dir, db_path) = create_test_db().await;
+
+        // Run migrations
+        db.run_migrations()
+            .await
+            .expect("Migrations should run successfully");
+
+        let conn = Connection::open(&db_path).expect("Failed to open database");
+        let runner = MigrationRunner::new();
+
+        // Get migration history
+        let history = runner
+            .get_migration_history(&conn)
+            .expect("Failed to get migration history");
+
+        // Verify migrations table has correct schema
+        let table_info: Vec<(String, String)> = conn
+            .prepare("PRAGMA table_info(migrations)")
+            .expect("Failed to prepare table_info query")
+            .query_map([], |row| Ok((row.get(1)?, row.get(2)?)))
+            .expect("Failed to query table_info")
+            .collect::<Result<Vec<_>, _>>()
+            .expect("Failed to collect table_info");
+
+        // Verify required columns exist
+        let column_names: Vec<String> = table_info.iter().map(|(name, _)| name.clone()).collect();
+        assert!(
+            column_names.contains(&"version".to_string()),
+            "migrations table should have version column"
+        );
+        assert!(
+            column_names.contains(&"description".to_string()),
+            "migrations table should have description column"
+        );
+        assert!(
+            column_names.contains(&"applied_at".to_string()),
+            "migrations table should have applied_at column"
+        );
+        assert!(
+            column_names.contains(&"checksum".to_string()),
+            "migrations table should have checksum column"
+        );
+
+        // Verify version is primary key
+        let version_is_pk: bool = conn
+            .query_row(
+                "SELECT COUNT(*) > 0 FROM pragma_table_info('migrations') WHERE name='version' AND pk=1",
+                [],
+                |row| row.get(0),
+            )
+            .expect("Failed to check if version is primary key");
+
+        assert!(
+            version_is_pk,
+            "version column should be the primary key"
+        );
+
+        // Verify versions are sequential and unique
+        let mut versions: Vec<u32> = history.iter().map(|m| m.version).collect();
+        versions.sort();
+
+        for i in 0..versions.len() {
+            if i > 0 {
+                assert!(
+                    versions[i] > versions[i - 1],
+                    "Migration versions should be unique and increasing"
+                );
+            }
+        }
+
+        // Verify all migrations have checksums
+        for migration_info in &history {
+            assert!(
+                migration_info.checksum.is_some(),
+                "Migration {} should have a checksum",
+                migration_info.version
+            );
+        }
+
+        // Verify current version matches max version
+        let current_version = runner
+            .get_current_version(&conn)
+            .expect("Failed to get current version");
+
+        let max_version = versions.iter().max().copied().unwrap_or(0);
+        assert_eq!(
+            current_version, max_version,
+            "Current version should match maximum applied migration version"
+        );
+
+        println!("✓ Migrations table correctly tracks versions with proper schema");
+    }
+
+    #[tokio::test]
     async fn test_all_indices_created() {
         let (db, _temp_dir, db_path) = create_test_db().await;
 
@@ -219,14 +434,14 @@ mod migration_clean_run_tests {
             .expect("Migrations should run successfully");
 
         // Verify indices exist
-        let conn = Connection::open(&db_path)
-            .expect("Failed to open database");
+        let conn = Connection::open(&db_path).expect("Failed to open database");
 
-        let mut stmt = conn.prepare(
-            "SELECT name FROM sqlite_master WHERE type='index' ORDER BY name"
-        ).expect("Failed to prepare index query");
+        let mut stmt = conn
+            .prepare("SELECT name FROM sqlite_master WHERE type='index' ORDER BY name")
+            .expect("Failed to prepare index query");
 
-        let indices: Vec<String> = stmt.query_map([], |row| row.get(0))
+        let indices: Vec<String> = stmt
+            .query_map([], |row| row.get(0))
             .expect("Failed to query indices")
             .collect::<Result<Vec<String>, _>>()
             .expect("Failed to collect indices");
@@ -264,25 +479,21 @@ mod migration_clean_run_tests {
             .expect("Migrations should run successfully");
 
         // Run PRAGMA integrity_check
-        let conn = Connection::open(&db_path)
-            .expect("Failed to open database");
+        let conn = Connection::open(&db_path).expect("Failed to open database");
 
-        let integrity: String = conn.query_row(
-            "PRAGMA integrity_check",
-            [],
-            |row| row.get(0)
-        ).expect("Failed to run integrity check");
+        let integrity: String = conn
+            .query_row("PRAGMA integrity_check", [], |row| row.get(0))
+            .expect("Failed to run integrity check");
 
-        assert_eq!(
-            integrity, "ok",
-            "Database integrity check should pass"
-        );
+        assert_eq!(integrity, "ok", "Database integrity check should pass");
 
         // Run PRAGMA foreign_key_check
-        let mut stmt = conn.prepare("PRAGMA foreign_key_check")
+        let mut stmt = conn
+            .prepare("PRAGMA foreign_key_check")
             .expect("Failed to prepare foreign key check");
-        
-        let violations: Vec<String> = stmt.query_map([], |row| row.get(0))
+
+        let violations: Vec<String> = stmt
+            .query_map([], |row| row.get(0))
             .expect("Failed to query foreign key violations")
             .collect::<Result<Vec<String>, _>>()
             .expect("Failed to collect foreign key violations");
@@ -306,13 +517,13 @@ mod migration_clean_run_tests {
             .expect("First migration run should succeed");
 
         // Insert some test data
-        let conn = Connection::open(&db_path)
-            .expect("Failed to open database");
+        let conn = Connection::open(&db_path).expect("Failed to open database");
 
         conn.execute(
             "INSERT INTO favorites (claimId, title, insertedAt) VALUES (?1, ?2, ?3)",
-            ["test-claim-id", "Test Title", "1234567890"]
-        ).expect("Failed to insert test data");
+            ["test-claim-id", "Test Title", "1234567890"],
+        )
+        .expect("Failed to insert test data");
 
         drop(conn);
 
@@ -327,14 +538,15 @@ mod migration_clean_run_tests {
             .expect("Second migration run should succeed on existing database");
 
         // Verify test data still exists
-        let conn = Connection::open(&db_path)
-            .expect("Failed to open database");
+        let conn = Connection::open(&db_path).expect("Failed to open database");
 
-        let title: String = conn.query_row(
-            "SELECT title FROM favorites WHERE claimId = ?1",
-            ["test-claim-id"],
-            |row| row.get(0)
-        ).expect("Test data should still exist after migrations");
+        let title: String = conn
+            .query_row(
+                "SELECT title FROM favorites WHERE claimId = ?1",
+                ["test-claim-id"],
+                |row| row.get(0),
+            )
+            .expect("Test data should still exist after migrations");
 
         assert_eq!(title, "Test Title", "Test data should be preserved");
 
@@ -351,12 +563,10 @@ mod migration_clean_run_tests {
             .await
             .expect("Migrations should run successfully");
 
-        let conn = Connection::open(&db_path)
-            .expect("Failed to open database");
+        let conn = Connection::open(&db_path).expect("Failed to open database");
 
         // Get all tables
-        let tables = get_all_tables(&db_path)
-            .expect("Failed to get tables");
+        let tables = get_all_tables(&db_path).expect("Failed to get tables");
 
         // Verify each table has at least one column
         for table in tables {
@@ -364,10 +574,12 @@ mod migration_clean_run_tests {
                 continue; // Skip SQLite internal tables
             }
 
-            let mut stmt = conn.prepare(&format!("PRAGMA table_info({})", table))
+            let mut stmt = conn
+                .prepare(&format!("PRAGMA table_info({})", table))
                 .expect(&format!("Failed to get table info for {}", table));
 
-            let columns: Vec<String> = stmt.query_map([], |row| row.get(1))
+            let columns: Vec<String> = stmt
+                .query_map([], |row| row.get(1))
                 .expect(&format!("Failed to query columns for {}", table))
                 .collect::<Result<Vec<String>, _>>()
                 .expect(&format!("Failed to collect columns for {}", table));

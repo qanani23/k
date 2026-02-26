@@ -1,0 +1,2263 @@
+﻿cargo :    Compiling proc-macro2 v1.0.106
+At line:1 char:1
++ cargo test --no-fail-fast 2>&1 | Out-File -FilePath ../stabilization/ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (   Compiling proc-macro2 v1.0.106:String) [],  
+   RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   Compiling quote v1.0.44
+   Compiling unicode-ident v1.0.22
+   Compiling cfg-if v1.0.4
+   Compiling serde_core v1.0.228
+   Compiling serde v1.0.228
+   Compiling zerocopy v0.8.38
+   Compiling memchr v2.7.6
+   Compiling getrandom v0.3.4
+   Compiling syn v2.0.114
+   Compiling getrandom v0.2.17
+   Compiling rand_core v0.6.4
+   Compiling smallvec v1.15.1
+   Compiling itoa v1.0.17
+   Compiling windows-link v0.2.1
+   Compiling version_check v0.9.5
+   Compiling stable_deref_trait v1.2.1
+   Compiling fnv v1.0.7
+   Compiling siphasher v0.3.11
+   Compiling parking_lot_core v0.9.12
+   Compiling windows_x86_64_msvc v0.52.6
+   Compiling scopeguard v1.2.0
+   Compiling lock_api v0.4.14
+   Compiling syn v1.0.109
+   Compiling parking_lot v0.12.5
+   Compiling jobserver v0.1.34
+   Compiling shlex v1.3.0
+   Compiling find-msvc-tools v0.1.9
+   Compiling zmij v1.0.19
+   Compiling ppv-lite86 v0.2.21
+   Compiling cc v1.2.55
+   Compiling synstructure v0.13.2
+   Compiling windows-targets v0.52.6
+   Compiling typenum v1.19.0
+   Compiling equivalent v1.0.2
+   Compiling hashbrown v0.16.1
+   Compiling getrandom v0.1.16
+   Compiling indexmap v2.13.0
+   Compiling serde_derive v1.0.228
+   Compiling zerofrom-derive v0.1.6
+   Compiling yoke-derive v0.8.1
+   Compiling zerofrom v0.1.6
+   Compiling zerovec-derive v0.11.2
+   Compiling yoke v0.8.1
+   Compiling rand_chacha v0.3.1
+   Compiling generic-array v0.14.7
+   Compiling zerovec v0.11.5
+   Compiling displaydoc v0.2.5
+   Compiling byteorder v1.5.0
+   Compiling rand_core v0.5.1
+   Compiling log v0.4.29
+   Compiling autocfg v1.5.0
+   Compiling rand_chacha v0.2.2
+   Compiling tinystr v0.8.2
+   Compiling pin-project-lite v0.2.16
+   Compiling writeable v0.6.2
+   Compiling thiserror v1.0.69
+   Compiling once_cell v1.21.3
+   Compiling litemap v0.8.1
+   Compiling bytes v1.11.1
+   Compiling icu_locale_core v2.1.1
+   Compiling zerotrie v0.2.3
+   Compiling potential_utf v0.1.4
+   Compiling rand v0.8.5
+   Compiling thiserror-impl v1.0.69
+   Compiling icu_normalizer_data v2.1.1
+   Compiling icu_properties_data v2.1.2
+   Compiling siphasher v1.0.2
+   Compiling icu_provider v2.1.1
+   Compiling phf_shared v0.11.3
+   Compiling icu_collections v2.1.1
+   Compiling rand_pcg v0.2.1
+   Compiling regex-syntax v0.8.9
+   Compiling rand v0.7.3
+   Compiling icu_normalizer v2.1.1
+   Compiling phf_generator v0.11.3
+   Compiling phf_shared v0.10.0
+   Compiling phf_shared v0.8.0
+   Compiling phf_generator v0.8.0
+   Compiling utf-8 v0.7.6
+   Compiling futures-core v0.3.31
+   Compiling utf8_iter v1.0.4
+   Compiling phf_generator v0.10.0
+   Compiling new_debug_unreachable v1.0.6
+   Compiling precomputed-hash v0.1.1
+   Compiling proc-macro-hack v0.5.20+deprecated
+   Compiling phf_codegen v0.10.0
+   Compiling string_cache_codegen v0.5.4
+   Compiling crypto-common v0.1.7
+   Compiling icu_properties v2.1.2
+   Compiling mac v0.1.1
+   Compiling crossbeam-utils v0.8.21
+   Compiling bitflags v1.3.2
+   Compiling serde_json v1.0.149
+   Compiling libc v0.2.180
+   Compiling windows_x86_64_msvc v0.53.1
+   Compiling markup5ever v0.11.0
+   Compiling futf v0.1.5
+   Compiling idna_adapter v1.2.1
+   Compiling idna v1.1.0
+   Compiling windows-sys v0.59.0
+   Compiling phf_macros v0.8.0
+   Compiling tendril v0.4.3
+   Compiling string_cache v0.8.9
+   Compiling phf_codegen v0.8.0
+   Compiling cssparser v0.27.2
+   Compiling windows-sys v0.61.2
+   Compiling futures-io v0.3.31
+   Compiling windows_x86_64_msvc v0.48.5
+   Compiling dtoa v1.0.11
+   Compiling cpufeatures v0.2.17
+   Compiling dtoa-short v0.3.5
+   Compiling selectors v0.22.0
+   Compiling windows-targets v0.53.5
+   Compiling phf v0.8.0
+   Compiling http v0.2.12
+   Compiling block-buffer v0.10.4
+   Compiling html5ever v0.26.0
+   Compiling cssparser-macros v0.6.1
+   Compiling matches v0.1.10
+   Compiling pkg-config v0.3.32
+   Compiling convert_case v0.4.0
+   Compiling subtle v2.6.1
+   Compiling strsim v0.11.1
+   Compiling ident_case v1.0.1
+   Compiling percent-encoding v2.3.2
+   Compiling nodrop v0.1.14
+   Compiling itoa v0.4.8
+   Compiling servo_arc v0.1.1
+   Compiling darling_core v0.21.3
+   Compiling derive_more v0.99.20
+   Compiling windows-sys v0.60.2
+   Compiling fxhash v0.2.1
+   Compiling hashbrown v0.12.3
+   Compiling thin-slice v0.1.1
+   Compiling futures-sink v0.3.31
+   Compiling windows-targets v0.48.5
+   Compiling socket2 v0.6.2
+   Compiling mio v1.1.1
+   Compiling form_urlencoded v1.2.2
+   Compiling tokio-macros v2.6.0
+   Compiling winapi v0.3.9
+   Compiling alloc-no-stdlib v2.0.4
+   Compiling tokio v1.49.0
+   Compiling alloc-stdlib v0.2.2
+   Compiling futures-channel v0.3.31
+   Compiling tracing-core v0.1.36
+   Compiling darling_macro v0.21.3
+   Compiling futures-macro v0.3.31
+   Compiling darling v0.21.3
+   Compiling windows-version v0.1.7
+   Compiling aho-corasick v1.1.4
+   Compiling futures-task v0.3.31
+   Compiling windows-tokens v0.39.0
+   Compiling pin-utils v0.1.0
+   Compiling slab v0.4.12
+   Compiling futures-util v0.3.31
+   Compiling serde_with_macros v3.16.1
+   Compiling regex-automata v0.4.14
+   Compiling brotli-decompressor v4.0.3
+   Compiling url v2.5.8
+   Compiling phf_macros v0.11.3
+   Compiling dunce v1.0.5
+   Compiling windows-link v0.1.3
+   Compiling httparse v1.10.1
+   Compiling phf v0.11.3
+   Compiling regex v1.12.3
+   Compiling brotli v7.0.0
+   Compiling serde_with v3.16.1
+   Compiling phf v0.10.1
+   Compiling num-traits v0.2.19
+   Compiling indexmap v1.9.3
+   Compiling serde_spanned v0.6.9
+   Compiling toml_datetime v0.6.11
+   Compiling ctor v0.2.9
+   Compiling tracing-attributes v0.1.31
+   Compiling windows_x86_64_msvc v0.39.0
+   Compiling glob v0.3.3
+   Compiling crc32fast v1.5.0
+   Compiling adler2 v2.0.1
+   Compiling semver v1.0.27
+   Compiling tracing v0.1.44
+   Compiling winapi-util v0.1.11
+   Compiling digest v0.10.7
+   Compiling uuid v1.20.0
+   Compiling windows-metadata v0.39.0
+   Compiling cfb v0.7.3
+   Compiling windows-bindgen v0.39.0
+   Compiling same-file v1.0.6
+   Compiling windows-strings v0.4.2
+   Compiling windows-result v0.3.4
+   Compiling windows-implement v0.39.0
+   Compiling jsonptr v0.4.7
+   Compiling windows-interface v0.59.3
+   Compiling windows-implement v0.60.2
+   Compiling vswhom-sys v0.1.3
+   Compiling anyhow v1.0.100
+   Compiling simd-adler32 v0.3.8
+   Compiling base64 v0.21.7
+   Compiling lazy_static v1.5.0
+   Compiling webview2-com-sys v0.19.0
+   Compiling windows-core v0.61.2
+   Compiling json-patch v2.0.0
+   Compiling windows v0.39.0
+   Compiling kuchikiki v0.8.2
+   Compiling walkdir v2.5.0
+   Compiling infer v0.13.0
+   Compiling tokio-util v0.7.18
+   Compiling toml_write v0.1.2
+   Compiling winnow v0.5.40
+   Compiling httpdate v1.0.3
+   Compiling winnow v0.7.14
+   Compiling try-lock v0.2.5
+   Compiling heck v0.5.0
+   Compiling toml_edit v0.19.15
+   Compiling want v0.3.1
+   Compiling h2 v0.3.27
+   Compiling toml_edit v0.22.27
+   Compiling tauri-utils v1.6.2
+   Compiling miniz_oxide v0.8.9
+   Compiling socket2 v0.4.10
+   Compiling windows-sys v0.48.0
+   Compiling zstd-sys v2.0.16+zstd.1.5.7
+   Compiling http-body v0.4.6
+   Compiling crossbeam-epoch v0.9.18
+   Compiling ryu v1.0.22
+   Compiling native-tls v0.2.14
+   Compiling mime v0.3.17
+   Compiling thiserror v2.0.18
+   Compiling parking v2.2.1
+   Compiling fastrand v2.3.0
+   Compiling raw-window-handle v0.5.2
+   Compiling tower-service v0.3.3
+   Compiling hyper v0.14.32
+   Compiling serde_urlencoded v0.7.1
+   Compiling winreg v0.52.0
+   Compiling crossbeam-deque v0.8.6
+   Compiling flate2 v1.1.9
+   Compiling vswhom v0.1.0
+   Compiling toml v0.8.23
+   Compiling toml v0.7.8
+   Compiling fdeflate v0.3.7
+   Compiling sha1 v0.10.6
+   Compiling rustc_version v0.4.1
+   Compiling windows-threading v0.1.0
+   Compiling schannel v0.1.28
+   Compiling crossbeam-channel v0.5.15
+   Compiling inout v0.1.4
+   Compiling webview2-com-macros v0.6.0
+   Compiling thiserror-impl v2.0.18
+   Compiling tao v0.16.10
+   Compiling ahash v0.8.12
+   Compiling color_quant v1.1.0
+   Compiling bytemuck v1.25.0
+   Compiling windows_x86_64_msvc v0.42.2
+   Compiling windows_x86_64_msvc v0.37.0
+   Compiling image v0.24.9
+   Compiling cipher v0.4.4
+   Compiling dirs-sys-next v0.1.2
+   Compiling windows-future v0.2.1
+   Compiling embed-resource v2.5.2
+   Compiling png v0.17.16
+   Compiling windows-numerics v0.2.0
+   Compiling windows-collections v0.2.0
+   Compiling bzip2-sys v0.1.13+1.0.8
+   Compiling rand_core v0.9.5
+   Compiling instant v0.1.13
+   Compiling encoding_rs v0.8.35
+   Compiling wry v0.24.11
+   Compiling zstd-safe v5.0.2+zstd.1.5.2
+   Compiling unicode-segmentation v1.12.0
+   Compiling unicase v2.9.0
+   Compiling powerfmt v0.2.0
+   Compiling webview2-com v0.19.1
+   Compiling tauri-runtime v0.14.6
+   Compiling rayon-core v1.13.0
+   Compiling vcpkg v0.2.15
+   Compiling deranged v0.5.5
+   Compiling libsqlite3-sys v0.27.0
+   Compiling mime_guess v2.0.5
+   Compiling windows v0.61.3
+   Compiling ico v0.4.0
+   Compiling tauri-winres v0.1.1
+   Compiling dirs-next v2.0.0
+   Compiling tokio-native-tls v0.3.1
+   Compiling sha2 v0.10.9
+   Compiling cargo_toml v0.15.3
+   Compiling tempfile v3.24.0
+   Compiling universal-hash v0.5.1
+   Compiling concurrent-queue v2.5.0
+   Compiling http v1.4.0
+   Compiling multer v2.1.0
+   Compiling quick-xml v0.37.5
+   Compiling bstr v1.12.1
+   Compiling ntapi v0.4.2
+   Compiling tauri-runtime-wry v0.14.11
+   Compiling time-core v0.1.8
+   Compiling rfd v0.10.0
+   Compiling http-types v2.12.0
+   Compiling opaque-debug v0.3.1
+   Compiling waker-fn v1.2.0
+   Compiling num-conv v0.2.0
+   Compiling base64ct v1.8.3
+   Compiling allocator-api2 v0.2.21
+   Compiling http-range v0.1.5
+   Compiling data-encoding v2.10.0
+   Compiling event-listener v2.5.3
+   Compiling fastrand v1.9.0
+   Compiling hashbrown v0.14.5
+   Compiling async-channel v1.9.0
+   Compiling futures-lite v1.13.0
+   Compiling password-hash v0.4.2
+   Compiling tungstenite v0.21.0
+   Compiling time v0.3.47
+   Compiling polyval v0.6.2
+   Compiling tauri-winrt-notification v0.7.2
+   Compiling globset v0.4.18
+   Compiling tauri-build v1.5.6
+   Compiling windows v0.37.0
+   Compiling windows-sys v0.42.0
+   Compiling tauri-codegen v1.4.6
+   Compiling hyper-tls v0.5.0
+   Compiling aes v0.8.4
+   Compiling winreg v0.50.0
+   Compiling futures-lite v2.6.1
+   Compiling tauri v1.8.3
+   Compiling rustls-pemfile v1.0.4
+   Compiling sharded-slab v0.1.7
+   Compiling matchers v0.2.0
+   Compiling hmac v0.12.1
+   Compiling futures-executor v0.3.31
+   Compiling tracing-serde v0.2.0
+   Compiling tracing-log v0.2.0
+   Compiling serde_qs v0.8.5
+   Compiling headers-core v0.2.0
+   Compiling nu-ansi-term v0.50.3
+   Compiling pin-project-internal v1.1.10
+   Compiling async-trait v0.1.89
+   Compiling serialize-to-javascript-impl v0.1.2
+   Compiling filetime v0.2.27
+   Compiling thread_local v1.1.9
+   Compiling quick-error v1.2.3
+   Compiling retain_mut v0.1.9
+   Compiling ipnet v2.11.0
+   Compiling bit-vec v0.8.0
+   Compiling bitflags v2.10.0
+   Compiling num_cpus v1.17.0
+   Compiling spin v0.9.8
+   Compiling wait-timeout v0.2.1
+   Compiling option-ext v0.2.0
+   Compiling sync_wrapper v0.1.2
+   Compiling either v1.15.0
+   Compiling infer v0.2.3
+   Compiling base64 v0.13.1
+   Compiling deadpool-runtime v0.1.4
+   Compiling deadpool v0.9.5
+   Compiling rayon v1.11.0
+   Compiling reqwest v0.11.27
+   Compiling dirs-sys v0.4.1
+   Compiling rusty-fork v0.3.1
+   Compiling bit-set v0.8.0
+   Compiling pin-project v1.1.10
+   Compiling tracing-subscriber v0.3.22
+   Compiling tar v0.4.44
+   Compiling serialize-to-javascript v0.1.2
+   Compiling headers v0.3.9
+   Compiling futures v0.3.31
+   Compiling pbkdf2 v0.11.0
+   Compiling notify-rust v4.12.0
+   Compiling tauri-macros v1.4.7
+   Compiling bzip2 v0.4.4
+   Compiling kiyya-desktop v1.0.0 (C:\Users\hp\Desktop\kiyya1\src-tauri)
+   Compiling open v3.2.0
+   Compiling zstd v0.11.2+zstd.1.5.2
+   Compiling ignore v0.4.25
+   Compiling tokio-tungstenite v0.21.0
+   Compiling ghash v0.5.1
+   Compiling hashlink v0.8.4
+   Compiling rand_chacha v0.9.0
+   Compiling rand_xorshift v0.4.0
+   Compiling rand v0.9.2
+   Compiling ctr v0.9.2
+   Compiling chrono v0.4.43
+   Compiling termcolor v1.4.1
+   Compiling assert-json-diff v2.0.2
+   Compiling is-terminal v0.4.17
+   Compiling aead v0.5.2
+   Compiling serde_repr v0.1.20
+   Compiling windows-sys v0.52.0
+   Compiling fallible-streaming-iterator v0.1.9
+   Compiling humantime v2.3.0
+   Compiling state v0.5.3
+   Compiling scoped-tls v1.0.1
+   Compiling fallible-iterator v0.3.0
+   Compiling constant_time_eq v0.1.5
+   Compiling unarray v0.1.4
+   Compiling futures-timer v3.0.3
+   Compiling rusqlite v0.30.0
+   Compiling proptest v1.9.0
+   Compiling zip v0.6.6
+   Compiling wiremock v0.5.22
+   Compiling warp v0.3.7
+   Compiling keyring v2.3.3
+   Compiling env_logger v0.10.2
+   Compiling aes-gcm v0.10.3
+   Compiling sysinfo v0.29.11
+   Compiling tracing-appender v0.2.4
+   Compiling dirs v5.0.1
+   Compiling tokio-stream v0.1.18
+warning: duplicated attribute
+    --> src\commands.rs:1526:5
+     |
+1526 |     #[test]
+     |     ^^^^^^^
+     |
+     = note: `#[warn(duplicate_macro_attributes)]` on by default
+
+warning: duplicated attribute
+    --> src\commands.rs:2329:5
+     |
+2329 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2330:5
+     |
+2330 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2331:5
+     |
+2331 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2332:5
+     |
+2332 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2333:5
+     |
+2333 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2334:5
+     |
+2334 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2335:5
+     |
+2335 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2336:5
+     |
+2336 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2337:5
+     |
+2337 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2338:5
+     |
+2338 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2339:5
+     |
+2339 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2340:5
+     |
+2340 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2341:5
+     |
+2341 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2342:5
+     |
+2342 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2343:5
+     |
+2343 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2344:5
+     |
+2344 |     #[test]
+     |     ^^^^^^^
+
+warning: duplicated attribute
+    --> src\commands.rs:2346:5
+     |
+2346 |     #[test]
+     |     ^^^^^^^
+
+warning: unused import: `create_dir_all`
+   --> src\download.rs:775:21
+    |
+775 |     use tokio::fs::{create_dir_all, write};
+    |                     ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `std::fs`
+   --> src\logging.rs:380:9
+    |
+380 |     use std::fs;
+    |         ^^^^^^^
+
+warning: duplicated attribute
+    --> src\models.rs:1031:5
+     |
+1031 |     #[test]
+     |     ^^^^^^^
+
+warning: unused imports: `Duration` and `sleep`
+   --> src\server.rs:667:27
+    |
+667 |         use tokio::time::{sleep, Duration};
+    |                           ^^^^^  ^^^^^^^^
+
+warning: unused import: `std::fs`
+ --> src\logging_test.rs:2:5
+  |
+2 | use std::fs;
+  |     ^^^^^^^
+
+warning: unused import: `std::path::PathBuf`
+  --> src\filesystem_access_test.rs:21:9
+   |
+21 |     use std::path::PathBuf;
+   |         ^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `build_cdn_playback_url`
+  --> src\valid_claim_id_property_test.rs:17:27
+   |
+17 |     use crate::commands::{build_cdn_playback_url, get_cdn_gateway, parse_claim_item};
+   |                           ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `KiyyaError`
+ --> src\migrations_error_handling_test.rs:4:34
+  |
+4 | use crate::error::{ErrorContext, KiyyaError};
+  |                                  ^^^^^^^^^^
+
+warning: unused import: `MigrationInfo`
+ --> src\migrations_error_handling_test.rs:5:36
+  |
+5 | use crate::migrations::{Migration, MigrationInfo, MigrationRunner};
+  |                                    ^^^^^^^^^^^^^
+
+warning: unused import: `MigrationPlan`
+ --> src\migrations_dry_run_test.rs:4:36
+  |
+4 | use crate::migrations::{Migration, MigrationPlan, MigrationRunner, ValidationResult};
+  |                                    ^^^^^^^^^^^^^
+
+warning: unused import: `std::path::Path`
+ --> src\diagnostics_test.rs:5:5
+  |
+5 | use std::path::Path;
+  |     ^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::database::Database`
+  --> src\migration_property_test.rs:10:9
+   |
+10 |     use crate::database::Database;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused variable: `supports_range`
+   --> src\download.rs:961:39
+    |
+961 |             Ok((content_length, etag, supports_range)) => {
+    |                                       ^^^^^^^^^^^^^^ help: if this is intentional, 
+prefix it with an underscore: `_supports_range`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+   --> src\gateway.rs:904:13
+    |
+904 |         let mut client = GatewayClient::new();
+    |             ----^^^^^^
+    |             |
+    |             help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `encrypted_file_size`
+   --> src\server.rs:940:13
+    |
+940 |         let encrypted_file_size = 
+tokio::fs::metadata(&encrypted_file).await.unwrap().len();
+    |             ^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an 
+underscore: `_encrypted_file_size`
+
+warning: unused variable: `original_error_msg`
+   --> src\migrations_error_handling_test.rs:683:17
+    |
+683 |             let original_error_msg = error.to_string();
+    |                 ^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an 
+underscore: `_original_error_msg`
+
+warning: unused variable: `db`
+  --> src\database_initialization_test.rs:93:14
+   |
+93 |         let (db, db_path) = create_test_db().await;
+   |              ^^ help: if this is intentional, prefix it with an underscore: `_db`
+
+warning: unused variable: `db`
+  --> src\database_optimization_test.rs:46:14
+   |
+46 |         let (db, _temp_dir, db_path) = create_test_database_with_ttl(30 * 60);
+   |              ^^ help: if this is intentional, prefix it with an underscore: `_db`
+
+warning: unused variable: `tags`
+  --> src\hero_stream_filter_test.rs:14:13
+   |
+14 |         let tags = vec!["hero_trailer".to_string()];
+   |             ^^^^ help: if this is intentional, prefix it with an underscore: `_tags`
+
+warning: unused variable: `tags`
+  --> src\hero_stream_filter_test.rs:47:13
+   |
+47 |         let tags = vec!["movie".to_string()];
+   |             ^^^^ help: if this is intentional, prefix it with an underscore: `_tags`
+
+warning: unused variable: `db`
+   --> src\encryption_key_management_test.rs:111:13
+    |
+111 |         let db = Database::new_with_path(&db_path).await.unwrap();
+    |             ^^ help: if this is intentional, prefix it with an underscore: `_db`
+
+warning: unused variable: `db`
+   --> src\migration_older_db_test.rs:333:13
+    |
+333 |         let db = Database::new_with_path(&db_path)
+    |             ^^ help: if this is intentional, prefix it with an underscore: `_db`
+
+warning: unused variable: `db`
+   --> src\migration_older_db_test.rs:410:13
+    |
+410 |         let db = Database::new_with_path(&db_path)
+    |             ^^ help: if this is intentional, prefix it with an underscore: `_db`
+
+warning: unused variable: `db`
+   --> src\migration_older_db_test.rs:496:13
+    |
+496 |         let db = Database::new_with_path(&db_path)
+    |             ^^ help: if this is intentional, prefix it with an underscore: `_db`
+
+warning: unused variable: `db`
+   --> src\migration_older_db_test.rs:597:13
+    |
+597 |         let db = Database::new_with_path(&db_path)
+    |             ^^ help: if this is intentional, prefix it with an underscore: `_db`
+
+warning: unused variable: `db`
+   --> src\migration_older_db_test.rs:673:13
+    |
+673 |         let db = Database::new_with_path(&db_path)
+    |             ^^ help: if this is intentional, prefix it with an underscore: `_db`
+
+warning: unused variable: `db`
+   --> src\migration_older_db_test.rs:714:13
+    |
+714 |         let db = Database::new_with_path(&db_path)
+    |             ^^ help: if this is intentional, prefix it with an underscore: `_db`
+
+warning: unused variable: `db`
+   --> src\migration_older_db_test.rs:787:13
+    |
+787 |         let db = Database::new_with_path(&db_path)
+    |             ^^ help: if this is intentional, prefix it with an underscore: `_db`
+
+warning: function `get_security_log_path` is never used
+  --> src\security_logging_e2e_test.rs:17:8
+   |
+17 |     fn get_security_log_path() -> PathBuf {
+   |        ^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `read_security_log` is never used
+  --> src\security_logging_e2e_test.rs:23:8
+   |
+23 |     fn read_security_log() -> Result<String, std::io::Error> {
+   |        ^^^^^^^^^^^^^^^^^
+
+warning: function `migration_version_strategy` is never used
+  --> src\migration_property_test.rs:77:8
+   |
+77 |     fn migration_version_strategy() -> impl Strategy<Value = u32> {
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: comparison is useless due to type limits
+    --> src\database.rs:2699:17
+     |
+2699 |         assert!(version >= 0, "Database version should be non-negative");
+     |                 ^^^^^^^^^^^^
+     |
+     = note: `#[warn(unused_comparisons)]` on by default
+
+warning: comparison is useless due to type limits
+   --> src\integration_test.rs:427:21
+    |
+427 |             assert!(favorites.len() >= 0, "Database should be operational");
+    |                     ^^^^^^^^^^^^^^^^^^^^
+
+warning: `kiyya-desktop` (bin "kiyya-desktop" test) generated 51 warnings (run `cargo fix 
+--bin "kiyya-desktop" -p kiyya-desktop --tests` to apply 27 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 46m 18s
+     Running unittests src\main.rs (target\debug\deps\kiyya_desktop-62cb0511019ee90f.exe)
+
+running 738 tests
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_completely_empty ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_empty_claim_id ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_empty_streams_array ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_empty_title ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_invalid_thumbnail_url ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_empty_thumbnail_url ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_malformed_duration ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_malformed_stream_entry ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_missing_claim_id ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_malformed_tags ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_missing_title ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_missing_video_urls ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_missing_value_object ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_mixed_valid_invalid_streams ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_negative_duration ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_multiple_url_sources ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_nested_value_objects ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_null_claim_id ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_null_value ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_null_release_time ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_null_title ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_tags_with_empty_strings ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_tags_with_nulls ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_unicode_in_title ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_search_response_empty_items ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_search_response_items_not_array ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_search_response_missing_data ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_search_response_missing_items_array ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_search_response_partial_valid_items ... ok
+test api_parsing_test::api_parsing_tests::test_parse_playlist_item_empty_claim_id ... ok
+test api_parsing_test::api_parsing_tests::test_parse_playlist_item_missing_claim_id ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_very_long_title ... ok
+test api_parsing_test::api_parsing_tests::test_parse_playlist_search_response_missing_data ... ok
+test api_parsing_test::api_parsing_tests::test_parse_claim_item_very_large_tags_array ... ok
+test api_parsing_test::api_parsing_tests::test_parse_resolve_response_invalid_claim_data ... ok
+test api_parsing_test::api_parsing_tests::test_parse_resolve_response_missing_data ... ok
+test async_completion_tests::test_build_cdn_playback_url_test_completes_within_timeout ... ok
+test async_completion_tests::test_clear_crash_log_completes_within_timeout ... ok
+test async_completion_tests::test_concurrent_async_calls_complete ... ok
+test async_completion_tests::test_get_recent_crashes_completes_within_timeout ... ok
+test async_completion_tests::test_parsing_functions_complete ... ok
+test api_parsing_test::api_parsing_tests::test_parse_playlist_item_missing_title ... ok
+test api_parsing_test::api_parsing_tests::test_parse_playlist_item_null_title ... ok
+test async_completion_tests::test_playlist_parsing_completes ... ok
+test async_completion_tests::test_simple_async_calls_return_quickly ... ok
+test async_completion_tests::test_test_connection_completes_within_timeout ... ok
+test api_parsing_test::api_parsing_tests::test_parse_playlist_search_response_partial_valid_playlists ... ok
+test cache_ttl_property_test::cache_ttl_property_tests::prop_cache_stats_updated_correctly ... ok
+test cache_ttl_property_test::cache_ttl_property_tests::prop_content_within_ttl_returned_from_cache ... ok
+test cache_ttl_property_test::cache_ttl_property_tests::prop_content_beyond_ttl_not_returned ... ok
+test cdn_builder_determinism_property_test::cdn_builder_determinism_tests::prop_cdn_url_consistent_across_claim_ids ... ok
+test cdn_builder_determinism_property_test::cdn_builder_determinism_tests::prop_cdn_url_default_gateway ... ok
+test cdn_builder_determinism_property_test::cdn_builder_determinism_tests::prop_cdn_url_deterministic ... ok
+test cdn_builder_determinism_property_test::cdn_builder_determinism_tests::prop_cdn_url_format_consistent ... ok
+test cdn_builder_determinism_property_test::cdn_builder_determinism_tests::prop_cdn_url_idempotent_custom_gateway ... ok
+test cdn_builder_determinism_property_test::cdn_builder_determinism_tests::prop_cdn_url_idempotent_default_gateway ... ok
+test cdn_builder_determinism_property_test::cdn_builder_determinism_tests::prop_cdn_url_independent_of_call_order ... ok
+test cdn_builder_determinism_property_test::cdn_builder_determinism_tests::prop_cdn_url_no_side_effects ... ok
+test cdn_builder_determinism_property_test::cdn_builder_determinism_tests::prop_cdn_url_preserves_claim_id ... ok
+test cdn_builder_determinism_property_test::cdn_builder_determinism_tests::prop_cdn_url_thread_safe ... ok
+test channel_id_format_validation_property_test::channel_id_format_validation_tests::prop_at_followed_by_any_char_is_valid ... ok
+test channel_id_format_validation_property_test::channel_id_format_validation_tests::prop_at_symbol_only_is_valid ... ok
+test channel_id_format_validation_property_test::channel_id_format_validation_tests::prop_empty_or_whitespace_fails ... ok
+test channel_id_format_validation_property_test::channel_id_format_validation_tests::prop_not_starting_with_at_fails ... ok
+test channel_id_format_validation_property_test::channel_id_format_validation_tests::prop_null_bytes_always_fail ... ok
+test channel_id_format_validation_property_test::channel_id_format_validation_tests::prop_valid_format_passes ... ok
+test channel_id_format_validation_property_test::channel_id_format_validation_tests::prop_validation_bidirectional ... ok
+test channel_id_format_validation_property_test::channel_id_format_validation_tests::prop_validation_case_insensitive ... ok
+test channel_id_format_validation_property_test::channel_id_format_validation_tests::prop_validation_iff_starts_with_at_and_non_empty ... ok
+test cache_ttl_property_test::cache_ttl_property_tests::prop_cleanup_removes_only_expired_items ... ok
+test channel_id_format_validation_property_test::channel_id_format_validation_tests::prop_validation_length_independent ... ok
+test channel_id_format_validation_property_test::channel_id_format_validation_tests::prop_validation_matches_specification ... ok
+test channel_id_parameter_property_test::channel_id_parameter_tests::prop_channel_id_validation_consistency ... ok
+test channel_id_parameter_property_test::channel_id_parameter_tests::prop_channel_id_validation_deterministic ... ok
+test channel_id_parameter_property_test::channel_id_parameter_tests::prop_channel_id_validation_independent_of_env ... ok
+test channel_id_parameter_property_test::channel_id_parameter_tests::prop_channel_id_validation_preserves_value ... ok
+test channel_id_format_validation_property_test::channel_id_format_validation_tests::prop_validation_is_consistent ... ok
+test channel_id_parameter_property_test::channel_id_parameter_tests::prop_channel_id_validation_thread_safe ... ok
+test channel_id_parameter_property_test::channel_id_parameter_tests::prop_channel_id_with_special_chars ... ok
+test channel_id_parameter_property_test::channel_id_parameter_tests::prop_valid_channel_ids_pass_validation ... ok
+test channel_id_parameter_property_test::channel_id_parameter_tests::prop_multiple_channel_ids_validate_independently ... ok
+test channel_id_parameter_property_test::invalid_channel_id_rejection_tests::prop_channel_ids_with_at_in_middle_fail ... ok
+test channel_id_parameter_property_test::invalid_channel_id_rejection_tests::prop_channel_ids_with_null_bytes_fail ... ok
+test channel_id_parameter_property_test::invalid_channel_id_rejection_tests::prop_channel_ids_without_at_symbol_fail ... ok
+test channel_id_parameter_property_test::invalid_channel_id_rejection_tests::prop_empty_channel_ids_fail_validation ... ok
+test channel_id_parameter_property_test::invalid_channel_id_rejection_tests::prop_invalid_channel_id_validation_consistency ... ok
+test channel_id_parameter_property_test::invalid_channel_id_rejection_tests::prop_invalid_channel_id_validation_independent_of_env ... ok
+test channel_id_parameter_property_test::invalid_channel_id_rejection_tests::prop_invalid_channel_id_validation_deterministic ... ok
+test channel_id_parameter_property_test::invalid_channel_id_rejection_tests::prop_invalid_channel_ids_fail_validation ... ok
+test channel_id_parameter_property_test::invalid_channel_id_rejection_tests::prop_invalid_channel_id_validation_thread_safe ... ok
+test commands::tests::test_assess_compatibility ... ok
+test commands::tests::test_build_cdn_playback_url_format ... ok
+test commands::tests::test_build_cdn_playback_url_idempotent ... ok
+test commands::tests::test_build_cdn_playback_url_test_command ... ok
+test commands::tests::test_build_cdn_playback_url_test_with_various_claim_ids ... ok
+test commands::tests::test_build_cdn_playback_url_with_custom_gateway ... ok
+test commands::tests::test_build_cdn_playback_url_with_default_gateway ... ok
+test commands::tests::test_build_cdn_playback_url_with_special_characters ... ok
+test commands::tests::test_extract_claim_id ... ok
+test commands::tests::test_extract_claim_id ... ok
+test commands::tests::test_extract_claim_id_missing ... ok
+test commands::tests::test_extract_description ... ok
+test commands::tests::test_extract_duration ... ok
+test commands::tests::test_extract_release_time ... ok
+test commands::tests::test_extract_season_number_from_title ... ok
+test commands::tests::test_extract_series_key_from_title ... ok
+test commands::tests::test_extract_tags ... ok
+test commands::tests::test_extract_thumbnail_url ... ok
+test commands::tests::test_extract_title ... ok
+test commands::tests::test_extract_video_urls ... ok
+test commands::tests::test_gateway_configuration_default_fallback ... ok
+test commands::tests::test_gateway_configuration_immutability ... ok
+test commands::tests::test_gateway_configuration_validation ... ok
+test commands::tests::test_gateway_configuration_with_custom_valid_gateway ... ok
+test commands::tests::test_gateway_configuration_with_env_var_not_set ... ok
+test commands::tests::test_gateway_configuration_with_env_var_set ... ok
+test commands::tests::test_get_cdn_gateway_is_consistent ... ok
+test commands::tests::test_get_cdn_gateway_returns_valid_url ... ok
+test commands::tests::test_parse_claim_item ... ok
+test commands::tests::test_parse_claim_item_cdn_url_format ... ok
+test commands::tests::test_parse_claim_item_error_empty_claim_id ... ok
+test commands::tests::test_parse_claim_item_error_missing_claim_id ... ok
+test commands::tests::test_parse_claim_item_error_non_stream_channel ... ok
+test commands::tests::test_parse_claim_item_error_non_stream_collection ... ok
+test commands::tests::test_parse_claim_item_error_non_stream_repost ... ok
+test commands::tests::test_parse_claim_item_ignores_direct_urls ... ok
+test commands::tests::test_parse_claim_item_infers_stream_from_sd_hash ... ok
+test commands::tests::test_parse_claim_item_malformed ... ok
+test commands::tests::test_parse_claim_item_minimal ... ok
+test commands::tests::test_parse_claim_item_missing_title ... ok
+test commands::tests::test_parse_claim_item_response_structure ... ok
+test commands::tests::test_parse_claim_item_successful_with_all_fields ... ok
+test commands::tests::test_parse_claim_item_successful_with_minimal_fields ... ok
+test commands::tests::test_parse_claim_search_response ... ok
+test commands::tests::test_parse_claim_search_response_no_data ... ok
+test commands::tests::test_parse_claim_search_response_no_items ... ok
+test commands::tests::test_parse_claim_search_response_with_malformed_items ... ok
+test commands::tests::test_parse_playlist_item ... ok
+test commands::tests::test_parse_playlist_item_without_season ... ok
+test commands::tests::test_parse_playlist_search_response ... ok
+test commands::tests::test_parse_playlist_search_response_empty ... ok
+test commands::tests::test_parse_playlist_search_response_no_data ... ok
+test commands::tests::test_parse_playlist_search_response_with_malformed_items ... ok
+test commands::tests::test_sanitize_gateway_rejects_http ... ok
+test commands::tests::test_sanitize_gateway_rejects_malformed_url ... ok
+test commands::tests::test_sanitize_gateway_removes_trailing_slash ... ok
+test commands::tests::test_sanitize_gateway_valid_https ... ok
+test commands::tests::test_sanitize_gateway_valid_https ... ok
+test commands::tests::test_sanitize_gateway_valid_https ... ok
+test commands::tests::test_sanitize_gateway_valid_https ... ok
+test commands::tests::test_sanitize_gateway_valid_https ... ok
+test commands::tests::test_sanitize_gateway_valid_https ... ok
+test commands::tests::test_sanitize_gateway_valid_https ... ok
+test commands::tests::test_sanitize_gateway_valid_https ... ok
+test commands::tests::test_sanitize_gateway_valid_https ... ok
+test commands::tests::test_sanitize_gateway_valid_https ... ok
+test commands::tests::test_sanitize_gateway_valid_https ... ok
+test commands::tests::test_sanitize_gateway_valid_https ... ok
+test commands::tests::test_sanitize_gateway_valid_https ... ok
+test commands::tests::test_sanitize_gateway_valid_https ... ok
+test commands::tests::test_sanitize_gateway_valid_https ... ok
+test commands::tests::test_sanitize_gateway_valid_https ... ok
+test commands::tests::test_sanitize_gateway_valid_https ... ok
+test commands::tests::test_sanitize_gateway_valid_https ... ok
+test commands::tests::test_sanitize_gateway_with_path ... ok
+test commands::tests::test_sanitize_gateway_with_port ... ok
+test commands::tests::test_test_connection_returns_expected_message ... ok
+test crash_reporting::tests::test_clear_crash_log ... ok
+test crash_reporting::tests::test_crash_report_parsing ... ok
+test crash_reporting::tests::test_get_recent_crashes_empty ... ok
+test crash_reporting::tests::test_init_crash_reporting ... ok
+test database::tests::test_cache_hit_miss_counters ... ok
+test channel_id_parameter_property_test::invalid_channel_id_rejection_tests::prop_multiple_invalid_channel_ids_fail_independently ... ok
+test database::tests::test_cache_invalidation ... ok
+test database::tests::test_cache_invalidation_by_tags ... ok
+test database::tests::test_cache_ttl_behavior ... ok
+test database::tests::test_clear_all_cache ... ok
+test database::tests::test_concurrent_transactions ... ok
+test database::tests::test_connection_pool_max_size ... ok
+test database::tests::test_connection_pooling ... ok
+test database::tests::test_content_hash_computation ... ok
+test database::tests::test_content_cache_operations ... ok
+test database::tests::test_database_backup_restore ... ok
+test database::tests::test_database_diagnostics ... ok
+test database::tests::test_database_initialization ... ok
+test database::tests::test_delta_updates ... ok
+test database::tests::test_favorites_operations ... ok
+test database::tests::test_get_changed_items ... ok
+test database::tests::test_migration_rollback ... ok
+test database::tests::test_migration_runner ... ok
+test database::tests::test_get_content_hashes ... ok
+test database::tests::test_migration_system ... ok
+test database::tests::test_offline_metadata_operations ... ok
+test database::tests::test_playlist_episode_ordering_preservation ... ok
+test database::tests::test_playlist_operations ... ok
+test database::tests::test_playlist_ordering_with_out_of_order_storage ... ok
+test database::tests::test_progress_operations ... ok
+test database::tests::test_raw_json_storage ... ok
+test database::tests::test_settings_operations ... ok
+test database::tests::test_transaction_commit ... ok
+test database::tests::test_transaction_rollback ... ok
+test database_initialization_test::tests::test_connection_pool_initialized ... FAILED
+test database_initialization_test::tests::test_database_new_does_not_run_migrations ... FAILED
+test database_initialization_test::tests::test_fts5_availability_check ... ok
+test database_initialization_test::tests::test_run_migrations_can_be_called_independently ... ok
+test database_initialization_test::tests::test_successful_application_startup ... ok
+test database_optimization_test::database_optimization_tests::test_encrypted_filter_performance ... ok
+test database_optimization_test::database_optimization_tests::test_cleanup_query_performance ... ok
+test database_optimization_test::database_optimization_tests::test_indices_exist ... ok
+test database_optimization_test::database_optimization_tests::test_optimize_database ... ok
+test database_optimization_test::database_optimization_tests::test_query_uses_index ... ok
+test diagnostics_test::test_debug_package_components_documented ... ok
+test database_optimization_test::database_optimization_tests::test_tag_filtering_with_composite_index ... ok
+test cache_ttl_property_test::cache_ttl_property_tests::prop_multiple_queries_within_ttl_consistent ... ok
+test cache_ttl_property_test::cache_ttl_property_tests::prop_ttl_boundary_behavior ... ok
+test diagnostics_test::test_debug_package_creation ... ok
+test diagnostics_test::test_debug_package_contains_database_metadata ... ok
+test download::tests::test_check_disk_space ... ok
+test diagnostics_test::test_debug_package_contains_system_info ... ok
+test diagnostics_test::test_debug_package_sanitizes_sensitive_data ... ok
+test download::tests::test_cleanup_stale_locks ... ok
+test download::tests::test_delete_content ... FAILED
+test download::tests::test_get_content_metadata ... ok
+test download::tests::test_get_vault_path ... ok
+test download::tests::test_check_disk_space_insufficient ... ok
+test download::tests::test_cleanup_failed_download ... ok
+test download::tests::test_get_content_path ... ok
+test download_resumable_atomic_property_test::download_resumable_atomic_property_tests::prop_atomic_final_file_naming ... ok
+test download_resumable_atomic_property_test::download_resumable_atomic_property_tests::prop_atomic_lock_file_prevents_concurrent ... ok
+test download_resumable_atomic_property_test::download_resumable_atomic_property_tests::prop_atomic_no_partial_files_after_cleanup ... ok
+test download_resumable_atomic_property_test::download_resumable_atomic_property_tests::prop_atomic_temp_file_naming ... ok
+test download_resumable_atomic_property_test::download_resumable_atomic_property_tests::prop_atomic_vault_directory_structure ... ok
+test download_resumable_atomic_property_test::download_resumable_atomic_property_tests::prop_atomic_final_replaces_temp ... ok
+test download_resumable_atomic_property_test::download_resumable_atomic_property_tests::prop_resume_etag_file_storage ... ok
+test emergency_disable_test::tests::test_emergency_disable_false ... ok
+test emergency_disable_test::tests::test_emergency_disable_malformed_json ... ok
+test emergency_disable_test::tests::test_emergency_disable_missing ... ok
+test emergency_disable_test::tests::test_emergency_disable_true ... ok
+test emergency_disable_test::tests::test_emergency_disable_with_checksums ... ok
+test emergency_disable_test::tests::test_version_manifest_deserialization ... ok
+test emergency_disable_test::tests::test_version_manifest_serialization ... ok
+test download_resumable_atomic_property_test::download_resumable_atomic_property_tests::prop_atomic_temp_file_content_integrity ... ok
+test download_resumable_atomic_property_test::download_resumable_atomic_property_tests::prop_resume_partial_file_size_tracking ... ok
+test encryption::tests::test_build_chunk_index ... ok
+test encryption::tests::test_decrypt_range_beyond_file_size ... ok
+test encryption::tests::test_concurrent_range_decryption ... ok
+test encryption::tests::test_decrypt_range_entire_file ... ok
+test encryption::tests::test_decrypt_range_first_chunk ... ok
+test encryption::tests::test_decrypt_range_last_chunk ... ok
+test encryption::tests::test_decrypt_range_middle_chunk ... ok
+test encryption::tests::test_decrypt_range_single_byte ... ok
+test encryption::tests::test_decrypt_range_partial_last_chunk ... ok
+test encryption::tests::test_decrypt_range_without_encryption_enabled ... ok
+test encryption::tests::test_disable_encryption ... ok
+test encryption::tests::test_enable_encryption ... ok
+test encryption::tests::test_decrypt_with_wrong_key_fails ... ok
+test encryption::tests::test_encrypt_decrypt_file_round_trip ... ok
+test encryption::tests::test_decrypt_range_spanning_multiple_chunks ... ok
+test encryption::tests::test_encryption_manager_creation ... ok
+test encryption::tests::test_encrypted_file_is_different_from_original ... ok
+test download_resumable_atomic_property_test::download_resumable_atomic_property_tests::prop_disk_space_check_before_download ... ok
+test encryption::tests::test_keystore_operations ... ok
+test encryption::tests::test_round_trip_all_ones ... ok
+test encryption::tests::test_multiple_sequential_round_trips ... ok
+test encryption::tests::test_round_trip_empty_file ... ok
+test encryption::tests::test_encrypt_decrypt_large_file ... ok
+test encryption::tests::test_round_trip_different_passphrases ... ok
+test encryption::tests::test_round_trip_all_zeros ... ok
+test encryption::tests::test_round_trip_preserves_binary_data ... ok
+test encryption::tests::test_round_trip_exact_chunk_boundary ... ok
+test encryption::tests::test_round_trip_multiple_exact_chunks ... ok
+test encryption::tests::test_round_trip_single_byte ... ok
+test encryption::tests::test_round_trip_random_data ... ok
+test encryption::tests::test_round_trip_text_data ... ok
+test encryption_key_management_test::encryption_key_management_tests::test_database_has_no_key_columns ... ok
+test encryption_key_management_test::encryption_key_management_tests::test_encrypted_files_contain_no_raw_keys ... ok
+test encryption_key_management_test::encryption_key_management_tests::test_key_removed_from_keystore_on_disable ... FAILED
+test encryption_key_management_test::encryption_key_management_tests::test_keys_only_in_os_keystore ... FAILED
+test encryption_key_management_test::encryption_key_management_tests::test_no_hardcoded_keys ... ok
+test encryption_key_management_test::encryption_key_management_tests::test_database_values_contain_no_keys ... ok
+test error::tests::test_error_categories ... ok
+test error::tests::test_error_context ... ok
+test error::tests::test_error_recoverability ... ok
+test error::tests::test_user_messages ... ok
+test error::tests::test_warning_level ... ok
+test encryption_key_management_test::encryption_key_management_tests::test_keystore_isolation ... ok
+test error_logging::tests::test_error_codes ... ok
+test encryption_key_management_test::encryption_key_management_tests::test_offline_meta_stores_only_flag ... ok
+test error_logging::tests::test_log_error ... ok
+test error_logging::tests::test_error_stats ... ok
+test error_logging::tests::test_cleanup_old_errors ... FAILED
+test encryption::tests::test_round_trip_very_large_file ... ok
+test error_logging::tests::test_mark_resolved ... ok
+test error_logging_test::test_cleanup_old_errors ... ok
+test error_logging_test::test_error_categorization ... ok
+test error_logging_test::test_error_stats ... ok
+test error_structure_property_test::error_structure_property_tests::prop_all_errors_have_consistent_structure ... ok
+test error_structure_property_test::error_structure_property_tests::prop_empty_claim_id_error_structure ... ok
+test error_structure_property_test::error_structure_property_tests::prop_error_categories_are_consistent ... ok
+test error_structure_property_test::error_structure_property_tests::prop_error_context_includes_claim_info ... ok
+test error_structure_property_test::error_structure_property_tests::prop_error_messages_are_human_readable ... ok
+test error_structure_property_test::error_structure_property_tests::prop_errors_are_serializable ... ok
+test error_structure_property_test::error_structure_property_tests::prop_errors_provide_actionable_information ... ok
+test error_structure_property_test::error_structure_property_tests::prop_malformed_data_error_structure ... ok
+test error_structure_property_test::error_structure_property_tests::prop_missing_claim_id_error_structure ... ok
+test error_structure_property_test::error_structure_property_tests::prop_non_stream_type_error_structure ... ok
+test filesystem_access_test::tests::test_absolute_paths_outside_app_data_blocked ... ok
+test filesystem_access_test::tests::test_cannot_access_system_files ... ok
+test filesystem_access_test::tests::test_case_sensitivity ... ok
+test filesystem_access_test::tests::test_create_directory_within_app_data ... ok
+test filesystem_access_test::tests::test_create_file_within_app_data ... ok
+test filesystem_access_test::tests::test_current_directory_references ... ok
+test filesystem_access_test::tests::test_empty_path_components ... ok
+test filesystem_access_test::tests::test_get_app_data_dir ... ok
+test error_logging_test::test_log_error_simple ... ok
+test filesystem_access_test::tests::test_mixed_separators ... ok
+test filesystem_access_test::tests::test_multiple_parent_traversals ... ok
+test filesystem_access_test::tests::test_parent_directory_within_app_data ... ok
+test filesystem_access_test::tests::test_nested_directory_access ... ok
+test filesystem_access_test::tests::test_special_characters_in_paths ... ok
+test filesystem_access_test::tests::test_subdir_path_traversal_blocked ... ok
+test filesystem_access_test::tests::test_path_traversal_attacks_blocked ... ok
+test filesystem_access_test::tests::test_subdir_path_validation ... ok
+test filesystem_access_test::tests::test_unicode_in_paths ... ok
+test filesystem_access_test::tests::test_very_long_path ... ok
+test force_refresh_test::tests::test_force_refresh_behavior_documentation ... ok
+test force_refresh_test::tests::test_force_refresh_default_value ... ok
+test force_refresh_test::tests::test_force_refresh_explicit_false ... ok
+test force_refresh_test::tests::test_force_refresh_explicit_true ... ok
+test force_refresh_test::tests::test_force_refresh_parameter_exists ... ok
+test gateway::tests::test_4xx_client_errors_not_retryable ... ok
+test gateway::tests::test_5xx_server_errors_retryable ... ok
+test gateway::tests::test_api_parsing ... ok
+test gateway::tests::test_api_parsing_malformed_data ... ok
+test gateway::tests::test_api_parsing_mixed_items ... ok
+test gateway::tests::test_claim_search_request_structure ... ok
+test gateway::tests::test_current_gateway_tracking ... ok
+test gateway::tests::test_error_retryability ... ok
+test gateway::tests::test_exponential_backoff_calculation ... ok
+test filesystem_access_test::tests::test_valid_paths_within_app_data ... ok
+test gateway::tests::test_exponential_backoff_with_jitter ... ok
+test gateway::tests::test_failover_integration ... ok
+test gateway::tests::test_gateway_client_creation ... ok
+test gateway::tests::test_failover_logic ... ok
+test gateway::tests::test_gateway_config_generation ... ok
+test gateway::tests::test_gateway_priority_consistency ... ok
+test gateway::tests::test_gateway_priority_immutability ... ok
+test gateway::tests::test_gateway_priority_immutability_enforcement ... ok
+test gateway::tests::test_health_stats_initialization ... ok
+test gateway::tests::test_http_429_handling ... ok
+test gateway::tests::test_gateway_health_logging ... ok
+test gateway::tests::test_log_gateway_health_method ... ok
+test gateway::tests::test_playlist_search_empty_results ... ok
+test gateway::tests::test_max_retry_configuration ... ok
+test gateway::tests::test_playlist_search_error_response ... ok
+test gateway::tests::test_playlist_search_malformed_data ... ok
+test gateway::tests::test_playlist_search_request_structure ... ok
+test gateway::tests::test_playlist_search_response_parsing ... ok
+test gateway::tests::test_rate_limit_error_detection ... ok
+test gateway::tests::test_rate_limit_retry_behavior ... ok
+test gateway::tests::test_retry_delay_calculation ... ok
+test gateway::tests::test_timeout_configuration ... ok
+test gateway::tests::test_retry_jitter_calculation ... ok
+test gateway::tests::test_timeout_error_detection ... ok
+test gateway::tests::test_timeout_retry_behavior ... ok
+test gateway_failover_property_test::tests::property_current_gateway_consistency ... ok
+test gateway_failover_property_test::tests::property_exponential_backoff_timing ... ok
+test gateway_failover_property_test::tests::property_gateway_config_serialization ... ok
+test gateway_failover_property_test::tests::property_gateway_configuration_values ... ok
+test gateway_failover_property_test::tests::property_gateway_list_length_consistency ... ok
+test gateway_failover_property_test::tests::property_gateway_configuration_consistency ... ok
+test gateway_failover_property_test::tests::property_gateway_priority_immutability ... ok
+test error_logging_test::test_log_error_with_context ... ok
+test gateway_failover_property_test::tests::property_gateway_priority_immutability_enforcement ... ok
+test gateway_failover_property_test::tests::property_jitter_range_verification ... ok
+test gateway_failover_property_test::tests::property_health_stats_initialization ... ok
+test gateway_production_test::tests::test_production_failover_consistency ... ignored
+test gateway_production_test::tests::test_production_failover_different_requests ... ignored
+test gateway_production_test::tests::test_production_failover_mechanism ... ignored
+test gateway_production_test::tests::test_production_gateway_connectivity ... ignored
+test gateway_production_test::tests::test_production_gateway_logging ... ignored
+test gateway_production_test::tests::test_production_gateway_performance ... ignored
+test gateway_failover_property_test::tests::property_max_retry_attempts_calculation ... ok
+test gateway_failover_property_test::tests::property_gateway_order_determinism ... ok
+test hero_single_item_test::hero_single_item_tests::test_cache_returns_single_hero_item ... ok
+test hero_single_item_test::hero_single_item_tests::test_cache_returns_empty_array_when_no_items ... ok
+test hero_stream_filter_test::hero_stream_filter_tests::test_hero_handles_empty_results ... ok
+test hero_stream_filter_test::hero_stream_filter_tests::test_hero_query_complete_flow ... ok
+test hero_stream_filter_test::hero_stream_filter_tests::test_hero_query_has_reasonable_limit ... ok
+test hero_stream_filter_test::hero_stream_filter_tests::test_hero_query_includes_stream_types_filter ... ok
+test hero_stream_filter_test::hero_stream_filter_tests::test_non_hero_queries_dont_force_stream_filter ... ok
+test hero_stream_filter_test::hero_stream_filter_tests::test_stream_filter_prevents_non_stream_claims ... ok
+test http_range_property_test::prop_end_clamping ... ok
+test http_range_property_test::prop_invalid_format_rejected ... ok
+test http_range_property_test::prop_inverted_range_rejected ... ok
+test http_range_property_test::prop_non_numeric_rejected ... ok
+test http_range_property_test::prop_open_ended_range ... ok
+test http_range_property_test::prop_out_of_bounds_rejected ... ok
+test http_range_property_test::prop_suffix_range ... ok
+test http_range_property_test::prop_valid_full_range ... ok
+test http_range_property_test::test_discovery_works ... ok
+test input_validation_test::tests::test_channel_id_validation_accepts_valid_formats ... ok
+test input_validation_test::tests::test_channel_id_validation_rejects_empty_string ... ok
+test input_validation_test::tests::test_channel_id_validation_rejects_whitespace_only ... ok
+test input_validation_test::tests::test_channel_id_validation_rejects_without_at_symbol ... ok
+test input_validation_test::tests::test_claim_id_validation_prevents_injection ... ok
+test input_validation_test::tests::test_comprehensive_input_validation_coverage ... ok
+test error_logging_test::test_mark_resolved ... ok
+test input_validation_test::tests::test_external_url_validation_enforces_https ... ok
+test input_validation_test::tests::test_like_pattern_sanitization_escapes_special_chars ... ok
+test input_validation_test::tests::test_limit_sanitization_prevents_excessive_queries ... ok
+test input_validation_test::tests::test_offset_sanitization_prevents_excessive_pagination ... ok
+test input_validation_test::tests::test_position_seconds_validation_prevents_overflow ... ok
+test input_validation_test::tests::test_quality_validation_prevents_invalid_values ... ok
+test input_validation_test::tests::test_search_text_validation_prevents_injection ... ok
+test input_validation_test::tests::test_setting_key_validation_prevents_arbitrary_keys ... ok
+test input_validation_test::tests::test_setting_value_validation_enforces_constraints ... ok
+test input_validation_test::tests::test_order_by_sanitization_prevents_sql_injection ... ok
+test input_validation_test::tests::test_tags_validation_prevents_injection ... ok
+test input_validation_test::tests::test_tag_sanitization_enforces_format ... ok
+test input_validation_test::tests::test_title_validation_prevents_injection ... ok
+test input_validation_test::tests::test_url_validation_prevents_malicious_urls ... ok
+test hero_single_item_test::hero_single_item_tests::test_cache_threshold_only_applies_to_tag_queries ... ok
+test hero_single_item_test::hero_single_item_tests::test_cache_works_with_multiple_item_counts ... ok
+test integration_test::tests::test_concurrent_database_access ... ok
+test integration_test::tests::test_database_schema_integrity ... ok
+test integration_test::tests::test_error_logging ... ok
+test integration_test::tests::test_existing_database_compatibility ... ok
+test integration_test::tests::test_fresh_database_initialization ... ok
+test integration_test::tests::test_fts5_initialization ... ok
+test integration_test::tests::test_hero_section_with_missing_direct_urls ... ok
+test integration_test::tests::test_hero_section_with_valid_hero_trailer ... ok
+test integration_test::tests::test_movies_section_with_all_claims_missing_claim_id ... ok
+test integration_test::tests::test_multiple_startup_cycles ... ok
+test logging::tests::test_custom_log_directory ... ok
+test logging::tests::test_get_default_log_level_development ... ok
+test logging::tests::test_get_log_directory ... ok
+test logging::tests::test_init_logging_with_feature ... ok
+test logging::tests::test_logging_config_default ... ok
+test logging::tests::test_redact_secrets_api_key ... ok
+test logging::tests::test_redact_secrets_case_insensitive ... ok
+test logging::tests::test_redact_secrets_multiple ... ok
+test logging::tests::test_redact_secrets_no_secrets ... ok
+test logging::tests::test_redact_secrets_password ... ok
+test logging::tests::test_redact_secrets_token ... ok
+test logging_test::test_custom_logging_config ... ok
+test logging_test::test_logging_config_creation ... ok
+[2m2026-02-25T16:40:40.286036Z[0m [32m INFO[0m ThreadId(4113) [2mkiyya_desktop::logging[0m[2m:[0m [2msrc\logging.rs[0m[2m:[0m[2m218:[0m Logging system initialized with file rotation and secret redaction [3mlog_dir[0m[2m=[0mC:\Users\hp\AppData\Local\Temp\kiyya_test\logs [3mlog_level[0m[2m=[0mdebug [3mcomponent[0m[2m=[0m"logging"
+test logging_test::test_logging_initialization ... ok
+test logging_unit_test::test_ambiguous_claim_structure_logged ... ok
+test logging_unit_test::test_batch_processing_continues_after_error ... ok
+test logging_unit_test::test_cdn_url_construction_deterministic ... ok
+test logging_unit_test::test_claim_id_in_video_url ... ok
+test logging_unit_test::test_claim_id_logged_when_constructing_url ... ok
+test logging_unit_test::test_constructed_url_logged ... ok
+test logging_unit_test::test_empty_claim_id_logged_with_context ... ok
+test logging_unit_test::test_errors_logged_with_context ... ok
+test logging_unit_test::test_gateway_logged_at_startup ... ok
+test logging_unit_test::test_logging_uses_debug_for_repetitive_operations ... ok
+test logging_unit_test::test_no_warnings_for_missing_direct_urls ... ok
+test logging_unit_test::test_non_stream_claim_logged_with_context ... ok
+test logging_unit_test::test_parse_claim_search_response_logs_skipped_claims ... ok
+test migration_clean_run_test::migration_clean_run_tests::test_all_indices_created ... ok
+test integration_test::tests::test_section_independence_hero_failure_doesnt_affect_series ... ok
+test migration_clean_run_test::migration_clean_run_tests::test_all_tables_have_proper_schema ... ok
+test migration_clean_run_test::migration_clean_run_tests::test_database_schema_integrity ... ok
+test migration_clean_run_test::migration_clean_run_tests::test_duplicate_migration_execution_prevented ... ok
+test integration_test::tests::test_series_section_with_partial_success ... ok
+test migration_clean_run_test::migration_clean_run_tests::test_is_migration_applied_function ... ok
+test migration_clean_run_test::migration_clean_run_tests::test_migration_history_tracking ... ok
+test migration_clean_run_test::migration_clean_run_tests::test_migrations_are_idempotent ... ok
+test migration_clean_run_test::migration_clean_run_tests::test_migrations_run_cleanly_on_existing_database ... ok
+test migration_clean_run_test::migration_clean_run_tests::test_migrations_run_cleanly_on_fresh_database ... ok
+test migration_clean_run_test::migration_clean_run_tests::test_migrations_table_tracks_versions_correctly ... ok
+test integration_test::tests::test_tag_based_content_discovery_still_works ... ok
+test migration_older_db_test::migration_older_db_tests::test_foreign_key_integrity_after_upgrade ... FAILED
+test migration_older_db_test::migration_older_db_tests::test_schema_evolution_correctness ... FAILED
+test migration_older_db_test::migration_older_db_tests::test_data_integrity_after_upgrade ... FAILED
+test migration_older_db_test::migration_older_db_tests::test_migration_history_after_upgrade ... FAILED
+test migration_older_db_test::migration_older_db_tests::test_upgrade_from_v0_to_current ... FAILED
+test migration_older_db_test::migration_older_db_tests::test_upgrade_from_v1_to_current ... FAILED
+test migration_older_db_test::migration_older_db_tests::test_upgrade_from_v5_to_current ... FAILED
+test migration_property_test::migration_property_tests::prop_backward_compatibility ... ok
+test migration_property_test::migration_property_tests::prop_checksum_validation ... ok
+test migration_property_test::migration_property_tests::prop_error_context_reporting ... ok
+test migrations_dry_run_test::tests::test_dry_run_detects_invalid_sql ... ok
+test migrations_dry_run_test::tests::test_dry_run_does_not_execute ... ok
+test migrations_dry_run_test::tests::test_dry_run_handles_pragma_statements ... ok
+test migrations_dry_run_test::tests::test_dry_run_no_pending_migrations ... FAILED
+test migrations_dry_run_test::tests::test_dry_run_returns_plans_in_order ... ok
+test migrations_dry_run_test::tests::test_dry_run_skips_applied_migrations ... ok
+test migrations_dry_run_test::tests::test_dry_run_validates_valid_sql ... ok
+test migrations_dry_run_test::tests::test_dry_run_with_custom_migration ... ok
+test migrations_dry_run_test::tests::test_dry_run_with_partial_migrations ... FAILED
+test migrations_dry_run_test::tests::test_dry_run_with_pending_migrations ... ok
+test migrations_error_handling_test::property_tests::prop_complete_migration_history_retrieval ... ok
+test migrations_error_handling_test::property_tests::prop_context_string_formatting ... ok
+test migrations_error_handling_test::property_tests::prop_error_context_chain_preservation ... ok
+test migrations_error_handling_test::property_tests::prop_error_message_length_preservation ... ok
+test migrations_error_handling_test::property_tests::prop_error_message_preservation ... ok
+test migrations_error_handling_test::property_tests::prop_error_type_conversion_consistency ... ok
+test migrations_error_handling_test::tests::test_backward_compatibility_mixed_schema ... ok
+test migrations_error_handling_test::tests::test_backward_compatibility_old_schema ... ok
+test migrations_error_handling_test::tests::test_ensure_migrations_table_creates_full_schema ... ok
+test migrations_error_handling_test::tests::test_migration_execution ... ok
+test migrations_error_handling_test::tests::test_multiple_migrations_execution ... ok
+test migrations_error_handling_test::tests::test_query_failure_error_context ... ok
+test migrations_error_handling_test::tests::test_query_failure_with_corrupted_table ... ok
+test migrations_error_handling_test::tests::test_row_parsing_failure_error_context ... ok
+test migrations_error_handling_test::tests::test_row_parsing_with_missing_column ... ok
+test missing_claim_id_property_test::missing_claim_id_property_tests::prop_claim_id_wrong_type ... ok
+test migration_property_test::migration_property_tests::prop_migration_failure_rollback ... ok
+test missing_claim_id_property_test::missing_claim_id_property_tests::prop_empty_claim_id_with_non_stream_type ... ok
+test missing_claim_id_property_test::missing_claim_id_property_tests::prop_empty_claim_id_string ... ok
+test missing_claim_id_property_test::missing_claim_id_property_tests::prop_missing_claim_id_field ... ok
+test missing_claim_id_property_test::missing_claim_id_property_tests::prop_missing_claim_id_with_all_valid_fields ... ok
+test missing_claim_id_property_test::missing_claim_id_property_tests::prop_missing_claim_id_with_inferred_stream ... ok
+test missing_claim_id_property_test::missing_claim_id_property_tests::prop_null_claim_id_value ... ok
+test missing_claim_id_property_test::missing_claim_id_property_tests::prop_null_claim_id_with_metadata ... ok
+test missing_claim_id_property_test::missing_claim_id_property_tests::prop_missing_claim_id_in_batch ... ok
+test missing_claim_id_property_test::missing_claim_id_property_tests::prop_whitespace_claim_id ... ok
+test missing_direct_urls_property_test::missing_direct_urls_property_tests::prop_empty_streams_array ... ok
+test missing_direct_urls_property_test::missing_direct_urls_property_tests::prop_missing_all_direct_url_fields ... ok
+test missing_direct_urls_property_test::missing_direct_urls_property_tests::prop_missing_direct_urls_with_explicit_stream_type ... ok
+test missing_direct_urls_property_test::missing_direct_urls_property_tests::prop_cdn_url_consistent_for_missing_direct_urls ... ok
+test missing_direct_urls_property_test::missing_direct_urls_property_tests::prop_missing_direct_urls_with_inferred_stream_type ... ok
+test missing_direct_urls_property_test::missing_direct_urls_property_tests::prop_missing_hd_url_field ... ok
+test missing_direct_urls_property_test::missing_direct_urls_property_tests::prop_missing_sd_url_field ... ok
+test missing_direct_urls_property_test::missing_direct_urls_property_tests::prop_missing_streams_array ... ok
+test missing_direct_urls_property_test::missing_direct_urls_property_tests::prop_missing_video_url_field ... ok
+test models::tests::test_content_item_creation ... ok
+test models::tests::test_content_item_validation ... ok
+test models::tests::test_quality_utilities ... ok
+test models::tests::test_quality_utilities ... ok
+test models::tests::test_range_request_parsing ... ok
+test missing_direct_urls_property_test::missing_direct_urls_property_tests::prop_null_direct_url_fields ... ok
+test models::tests::test_tag_validation ... ok
+test models::tests::test_version_comparison ... ok
+test models::tests::test_video_url_creation ... ok
+test models::tests::test_series_parsing ... ok
+test monitoring_local_test::tests::test_commands_expose_local_data_only ... ok
+test monitoring_local_test::tests::test_cache_stats_stay_local ... ok
+test monitoring_local_test::tests::test_diagnostics_stay_local ... ok
+test monitoring_local_test::tests::test_download_stats_stay_local ... ok
+test monitoring_local_test::tests::test_complete_monitoring_flow_is_local ... ok
+test monitoring_local_test::tests::test_main_no_external_monitoring ... ok
+test monitoring_local_test::tests::test_monitoring_models_are_local ... ok
+test monitoring_local_test::tests::test_no_external_monitoring_sdks ... ok
+test monitoring_local_test::tests::test_gateway_logs_stay_local ... ok
+test partial_success_property_test::partial_success_property_tests::prop_all_invalid_claims_return_empty ... ok
+test partial_success_property_test::partial_success_property_tests::prop_all_valid_claims_succeed ... ok
+test partial_success_property_test::partial_success_property_tests::prop_continues_after_errors ... ok
+test partial_success_property_test::partial_success_property_tests::prop_order_preservation ... ok
+test partial_success_property_test::partial_success_property_tests::prop_single_valid_among_invalid ... ok
+test path_security::tests::test_get_app_data_dir ... ok
+test path_security::tests::test_multiple_parent_dirs ... ok
+test path_security::tests::test_resolve_path_components ... ok
+test path_security::tests::test_valid_nested_path ... ok
+test path_security::tests::test_validate_absolute_path_outside_appdata ... ok
+test path_security::tests::test_validate_path_traversal_attack ... ok
+test path_security::tests::test_validate_relative_path ... ok
+test path_security::tests::test_validate_subdir_path ... ok
+test rate_limit_timeout_test::tests::test_failover_delay_calculation ... ok
+test rate_limit_timeout_test::tests::test_gateway_client_configuration ... ok
+test rate_limit_timeout_test::tests::test_gateway_config_accessibility ... ok
+test rate_limit_timeout_test::tests::test_http_429_categorization ... ok
+test rate_limit_timeout_test::tests::test_jitter_application ... ok
+test rate_limit_timeout_test::tests::test_max_retry_attempts ... ok
+test rate_limit_timeout_test::tests::test_rate_limit_error_handling ... ok
+test rate_limit_timeout_test::tests::test_rate_limit_error_serialization ... ok
+test rate_limit_timeout_test::tests::test_rate_limit_retry_after ... ok
+test rate_limit_timeout_test::tests::test_rate_limit_retry_flow ... ok
+test rate_limit_timeout_test::tests::test_rate_limit_various_retry_after ... ok
+test rate_limit_timeout_test::tests::test_request_timeout_categorization ... ok
+test rate_limit_timeout_test::tests::test_retry_delay_for_rate_limiting ... ok
+test rate_limit_timeout_test::tests::test_specification_compliance ... ok
+test rate_limit_timeout_test::tests::test_timeout_duration_information ... ok
+test rate_limit_timeout_test::tests::test_timeout_error_handling ... ok
+test rate_limit_timeout_test::tests::test_timeout_error_serialization ... ok
+test rate_limit_timeout_test::tests::test_timeout_retry_flow ... ok
+test rate_limit_timeout_test::tests::test_timeout_various_durations ... ok
+test response_structure_property_test::response_structure_property_tests::prop_response_contains_claim_id ... ok
+test partial_success_property_test::partial_success_property_tests::prop_partial_success_mixed_claims ... ok
+test response_structure_property_test::response_structure_property_tests::prop_response_contains_tags_field ... ok
+test response_structure_property_test::response_structure_property_tests::prop_response_contains_thumbnail_url_field ... ok
+test response_structure_property_test::response_structure_property_tests::prop_response_contains_title ... ok
+test response_structure_property_test::response_structure_property_tests::prop_response_contains_video_urls ... ok
+test response_structure_property_test::response_structure_property_tests::prop_response_has_master_playback_url ... ok
+test response_structure_property_test::response_structure_property_tests::prop_response_structure_complete ... ok
+test response_structure_property_test::response_structure_property_tests::prop_response_structure_minimal_metadata ... ok
+test response_structure_property_test::response_structure_property_tests::prop_response_video_url_structure ... ok
+test sanitization::tests::test_sanitize_fts5_query ... ok
+test sanitization::tests::test_sanitize_like_pattern ... ok
+test sanitization::tests::test_sanitize_limit ... ok
+test sanitization::tests::test_sanitize_offset ... ok
+test sanitization::tests::test_sanitize_order_by_invalid ... ok
+test sanitization::tests::test_sanitize_order_by_valid ... ok
+test sanitization::tests::test_sanitize_tag ... ok
+test search_test::tests::test_fts5_availability ... ok
+test response_structure_property_test::response_structure_property_tests::prop_response_structure_consistent ... ok
+test search_test::tests::test_search_content_basic ... ok
+test search_test::tests::test_search_content_description ... FAILED
+test search_test::tests::test_search_content_empty_query ... ok
+test search_test::tests::test_search_content_episode ... FAILED
+test search_test::tests::test_search_content_limit ... ok
+test search_test::tests::test_search_content_no_results ... FAILED
+test security_logging::tests::test_log_multiple_events ... ok
+test security_logging::tests::test_log_security_event ... ok
+test security_logging::tests::test_security_event_details ... ok
+test security_logging::tests::test_security_event_severity ... ok
+test security_logging::tests::test_security_event_type ... ok
+test security_logging_e2e_test::tests::test_e2e_all_security_event_variants ... ok
+test security_logging_e2e_test::tests::test_e2e_channel_validation_security_logging ... ok
+test security_logging_e2e_test::tests::test_e2e_encryption_operations_logged ... ok
+test security_logging_e2e_test::tests::test_e2e_input_validation_logs_to_file ... ok
+test security_logging_e2e_test::tests::test_e2e_multiple_security_events_in_sequence ... ok
+test security_logging_e2e_test::tests::test_e2e_network_security_logs_violations ... ok
+test security_logging_e2e_test::tests::test_e2e_rate_limiting_logged ... ok
+test security_logging_e2e_test::tests::test_e2e_search_text_validation_security_logging ... ok
+test security_logging_e2e_test::tests::test_e2e_security_event_details_formatting ... ok
+test security_logging_e2e_test::tests::test_e2e_security_event_severity_routing ... ok
+test security_logging_e2e_test::tests::test_e2e_security_logging_non_blocking ... ok
+test security_logging_integration_test::tests::test_encryption_key_operation_logging ... ok
+test security_logging_integration_test::tests::test_path_security_logs_violations ... ok
+test security_logging_integration_test::tests::test_rate_limit_logging ... ok
+test security_logging_integration_test::tests::test_sanitization_logs_invalid_tags ... ok
+test security_logging_integration_test::tests::test_sanitization_logs_sql_injection ... ok
+test security_logging_integration_test::tests::test_security_event_creation ... ok
+test security_logging_integration_test::tests::test_security_logging_does_not_panic ... ok
+test security_logging_integration_test::tests::test_validation_logs_invalid_characters ... ok
+test security_logging_integration_test::tests::test_validation_logs_network_violations ... ok
+test security_logging_integration_test::tests::test_validation_logs_non_https_urls ... ok
+test security_logging_integration_test::tests::test_validation_logs_null_bytes ... ok
+test security_restrictions_test::tests::test_comprehensive_security_restrictions_enforced ... ok
+test security_restrictions_test::tests::test_encryption_key_never_in_code_or_database ... ok
+test search_test::tests::test_search_content_special_characters ... ok
+test security_restrictions_test::tests::test_encryption_key_stored_in_os_keystore_only ... ok
+test security_restrictions_test::tests::test_filesystem_restriction_absolute_paths_outside_blocked ... ok
+test security_restrictions_test::tests::test_filesystem_restriction_app_data_only ... ok
+test security_restrictions_test::tests::test_filesystem_restriction_path_traversal_blocked ... ok
+test security_restrictions_test::tests::test_input_sanitization_empty_inputs_rejected ... ok
+test security_restrictions_test::tests::test_input_sanitization_length_limits_enforced ... ok
+test security_restrictions_test::tests::test_input_sanitization_no_sql_injection ... ok
+test security_restrictions_test::tests::test_input_sanitization_null_bytes_blocked ... ok
+test security_restrictions_test::tests::test_network_restriction_approved_domains ... ok
+test security_restrictions_test::tests::test_network_restriction_http_blocked ... ok
+test security_restrictions_test::tests::test_network_restriction_invalid_protocols_blocked ... ok
+test security_restrictions_test::tests::test_network_restriction_unapproved_domains_blocked ... ok
+test security_restrictions_test::tests::test_security_boundary_numeric_ranges_enforced ... ok
+test security_restrictions_test::tests::test_security_boundary_quality_values_restricted ... ok
+test security_restrictions_test::tests::test_security_boundary_setting_keys_restricted ... ok
+test security_restrictions_test::tests::test_tag_system_immutability ... ok
+test server::tests::test_concurrent_streaming_connections ... ok
+test server::tests::test_concurrent_streaming_same_range ... ok
+test security_restrictions_test::tests::test_encryption_key_removed_from_keystore_on_disable ... ok
+test server::tests::test_concurrent_streaming_with_seeks ... ok
+test server::tests::test_encrypted_file_streaming ... ok
+test server::tests::test_health_and_status_endpoints_cors ... ok
+test server::tests::test_health_check_endpoint ... ok
+test server::tests::test_local_server_creation ... ok
+test server::tests::test_local_server_get_status ... ok
+test server::tests::test_local_server_register_content ... ok
+test server::tests::test_local_server_start ... ok
+test server::tests::test_local_server_stop ... ok
+test server::tests::test_local_server_unregister_content ... ok
+test server::tests::test_mixed_encrypted_and_plain_streaming ... ok
+test server::tests::test_parse_range_header_end_beyond_file_size ... ok
+test server::tests::test_parse_range_header_full_range ... ok
+test server::tests::test_parse_range_header_invalid_format ... ok
+test server::tests::test_parse_range_header_invalid_range ... ok
+test server::tests::test_parse_range_header_open_end ... ok
+test server::tests::test_parse_range_header_suffix ... ok
+test server::tests::test_range_request_scenarios ... ok
+test server::tests::test_read_file_range ... ok
+test server::tests::test_read_file_range_entire_file ... ok
+test server::tests::test_read_file_range_nonexistent_file ... ok
+test server::tests::test_read_file_range_single_byte ... ok
+test server::tests::test_status_endpoint_no_streams ... ok
+test server::tests::test_encrypted_large_file_streaming ... ok
+test server::tests::test_status_endpoint_with_streams ... ok
+test sql_injection_test::prop_fts5_query_escaping ... ok
+test sql_injection_test::prop_like_pattern_escaping ... ok
+test sql_injection_test::prop_limit_validation ... ok
+test sql_injection_test::prop_offset_validation ... ok
+test sql_injection_test::prop_tag_injection_blocked ... ok
+test migration_property_test::migration_property_tests::prop_migration_recording ... ok
+test sql_injection_test::prop_order_by_injection_blocked ... ok
+test sql_injection_test::test_discovery_works ... ok
+test tag_immutability_test::tests::test_base_tag_for_filter_mapping ... ok
+test tag_immutability_test::tests::test_base_tags_are_constant_strings ... ok
+test tag_immutability_test::tests::test_base_tags_array_is_immutable ... ok
+test tag_immutability_test::tests::test_filter_tags_are_constant_strings ... ok
+test tag_immutability_test::tests::test_filter_tags_array_is_immutable ... ok
+test sql_injection_test::prop_valid_order_by_accepted ... ok
+test tag_immutability_test::tests::test_frontend_backend_tag_consistency ... ok
+test tag_immutability_test::tests::test_hero_trailer_is_base_tag ... ok
+test tag_immutability_test::tests::test_no_dynamic_tag_generation ... ok
+test tag_immutability_test::tests::test_no_tag_inference_logic ... ok
+test tag_immutability_test::tests::test_tag_count_consistency ... ok
+test tag_immutability_test::tests::test_tag_validation_functions ... ok
+test tag_immutability_test::tests::test_tags_are_lowercase_snake_case ... ok
+test valid_channel_id_acceptance_property_test::valid_channel_id_acceptance_tests::prop_minimal_valid_channel_id_accepted ... ok
+test valid_channel_id_acceptance_property_test::valid_channel_id_acceptance_tests::prop_valid_channel_id_acceptance_consistent ... ok
+test sql_injection_test::prop_valid_tags_accepted ... ok
+test valid_channel_id_acceptance_property_test::valid_channel_id_acceptance_tests::prop_valid_channel_id_acceptance_deterministic ... ok
+test valid_channel_id_acceptance_property_test::valid_channel_id_acceptance_tests::prop_valid_channel_id_acceptance_independent_of_env ... ok
+test valid_channel_id_acceptance_property_test::valid_channel_id_acceptance_tests::prop_valid_channel_id_preserves_bytes ... ok
+test valid_channel_id_acceptance_property_test::valid_channel_id_acceptance_tests::prop_multiple_valid_channel_ids_all_accepted ... ok
+test valid_channel_id_acceptance_property_test::valid_channel_id_acceptance_tests::prop_valid_channel_ids_are_accepted ... ok
+test valid_channel_id_acceptance_property_test::valid_channel_id_acceptance_tests::prop_valid_channel_ids_length_independent ... ok
+test valid_channel_id_acceptance_property_test::valid_channel_id_acceptance_tests::prop_valid_channel_ids_case_variations_accepted ... ok
+test valid_channel_id_acceptance_property_test::valid_channel_id_acceptance_tests::prop_valid_channel_ids_with_numbers_accepted ... ok
+test valid_channel_id_acceptance_property_test::valid_channel_id_acceptance_tests::prop_valid_channel_ids_with_special_chars_accepted ... ok
+test valid_channel_id_acceptance_property_test::valid_channel_id_acceptance_tests::prop_valid_channel_ids_with_trailing_content_accepted ... ok
+test valid_channel_id_acceptance_property_test::valid_channel_id_acceptance_tests::prop_valid_channel_ids_with_various_chars_accepted ... ok
+test valid_channel_id_acceptance_property_test::valid_channel_id_acceptance_tests::prop_valid_channel_id_acceptance_thread_safe ... ok
+test valid_channel_id_acceptance_property_test::valid_channel_id_acceptance_tests::prop_validated_channel_id_matches_input ... ok
+test valid_claim_id_property_test::valid_claim_id_property_tests::prop_cdn_url_format_pattern ... ok
+test valid_claim_id_property_test::valid_claim_id_property_tests::prop_cdn_url_maximal_metadata ... ok
+test valid_claim_id_property_test::valid_claim_id_property_tests::prop_cdn_url_minimal_metadata ... ok
+test valid_claim_id_property_test::valid_claim_id_property_tests::prop_cdn_url_independent_of_field_order ... ok
+test valid_claim_id_property_test::valid_claim_id_property_tests::prop_cdn_url_preserves_claim_id_exactly ... ok
+test valid_claim_id_property_test::valid_claim_id_property_tests::prop_cdn_url_special_characters ... ok
+test valid_claim_id_property_test::valid_claim_id_property_tests::prop_valid_claim_id_inferred_stream_type ... ok
+test valid_claim_id_property_test::valid_claim_id_property_tests::prop_valid_claim_id_deterministic ... ok
+test validation::tests::test_validate_channel_id ... ok
+test validation::tests::test_validate_claim_id ... ok
+test validation::tests::test_validate_download_url ... ok
+test validation::tests::test_validate_external_url ... ok
+test validation::tests::test_validate_position_seconds ... ok
+test validation::tests::test_validate_quality ... ok
+test validation::tests::test_validate_search_text ... ok
+test validation::tests::test_validate_setting_key ... ok
+test validation::tests::test_validate_setting_value ... ok
+test validation::tests::test_validate_tags ... ok
+test validation::tests::test_validate_title ... ok
+test valid_claim_id_property_test::valid_claim_id_property_tests::prop_valid_claim_id_produces_cdn_url ... ok
+test valid_claim_id_property_test::valid_claim_id_property_tests::prop_multiple_claim_ids_unique_urls ... ok
+test migration_property_test::migration_property_tests::prop_sequential_migration_application ... ok
+
+failures:
+
+---- database_initialization_test::tests::test_connection_pool_initialized stdout ----
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:00.364476100+00:00
+Message: Failed to get favorites: Internal { message: "Failed to prepare favorites query: Database error: no such table: favorites" }
+Location: src\database_initialization_test.rs:206:50
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:00.364815700+00:00
+Message: Failed to get favorites: Internal { message: "Failed to prepare favorites query: Database error: no such table: favorites" }
+Location: src\database_initialization_test.rs:206:50
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:00.365092900+00:00
+Message: Failed to get favorites: Internal { message: "Failed to prepare favorites query: Database error: no such table: favorites" }
+Location: src\database_initialization_test.rs:206:50
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:00.365326800+00:00
+Message: Failed to get favorites: Internal { message: "Failed to prepare favorites query: Database error: no such table: favorites" }
+Location: src\database_initialization_test.rs:206:50
+Version: 1.0.0
+===================
+
+
+
+thread 'database_initialization_test::tests::test_connection_pool_initialized' (9308) panicked at src\database_initialization_test.rs:206:50:
+Failed to get favorites: Internal { message: "Failed to prepare favorites query: Database error: no such table: favorites" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- database_initialization_test::tests::test_database_new_does_not_run_migrations stdout ----
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:00.602821800+00:00
+Message: Migrations table should exist after Database::new()
+Location: src\database_initialization_test.rs:96:9
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:00.603154700+00:00
+Message: Migrations table should exist after Database::new()
+Location: src\database_initialization_test.rs:96:9
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:00.603391400+00:00
+Message: Migrations table should exist after Database::new()
+Location: src\database_initialization_test.rs:96:9
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:00.603625200+00:00
+Message: Migrations table should exist after Database::new()
+Location: src\database_initialization_test.rs:96:9
+Version: 1.0.0
+===================
+
+
+
+thread 'database_initialization_test::tests::test_database_new_does_not_run_migrations' (13736) panicked at src\database_initialization_test.rs:96:9:
+Migrations table should exist after Database::new()
+
+---- download::tests::test_delete_content stdout ----
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:11.771687800+00:00
+Message: assertion failed: !temp_path.exists()
+Location: src\download.rs:894:9
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:11.771928400+00:00
+Message: assertion failed: !temp_path.exists()
+Location: src\download.rs:894:9
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:11.772112500+00:00
+Message: assertion failed: !temp_path.exists()
+Location: src\download.rs:894:9
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:11.772278400+00:00
+Message: assertion failed: !temp_path.exists()
+Location: src\download.rs:894:9
+Version: 1.0.0
+===================
+
+
+
+thread 'download::tests::test_delete_content' (7064) panicked at src\download.rs:894:9:
+assertion failed: !temp_path.exists()
+
+---- encryption_key_management_test::encryption_key_management_tests::test_key_removed_from_keystore_on_disable stdout ----
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:19.837509400+00:00
+Message: Key should be removed from keystore
+Location: src\encryption_key_management_test.rs:278:9
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:19.837915+00:00
+Message: Key should be removed from keystore
+Location: src\encryption_key_management_test.rs:278:9
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:19.838122100+00:00
+Message: Key should be removed from keystore
+Location: src\encryption_key_management_test.rs:278:9
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:19.838310400+00:00
+Message: Key should be removed from keystore
+Location: src\encryption_key_management_test.rs:278:9
+Version: 1.0.0
+===================
+
+
+
+thread 'encryption_key_management_test::encryption_key_management_tests::test_key_removed_from_keystore_on_disable' (12048) panicked at src\encryption_key_management_test.rs:278:9:
+Key should be removed from keystore
+
+---- encryption_key_management_test::encryption_key_management_tests::test_keys_only_in_os_keystore stdout ----
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:19.848569200+00:00
+Message: Should find key in keystore
+Location: src\encryption_key_management_test.rs:47:9
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:19.848903700+00:00
+Message: Should find key in keystore
+Location: src\encryption_key_management_test.rs:47:9
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:19.849136300+00:00
+Message: Should find key in keystore
+Location: src\encryption_key_management_test.rs:47:9
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:19.849359900+00:00
+Message: Should find key in keystore
+Location: src\encryption_key_management_test.rs:47:9
+Version: 1.0.0
+===================
+
+
+
+thread 'encryption_key_management_test::encryption_key_management_tests::test_keys_only_in_os_keystore' (10156) panicked at src\encryption_key_management_test.rs:47:9:
+Should find key in keystore
+
+---- error_logging::tests::test_cleanup_old_errors stdout ----
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:21.300606100+00:00
+Message: assertion `left == right` failed
+  left: 4
+ right: 5
+Location: src\error_logging.rs:523:9
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:21.300977100+00:00
+Message: assertion `left == right` failed
+  left: 4
+ right: 5
+Location: src\error_logging.rs:523:9
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:21.301298400+00:00
+Message: assertion `left == right` failed
+  left: 4
+ right: 5
+Location: src\error_logging.rs:523:9
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:21.301514600+00:00
+Message: assertion `left == right` failed
+  left: 4
+ right: 5
+Location: src\error_logging.rs:523:9
+Version: 1.0.0
+===================
+
+
+
+thread 'error_logging::tests::test_cleanup_old_errors' (12136) panicked at src\error_logging.rs:523:9:
+assertion `left == right` failed
+  left: 4
+ right: 5
+
+---- migration_older_db_test::migration_older_db_tests::test_foreign_key_integrity_after_upgrade stdout ----
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:46.493529600+00:00
+Message: Migrations should succeed: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:783:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:46.493792800+00:00
+Message: Migrations should succeed: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:783:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:46.493996200+00:00
+Message: Migrations should succeed: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:783:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:46.494178+00:00
+Message: Migrations should succeed: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:783:14
+Version: 1.0.0
+===================
+
+
+
+thread 'migration_older_db_test::migration_older_db_tests::test_foreign_key_integrity_after_upgrade' (2076) panicked at src\migration_older_db_test.rs:783:14:
+Migrations should succeed: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+
+---- migration_older_db_test::migration_older_db_tests::test_schema_evolution_correctness stdout ----
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:46.552288800+00:00
+Message: Migrations should succeed: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:669:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:46.552609100+00:00
+Message: Migrations should succeed: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:669:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:46.552824+00:00
+Message: Migrations should succeed: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:669:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:46.553201+00:00
+Message: Migrations should succeed: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:669:14
+Version: 1.0.0
+===================
+
+
+
+thread 'migration_older_db_test::migration_older_db_tests::test_schema_evolution_correctness' (13972) panicked at src\migration_older_db_test.rs:669:14:
+Migrations should succeed: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+
+---- migration_older_db_test::migration_older_db_tests::test_data_integrity_after_upgrade stdout ----
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:46.806997400+00:00
+Message: Migrations should succeed: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:593:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:46.807200500+00:00
+Message: Migrations should succeed: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:593:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:46.807323+00:00
+Message: Migrations should succeed: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:593:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:46.807462600+00:00
+Message: Migrations should succeed: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:593:14
+Version: 1.0.0
+===================
+
+
+
+thread 'migration_older_db_test::migration_older_db_tests::test_data_integrity_after_upgrade' (584) panicked at src\migration_older_db_test.rs:593:14:
+Migrations should succeed: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+
+---- migration_older_db_test::migration_older_db_tests::test_migration_history_after_upgrade stdout ----
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:46.835272900+00:00
+Message: Migrations should succeed: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:710:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:46.835516100+00:00
+Message: Migrations should succeed: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:710:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:46.835669200+00:00
+Message: Migrations should succeed: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:710:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:46.835889500+00:00
+Message: Migrations should succeed: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:710:14
+Version: 1.0.0
+===================
+
+
+
+thread 'migration_older_db_test::migration_older_db_tests::test_migration_history_after_upgrade' (11884) panicked at src\migration_older_db_test.rs:710:14:
+Migrations should succeed: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+
+---- migration_older_db_test::migration_older_db_tests::test_upgrade_from_v0_to_current stdout ----
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:46.896771700+00:00
+Message: Migrations should succeed from v0 to current: Migration { message: "Migration 4 failed: Internal error: Failed to execute statement 2 in migration 4: CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber): Database error: no such table: main.playlists" }
+Location: src\migration_older_db_test.rs:329:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:46.897032400+00:00
+Message: Migrations should succeed from v0 to current: Migration { message: "Migration 4 failed: Internal error: Failed to execute statement 2 in migration 4: CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber): Database error: no such table: main.playlists" }
+Location: src\migration_older_db_test.rs:329:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:46.897225800+00:00
+Message: Migrations should succeed from v0 to current: Migration { message: "Migration 4 failed: Internal error: Failed to execute statement 2 in migration 4: CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber): Database error: no such table: main.playlists" }
+Location: src\migration_older_db_test.rs:329:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:46.897377600+00:00
+Message: Migrations should succeed from v0 to current: Migration { message: "Migration 4 failed: Internal error: Failed to execute statement 2 in migration 4: CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber): Database error: no such table: main.playlists" }
+Location: src\migration_older_db_test.rs:329:14
+Version: 1.0.0
+===================
+
+
+
+thread 'migration_older_db_test::migration_older_db_tests::test_upgrade_from_v0_to_current' (10480) panicked at src\migration_older_db_test.rs:329:14:
+Migrations should succeed from v0 to current: Migration { message: "Migration 4 failed: Internal error: Failed to execute statement 2 in migration 4: CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber): Database error: no such table: main.playlists" }
+
+---- migration_older_db_test::migration_older_db_tests::test_upgrade_from_v1_to_current stdout ----
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:47.254076800+00:00
+Message: Migrations should succeed from v1 to current: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:406:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:47.254384300+00:00
+Message: Migrations should succeed from v1 to current: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:406:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:47.254623100+00:00
+Message: Migrations should succeed from v1 to current: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:406:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:47.254902500+00:00
+Message: Migrations should succeed from v1 to current: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:406:14
+Version: 1.0.0
+===================
+
+
+
+thread 'migration_older_db_test::migration_older_db_tests::test_upgrade_from_v1_to_current' (13336) panicked at src\migration_older_db_test.rs:406:14:
+Migrations should succeed from v1 to current: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+
+---- migration_older_db_test::migration_older_db_tests::test_upgrade_from_v5_to_current stdout ----
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:50.178618300+00:00
+Message: Migrations should succeed from v5 to current: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:492:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:50.178985900+00:00
+Message: Migrations should succeed from v5 to current: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:492:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:50.179169500+00:00
+Message: Migrations should succeed from v5 to current: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:492:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:40:50.179413100+00:00
+Message: Migrations should succeed from v5 to current: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+Location: src\migration_older_db_test.rs:492:14
+Version: 1.0.0
+===================
+
+
+
+thread 'migration_older_db_test::migration_older_db_tests::test_upgrade_from_v5_to_current' (11228) panicked at src\migration_older_db_test.rs:492:14:
+Migrations should succeed from v5 to current: Migration { message: "Migration 12 failed: Internal error: Failed to execute statement 1 in migration 12: CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash): Database error: no such column: contentHash in CREATE INDEX IF NOT EXISTS idx_localcache_contentHash ON local_cache(contentHash) at offset 69" }
+
+---- migrations_dry_run_test::tests::test_dry_run_no_pending_migrations stdout ----
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:41:42.166688500+00:00
+Message: called `Result::unwrap()` on an `Err` value: Migration { message: "Migration 4 failed: Internal error: Failed to execute statement 2 in migration 4: CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber): Database error: no such column: seasonNumber in CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber) at offset 67" }
+Location: src\migrations_dry_run_test.rs:70:38
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:41:42.166942500+00:00
+Message: called `Result::unwrap()` on an `Err` value: Migration { message: "Migration 4 failed: Internal error: Failed to execute statement 2 in migration 4: CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber): Database error: no such column: seasonNumber in CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber) at offset 67" }
+Location: src\migrations_dry_run_test.rs:70:38
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:41:42.167066500+00:00
+Message: called `Result::unwrap()` on an `Err` value: Migration { message: "Migration 4 failed: Internal error: Failed to execute statement 2 in migration 4: CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber): Database error: no such column: seasonNumber in CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber) at offset 67" }
+Location: src\migrations_dry_run_test.rs:70:38
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:41:42.167193900+00:00
+Message: called `Result::unwrap()` on an `Err` value: Migration { message: "Migration 4 failed: Internal error: Failed to execute statement 2 in migration 4: CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber): Database error: no such column: seasonNumber in CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber) at offset 67" }
+Location: src\migrations_dry_run_test.rs:70:38
+Version: 1.0.0
+===================
+
+
+
+thread 'migrations_dry_run_test::tests::test_dry_run_no_pending_migrations' (6396) panicked at src\migrations_dry_run_test.rs:70:38:
+called `Result::unwrap()` on an `Err` value: Migration { message: "Migration 4 failed: Internal error: Failed to execute statement 2 in migration 4: CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber): Database error: no such column: seasonNumber in CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber) at offset 67" }
+
+---- migrations_dry_run_test::tests::test_dry_run_with_partial_migrations stdout ----
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:41:42.207433100+00:00
+Message: called `Result::unwrap()` on an `Err` value: Migration { message: "Migration 4 failed: Internal error: Failed to execute statement 2 in migration 4: CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber): Database error: no such column: seasonNumber in CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber) at offset 67" }
+Location: src\migrations_dry_run_test.rs:344:56
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:41:42.207753800+00:00
+Message: called `Result::unwrap()` on an `Err` value: Migration { message: "Migration 4 failed: Internal error: Failed to execute statement 2 in migration 4: CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber): Database error: no such column: seasonNumber in CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber) at offset 67" }
+Location: src\migrations_dry_run_test.rs:344:56
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:41:42.207940500+00:00
+Message: called `Result::unwrap()` on an `Err` value: Migration { message: "Migration 4 failed: Internal error: Failed to execute statement 2 in migration 4: CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber): Database error: no such column: seasonNumber in CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber) at offset 67" }
+Location: src\migrations_dry_run_test.rs:344:56
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:41:42.208122400+00:00
+Message: called `Result::unwrap()` on an `Err` value: Migration { message: "Migration 4 failed: Internal error: Failed to execute statement 2 in migration 4: CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber): Database error: no such column: seasonNumber in CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber) at offset 67" }
+Location: src\migrations_dry_run_test.rs:344:56
+Version: 1.0.0
+===================
+
+
+
+thread 'migrations_dry_run_test::tests::test_dry_run_with_partial_migrations' (8960) panicked at src\migrations_dry_run_test.rs:344:56:
+called `Result::unwrap()` on an `Err` value: Migration { message: "Migration 4 failed: Internal error: Failed to execute statement 2 in migration 4: CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber): Database error: no such column: seasonNumber in CREATE INDEX IF NOT EXISTS idx_playlists_seasonNumber ON playlists(seasonNumber) at offset 67" }
+
+---- search_test::tests::test_search_content_description stdout ----
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:41:48.592956400+00:00
+Message: Search failed: Internal { message: "Failed to prepare FTS5 search query: Database error: no such table: local_cache_fts" }
+Location: src\search_test.rs:143:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:41:48.593302700+00:00
+Message: Search failed: Internal { message: "Failed to prepare FTS5 search query: Database error: no such table: local_cache_fts" }
+Location: src\search_test.rs:143:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:41:48.594520700+00:00
+Message: Search failed: Internal { message: "Failed to prepare FTS5 search query: Database error: no such table: local_cache_fts" }
+Location: src\search_test.rs:143:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:41:48.594793500+00:00
+Message: Search failed: Internal { message: "Failed to prepare FTS5 search query: Database error: no such table: local_cache_fts" }
+Location: src\search_test.rs:143:14
+Version: 1.0.0
+===================
+
+
+
+thread 'search_test::tests::test_search_content_description' (32) panicked at src\search_test.rs:143:14:
+Search failed: Internal { message: "Failed to prepare FTS5 search query: Database error: no such table: local_cache_fts" }
+
+---- search_test::tests::test_search_content_episode stdout ----
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:41:49.977361500+00:00
+Message: Search failed: Internal { message: "Failed to prepare FTS5 search query: Database error: no such table: local_cache_fts" }
+Location: src\search_test.rs:126:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:41:49.977639600+00:00
+Message: Search failed: Internal { message: "Failed to prepare FTS5 search query: Database error: no such table: local_cache_fts" }
+Location: src\search_test.rs:126:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:41:49.977904200+00:00
+Message: Search failed: Internal { message: "Failed to prepare FTS5 search query: Database error: no such table: local_cache_fts" }
+Location: src\search_test.rs:126:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:41:49.978155700+00:00
+Message: Search failed: Internal { message: "Failed to prepare FTS5 search query: Database error: no such table: local_cache_fts" }
+Location: src\search_test.rs:126:14
+Version: 1.0.0
+===================
+
+
+
+thread 'search_test::tests::test_search_content_episode' (10324) panicked at src\search_test.rs:126:14:
+Search failed: Internal { message: "Failed to prepare FTS5 search query: Database error: no such table: local_cache_fts" }
+
+---- search_test::tests::test_search_content_no_results stdout ----
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:41:50.561402400+00:00
+Message: Search failed: Internal { message: "Failed to prepare FTS5 search query: Database error: no such table: local_cache_fts" }
+Location: src\search_test.rs:172:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:41:50.561688600+00:00
+Message: Search failed: Internal { message: "Failed to prepare FTS5 search query: Database error: no such table: local_cache_fts" }
+Location: src\search_test.rs:172:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:41:50.561906+00:00
+Message: Search failed: Internal { message: "Failed to prepare FTS5 search query: Database error: no such table: local_cache_fts" }
+Location: src\search_test.rs:172:14
+Version: 1.0.0
+===================
+
+
+
+=== CRASH REPORT ===
+Timestamp: 2026-02-25T16:41:50.562106+00:00
+Message: Search failed: Internal { message: "Failed to prepare FTS5 search query: Database error: no such table: local_cache_fts" }
+Location: src\search_test.rs:172:14
+Version: 1.0.0
+===================
+
+
+
+thread 'search_test::tests::test_search_content_no_results' (13232) panicked at src\search_test.rs:172:14:
+Search failed: Internal { message: "Failed to prepare FTS5 search query: Database error: no such table: local_cache_fts" }
+
+
+failures:
+    database_initialization_test::tests::test_connection_pool_initialized
+    database_initialization_test::tests::test_database_new_does_not_run_migrations
+    download::tests::test_delete_content
+    encryption_key_management_test::encryption_key_management_tests::test_key_removed_from_keystore_on_disable
+    encryption_key_management_test::encryption_key_management_tests::test_keys_only_in_os_keystore
+    error_logging::tests::test_cleanup_old_errors
+    migration_older_db_test::migration_older_db_tests::test_data_integrity_after_upgrade
+    migration_older_db_test::migration_older_db_tests::test_foreign_key_integrity_after_upgrade
+    migration_older_db_test::migration_older_db_tests::test_migration_history_after_upgrade
+    migration_older_db_test::migration_older_db_tests::test_schema_evolution_correctness
+    migration_older_db_test::migration_older_db_tests::test_upgrade_from_v0_to_current
+    migration_older_db_test::migration_older_db_tests::test_upgrade_from_v1_to_current
+    migration_older_db_test::migration_older_db_tests::test_upgrade_from_v5_to_current
+    migrations_dry_run_test::tests::test_dry_run_no_pending_migrations
+    migrations_dry_run_test::tests::test_dry_run_with_partial_migrations
+    search_test::tests::test_search_content_description
+    search_test::tests::test_search_content_episode
+    search_test::tests::test_search_content_no_results
+
+test result: FAILED. 714 passed; 18 failed; 6 ignored; 0 measured; 0 filtered out; finished in 180.61s
+
+error: test failed, to rerun pass `--bin kiyya-desktop`
+error: 1 target failed:
+    `--bin kiyya-desktop`

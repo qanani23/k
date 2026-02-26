@@ -20,7 +20,6 @@
 //! ```
 
 use crate::error::{KiyyaError, Result};
-use crate::security_logging::{log_security_event, SecurityEvent};
 use std::path::{Path, PathBuf};
 
 /// Get the application data directory
@@ -43,13 +42,12 @@ pub fn get_app_data_dir() -> Result<PathBuf> {
         // Use dirs crate instead of tauri::api::path to avoid calling tauri::Config::default()
         // before Tauri is initialized. This prevents path validation errors during startup.
         // Note: We use config_dir() which returns %APPDATA% on Windows (Roaming), matching Tauri's behavior
-        let app_data_dir = dirs::config_dir()
-            .ok_or_else(|| {
-                KiyyaError::Io(std::io::Error::new(
-                    std::io::ErrorKind::NotFound,
-                    "Could not determine app data directory",
-                ))
-            })?;
+        let app_data_dir = dirs::config_dir().ok_or_else(|| {
+            KiyyaError::Io(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "Could not determine app data directory",
+            ))
+        })?;
 
         Ok(app_data_dir.join("Kiyya"))
     }
@@ -122,7 +120,7 @@ pub fn validate_path<P: AsRef<Path>>(path: P) -> Result<PathBuf> {
         let app_data_str = normalized_app_data.to_string_lossy().to_lowercase();
         resolved_str.starts_with(&app_data_str)
     };
-    
+
     #[cfg(not(target_os = "windows"))]
     let path_matches = normalized_resolved.starts_with(&normalized_app_data);
 
@@ -130,7 +128,7 @@ pub fn validate_path<P: AsRef<Path>>(path: P) -> Result<PathBuf> {
     if !path_matches {
         // NOTE: Security logging removed here to prevent recursion during logging initialization
         // The security violation is still returned as an error
-        
+
         return Err(KiyyaError::SecurityViolation {
             message: format!(
                 "Path '{}' is outside application data directory",
@@ -179,7 +177,7 @@ fn resolve_path_components(path: &Path) -> Result<PathBuf> {
                 } else {
                     // NOTE: Security logging removed here to prevent recursion during logging initialization
                     // The security violation is still returned as an error
-                    
+
                     return Err(KiyyaError::SecurityViolation {
                         message: "Path traversal beyond root directory".to_string(),
                     });
@@ -242,12 +240,16 @@ mod tests {
     fn test_validate_relative_path() {
         let app_data = get_app_data_dir().unwrap();
         eprintln!("App data dir: {:?}", app_data);
-        
+
         let result = validate_path("vault/movie.mp4");
         if let Err(ref e) = result {
             eprintln!("Error: {:?}", e);
         }
-        assert!(result.is_ok(), "Failed to validate path: {:?}", result.err());
+        assert!(
+            result.is_ok(),
+            "Failed to validate path: {:?}",
+            result.err()
+        );
         let path = result.unwrap();
         eprintln!("Validated path: {:?}", path);
         assert!(path.to_string_lossy().contains("vault"));
@@ -270,7 +272,7 @@ mod tests {
         // Attempt to access system directory
         #[cfg(target_os = "windows")]
         let result = validate_path("C:\\Windows\\System32\\config");
-        
+
         #[cfg(not(target_os = "windows"))]
         let result = validate_path("/etc/passwd");
 
@@ -294,9 +296,13 @@ mod tests {
     #[test]
     fn test_resolve_path_components() {
         let app_data = get_app_data_dir().unwrap();
-        let path = app_data.join("vault").join("..").join("logs").join("test.log");
+        let path = app_data
+            .join("vault")
+            .join("..")
+            .join("logs")
+            .join("test.log");
         let resolved = resolve_path_components(&path).unwrap();
-        
+
         // Should resolve to app_data/logs/test.log
         assert!(resolved.to_string_lossy().contains("logs"));
         assert!(!resolved.to_string_lossy().contains("vault"));

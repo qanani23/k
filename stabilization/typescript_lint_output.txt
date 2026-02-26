@@ -1,0 +1,656 @@
+﻿
+> kiyya-desktop@1.0.0 lint
+> eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0
+
+
+C:\Users\hp\Desktop\kiyya1\src\App.tsx
+   47:9  warning  Unexpected empty object pattern                                                                              no-empty-pattern
+  117:6  warning  React Hook useEffect has a missing dependency: 'addToast'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  155:6  warning  React Hook useEffect has a missing dependency: 'addToast'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\hp\Desktop\kiyya1\src\components\ErrorBoundary.tsx
+  29:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\src\components\NavBar.tsx
+  248:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\src\components\PlayerModal.refactored.tsx
+  116:28  warning  Forbidden non-null assertion                                                   @typescript-eslint/no-non-null-assertion
+  136:26  error    'currentTime' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  139:24  error    'buffered' is defined but never used. Allowed unused args must match /^_/u     @typescript-eslint/no-unused-vars
+  193:9   error    'handleBuffering' is assigned a value but never used                           @typescript-eslint/no-unused-vars
+
+C:\Users\hp\Desktop\kiyya1\src\components\PlayerModal.tsx
+   13:32  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                         @typescript-eslint/no-explicit-any
+  272:38  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                         @typescript-eslint/no-explicit-any
+  299:18  warning  The ref value 'videoRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'videoRef.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+  302:6   warning  React Hook useEffect has a missing dependency: 'handleBuffering'. Either include it or remove the dependency array                                                                                                                                               react-hooks/exhaustive-deps
+  336:46  warning  The ref value 'videoRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'videoRef.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+
+C:\Users\hp\Desktop\kiyya1\src\components\RowCarousel.tsx
+  93:19  warning  The ref value 'cardRefsMap.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'cardRefsMap.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+
+C:\Users\hp\Desktop\kiyya1\src\hooks\useContent.ts
+   72:6   warning  React Hook useMemo has a missing dependency: 'tags'. Either include it or remove the dependency array                                                  react-hooks/exhaustive-deps
+   72:7   warning  React Hook useMemo has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked                 react-hooks/exhaustive-deps
+   72:31  warning  React Hook useMemo has a spread element in its dependency array. This means we can't statically verify whether you've passed the correct dependencies  react-hooks/exhaustive-deps
+   82:6   warning  React Hook useMemo has a missing dependency: 'tags'. Either include it or remove the dependency array                                                  react-hooks/exhaustive-deps
+  275:45  warning  Unexpected any. Specify a different type                                                                                                               @typescript-eslint/no-explicit-any
+  276:47  warning  Unexpected any. Specify a different type                                                                                                               @typescript-eslint/no-explicit-any
+  277:48  warning  Unexpected any. Specify a different type                                                                                                               @typescript-eslint/no-explicit-any
+  278:48  warning  Unexpected any. Specify a different type                                                                                                               @typescript-eslint/no-explicit-any
+  381:6   warning  React Hook useCallback has a missing dependency: 'setStatusWithValidation'. Either include it or remove the dependency array                           react-hooks/exhaustive-deps
+  594:58  warning  Unexpected any. Specify a different type                                                                                                               @typescript-eslint/no-explicit-any
+  603:19  error    'seriesKey' is assigned a value but never used                                                                                                         @typescript-eslint/no-unused-vars
+
+C:\Users\hp\Desktop\kiyya1\src\i18n\EXAMPLE_USAGE.tsx
+  119:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\src\i18n\index.ts
+  82:3  error  'variables' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\hp\Desktop\kiyya1\src\lib\api.ts
+   64:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  107:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  187:9   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  242:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\src\lib\errors.ts
+  106:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  116:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  159:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  172:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  185:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  198:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  211:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  224:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  237:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  261:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  477:14  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  484:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  559:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\src\lib\idle.ts
+  31:6   error  'IdleCallback' is defined but never used                                    @typescript-eslint/no-unused-vars
+  52:14  error  'deadline' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+C:\Users\hp\Desktop\kiyya1\src\lib\images.ts
+  80:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\src\lib\memoryManager.ts
+  200:11  error    'now' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  348:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  348:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  369:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  369:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\src\lib\player\PlayerAdapter.ts
+   94:24  warning  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  156:20  error    'url' is defined but never used. Allowed unused args must match /^_/u        @typescript-eslint/no-unused-vars
+  156:33  error    'type' is defined but never used. Allowed unused args must match /^_/u       @typescript-eslint/no-unused-vars
+  173:11  error    'oldQuality' is assigned a value but never used                              @typescript-eslint/no-unused-vars
+  237:24  warning  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  274:25  warning  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  275:24  warning  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  289:20  error    'url' is defined but never used. Allowed unused args must match /^_/u        @typescript-eslint/no-unused-vars
+  289:33  error    'type' is defined but never used. Allowed unused args must match /^_/u       @typescript-eslint/no-unused-vars
+  293:16  error    'qualities' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  297:23  error    'quality' is defined but never used. Allowed unused args must match /^_/u    @typescript-eslint/no-unused-vars
+  309:8   error    'time' is defined but never used. Allowed unused args must match /^_/u       @typescript-eslint/no-unused-vars
+  333:24  warning  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\src\lib\quality.ts
+   36:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  111:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\src\lib\series.ts
+  261:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  268:22  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  283:24  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  337:21  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  467:24  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+C:\Users\hp\Desktop\kiyya1\src\main.tsx
+  12:21  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+C:\Users\hp\Desktop\kiyya1\src\pages\SettingsPage.tsx
+   75:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  160:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\src\test\setup.ts
+  20:1  warning  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  24:1  warning  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+
+C:\Users\hp\Desktop\kiyya1\src\types\index.ts
+  268:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  339:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  349:11  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  355:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  722:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\e2e\app.spec.ts
+   182:13  error    'initialTitle' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  1955:22  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\e2e\offline-functionality.spec.ts
+  12:24  error  'Page' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\hp\Desktop\kiyya1\tests\e2e\workflows.spec.ts
+  134:13  error  'initialText' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  301:11  error  'hasRomance' is assigned a value but never used   @typescript-eslint/no-unused-vars
+
+C:\Users\hp\Desktop\kiyya1\tests\integration\home-page-rendering.test.tsx
+  56:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\integration\movies-page-filtering.test.tsx
+   15:10  error    'BrowserRouter' is defined but never used      @typescript-eslint/no-unused-vars
+   37:70  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  231:15  error    'rerender' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  314:15  error    'rerender' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  334:15  error    'rerender' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\hp\Desktop\kiyya1\tests\integration\new-page-routes.test.tsx
+  38:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\integration\offline-functionality.test.ts
+  14:27  error    'waitFor' is defined but never used       @typescript-eslint/no-unused-vars
+  18:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\integration\series-page-grouping.test.tsx
+   17:44  error    'Playlist' is defined but never used       @typescript-eslint/no-unused-vars
+  231:21  warning  Forbidden non-null assertion               @typescript-eslint/no-non-null-assertion
+  235:21  warning  Forbidden non-null assertion               @typescript-eslint/no-non-null-assertion
+  295:24  warning  Forbidden non-null assertion               @typescript-eslint/no-non-null-assertion
+  303:13  error    'user' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  325:21  warning  Forbidden non-null assertion               @typescript-eslint/no-non-null-assertion
+  328:21  warning  Forbidden non-null assertion               @typescript-eslint/no-non-null-assertion
+  331:21  warning  Forbidden non-null assertion               @typescript-eslint/no-non-null-assertion
+  334:21  warning  Forbidden non-null assertion               @typescript-eslint/no-non-null-assertion
+  335:21  warning  Forbidden non-null assertion               @typescript-eslint/no-non-null-assertion
+  336:21  warning  Forbidden non-null assertion               @typescript-eslint/no-non-null-assertion
+  517:24  warning  Forbidden non-null assertion               @typescript-eslint/no-non-null-assertion
+
+C:\Users\hp\Desktop\kiyya1\tests\property\api.validation.property.test.ts
+   27:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   57:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   57:50  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  274:75  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\property\api.wrapper.property.test.ts
+   25:7   error    'channelIdArb' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   48:16  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  349:38  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  351:30  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  352:27  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  376:38  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  405:38  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\property\categorization.property.test.ts
+  161:55  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  239:28  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  243:53  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  255:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\property\memoryManager.cacheRoundTrip.property.test.ts
+  1:32  error  'beforeEach' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\hp\Desktop\kiyya1\tests\property\series.grouping.property.test.ts
+  230:19  error  'series' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\hp\Desktop\kiyya1\tests\property\series.ordering.property.test.ts
+  178:20  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  178:56  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  214:20  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  218:30  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  336:22  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  336:58  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+C:\Users\hp\Desktop\kiyya1\tests\property\useContent.cacheBypass.property.test.ts
+  121:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  176:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  382:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\property\useContent.errorMessageDisplay.property.test.ts
+  51:7  error  'limitArb' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\DownloadsPage.test.tsx
+  2:35  error  'within' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\FavoritesPage.test.tsx
+  100:5  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\Hero.test.tsx
+  485:75  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\Home.test.tsx
+   45:72  warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  279:22  warning  Forbidden non-null assertion               @typescript-eslint/no-non-null-assertion
+  302:22  warning  Forbidden non-null assertion               @typescript-eslint/no-non-null-assertion
+  379:11  error    'user' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\KidsPage.test.tsx
+  43:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  57:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\MovieDetail.test.tsx
+  37:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\MoviesPage.test.tsx
+   4:10  error    'BrowserRouter' is defined but never used  @typescript-eslint/no-unused-vars
+  40:76  warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\NavBar.test.tsx
+  483:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  599:25  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\PlayerModal.test.tsx
+  119:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  120:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  121:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  238:84  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  280:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  769:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\RowCarousel.test.tsx
+   62:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   66:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   85:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   88:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  162:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  167:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\Search.test.tsx
+  182:56  error    Unnecessary escape character: \+  no-useless-escape
+  221:24  warning  Forbidden non-null assertion      @typescript-eslint/no-non-null-assertion
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\SeriesDetail.test.tsx
+    5:23  error    'SeriesInfo' is defined but never used    @typescript-eslint/no-unused-vars
+   37:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  245:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  246:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\SeriesPage.retry.test.tsx
+   61:23  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  194:11  error    'initialHTML' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\SettingsPage.test.tsx
+  155:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  214:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  231:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  247:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  263:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  281:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  312:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  329:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  346:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  364:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  381:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  388:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  403:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  427:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  453:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  471:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  487:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  502:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  520:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  527:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  542:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  585:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  700:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  711:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  733:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  749:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  764:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\SitcomsPage.test.tsx
+  43:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\api.test.ts
+    20:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+    33:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+    62:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+    88:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   108:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   121:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   134:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   147:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   159:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   174:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   191:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   206:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   222:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   244:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   257:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   273:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   290:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   312:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   321:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   344:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   361:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   371:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   381:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   391:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   399:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   410:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   422:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   435:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   483:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   499:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   507:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   659:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   678:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   697:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   718:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   735:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   755:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   772:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   791:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   807:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   827:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   848:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   864:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   873:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   882:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   929:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   941:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   950:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   969:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   988:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1007:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\aria-labels.test.tsx
+  5:8  error  'DownloadsPage' is defined but never used  @typescript-eslint/no-unused-vars
+  6:8  error  'FavoritesPage' is defined but never used  @typescript-eslint/no-unused-vars
+  7:8  error  'SettingsPage' is defined but never used   @typescript-eslint/no-unused-vars
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\codec.test.ts
+    7:13  error    'Hls' is defined but never used           @typescript-eslint/no-unused-vars
+   33:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   34:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   39:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   55:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   89:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   90:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   94:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  225:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\errors.test.ts
+  268:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  269:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  270:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  322:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\gsap-restrictions.test.tsx
+   85:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   86:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   87:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   88:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   91:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  115:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  150:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  189:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  189:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  191:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  377:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  379:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\i18n.test.ts
+  209:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\idle.test.ts
+  15:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  16:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\images.test.ts
+  118:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  122:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  248:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  280:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  325:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\keyboard-navigation.test.tsx
+   46:25  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   63:25  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   80:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   87:25  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  104:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  111:25  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\quality.test.ts
+  173:34  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  188:34  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  203:34  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  215:28  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  221:31  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  227:28  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  233:31  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  246:34  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  261:34  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  273:29  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  282:28  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  291:28  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  301:30  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  306:29  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  317:11  error    'currentQuality' is never reassigned. Use 'const' instead  prefer-const
+  359:11  error    'currentQuality' is never reassigned. Use 'const' instead  prefer-const
+  380:28  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  390:29  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  400:29  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  505:29  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  516:24  warning  Forbidden non-null assertion                               @typescript-eslint/no-non-null-assertion
+  528:24  warning  Forbidden non-null assertion                               @typescript-eslint/no-non-null-assertion
+  555:26  warning  Forbidden non-null assertion                               @typescript-eslint/no-non-null-assertion
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\series.ordering.test.ts
+  135:14  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  138:31  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  144:31  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  239:14  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  239:56  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  242:32  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  243:31  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  251:32  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  252:31  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\series.test.ts
+   568:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   569:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   570:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   571:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   572:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   583:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   584:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   596:22  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   638:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   679:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   680:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   681:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   682:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   683:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   684:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   685:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   686:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   713:22  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   962:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   965:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   966:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   967:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   968:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   971:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   972:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   973:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   974:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   976:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1004:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1005:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1006:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1023:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1024:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1025:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1054:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1055:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1056:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1060:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1061:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1097:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1100:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1101:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1104:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1105:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1108:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1109:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1137:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1138:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1139:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1153:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1154:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1155:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1192:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1193:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  1194:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\series.ui.test.tsx
+  281:13  error  '_invalidSeason' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  299:13  error  '_invalidSeason' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\useContent.cacheBypass.test.tsx
+   79:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  148:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\useContent.offlineHandling.test.tsx
+   73:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  102:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  127:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  155:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  181:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  206:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  231:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  257:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  284:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  310:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  335:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  361:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  391:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  419:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  453:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\useContent.test.ts
+  567:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  662:94  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\useDebouncedSearch.nonblocking.test.ts
+   19:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   20:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   47:5   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  274:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  275:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  306:5   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\useDebouncedSearch.test.ts
+  895:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\useDownloadManager.test.ts
+   22:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   23:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   24:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   34:16  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   34:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   68:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   92:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  131:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  131:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  158:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  158:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  176:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  176:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  204:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  204:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  219:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  219:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  228:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  247:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  247:50  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  272:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  307:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  307:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  335:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  335:50  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  362:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  362:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  390:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  390:50  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  428:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  428:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  429:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  429:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  465:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  465:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  466:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  466:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  502:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  502:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  503:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  503:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  531:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  531:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  549:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  571:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  590:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  590:50  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  609:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  655:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  655:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  663:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  663:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  671:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  671:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\useOffline.test.ts
+    6:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   81:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  148:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\useUpdateChecker.test.ts
+   41:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   63:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   86:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  101:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  118:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  142:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  174:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\hp\Desktop\kiyya1\tests\unit\workflow-integration.test.tsx
+   28:34  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+   63:34  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+   66:55  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+   90:34  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+   93:49  error    'args' is defined but never used. Allowed unused args must match /^_/u                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   93:55  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  122:34  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  123:34  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  126:56  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  132:20  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  157:63  error    Don't use `Function` as a type. The `Function` type accepts any function-like value.
+It provides no type safety when calling the function, which can be a common source of bugs.
+It also accepts things like class declarations, which will throw at runtime as they will not be called with `new`.
+If you are expecting the function to accept certain arguments, you should explicitly define the function shape  @typescript-eslint/ban-types
+  170:34  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  173:56  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  200:34  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  203:56  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  224:34  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  279:34  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  282:49  error    'args' is defined but never used. Allowed unused args must match /^_/u                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+  282:55  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  353:34  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  386:34  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  389:55  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  422:34  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  425:55  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  477:34  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  480:55  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  515:40  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+
+Γ£û 497 problems (48 errors, 449 warnings)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+

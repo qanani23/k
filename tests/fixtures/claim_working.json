@@ -1,0 +1,30 @@
+{
+  "claim_id": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
+  "name": "sample-public-video",
+  "value": {
+    "stream": {
+      "source": {
+        "sd_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+        "media_type": "video/mp4",
+        "name": "sample-public-video.mp4",
+        "size": "1048576"
+      }
+    },
+    "title": "Sample Public Video",
+    "description": "This is a sanitized test claim for reproducible testing",
+    "thumbnail": {
+      "url": "https://example.com/thumbnail.jpg"
+    },
+    "video": {
+      "duration": 120,
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "permanent_url": "lbry://@testchannel#0/sample-public-video#a",
+  "canonical_url": "lbry://@testchannel#0/sample-public-video#a",
+  "signing_channel": {
+    "claim_id": "0000000000000000000000000000000000000000",
+    "name": "@testchannel"
+  }
+}

@@ -1,10 +1,10 @@
 /// Property-Based Tests for Valid Channel ID Acceptance
-/// 
+///
 /// **Feature: pass-channel-id-from-frontend, Property 4: Valid channel ID acceptance**
-/// 
+///
 /// For any channel_id string that starts with '@' and is non-empty, when passed to backend
 /// commands, the backend should proceed with the API request using the validated channel_id.
-/// 
+///
 /// **Validates: Requirements 4.4**
 
 #[cfg(test)]
@@ -50,7 +50,7 @@ mod valid_channel_id_acceptance_tests {
             channel_id in valid_channel_id_strategy()
         ) {
             let result = validation::validate_channel_id(&channel_id);
-            
+
             // Property: All valid channel IDs should be accepted (validation passes)
             prop_assert!(
                 result.is_ok(),
@@ -67,13 +67,13 @@ mod valid_channel_id_acceptance_tests {
             channel_id in valid_channel_id_strategy()
         ) {
             let result = validation::validate_channel_id(&channel_id);
-            
+
             // Property: Validation should succeed
             prop_assert!(
                 result.is_ok(),
                 "Valid channel_id should pass validation"
             );
-            
+
             // Property: Validated value should match input exactly
             if let Ok(validated) = result {
                 prop_assert_eq!(
@@ -93,14 +93,14 @@ mod valid_channel_id_acceptance_tests {
             // Generate valid channel ID of given length (@ + alphanumeric characters)
             let channel_id = format!("@{}", "a".repeat(length));
             let result = validation::validate_channel_id(&channel_id);
-            
+
             // Property: Valid channel IDs should be accepted regardless of length
             prop_assert!(
                 result.is_ok(),
                 "Valid channel_id of length {} should be accepted",
                 length + 1
             );
-            
+
             // Property: Validated value should match input
             if let Ok(validated) = result {
                 prop_assert_eq!(
@@ -121,18 +121,18 @@ mod valid_channel_id_acceptance_tests {
             // Test with colon (claim ID format)
             let channel_id_with_colon = format!("@{}:{}", name, claim_id);
             let result_with_colon = validation::validate_channel_id(&channel_id_with_colon);
-            
+
             // Property: Channel IDs with colons should be accepted
             prop_assert!(
                 result_with_colon.is_ok(),
                 "Valid channel_id with colon '{}' should be accepted",
                 channel_id_with_colon
             );
-            
+
             // Test without colon
             let channel_id_without_colon = format!("@{}", name);
             let result_without_colon = validation::validate_channel_id(&channel_id_without_colon);
-            
+
             // Property: Channel IDs without colons should be accepted
             prop_assert!(
                 result_without_colon.is_ok(),
@@ -151,7 +151,7 @@ mod valid_channel_id_acceptance_tests {
             let results: Vec<_> = (0..iterations)
                 .map(|_| validation::validate_channel_id(&channel_id))
                 .collect();
-            
+
             // Property: All results should be Ok (accepted)
             for (i, result) in results.iter().enumerate() {
                 prop_assert!(
@@ -161,7 +161,7 @@ mod valid_channel_id_acceptance_tests {
                     channel_id
                 );
             }
-            
+
             // Property: All validated values should be identical
             let first_validated = results[0].as_ref().ok();
             for result in &results[1..] {
@@ -182,15 +182,15 @@ mod valid_channel_id_acceptance_tests {
             // Test lowercase
             let lowercase_id = format!("@{}", name.to_lowercase());
             let result_lower = validation::validate_channel_id(&lowercase_id);
-            
+
             // Test uppercase
             let uppercase_id = format!("@{}", name.to_uppercase());
             let result_upper = validation::validate_channel_id(&uppercase_id);
-            
+
             // Test mixed case
             let mixed_id = format!("@{}", name);
             let result_mixed = validation::validate_channel_id(&mixed_id);
-            
+
             // Property: All case variations should be accepted
             prop_assert!(
                 result_lower.is_ok(),
@@ -219,14 +219,14 @@ mod valid_channel_id_acceptance_tests {
             // Test without environment variable
             std::env::remove_var("CHANNEL_ID");
             let result_no_env = validation::validate_channel_id(&channel_id);
-            
+
             // Test with environment variable set
             std::env::set_var("CHANNEL_ID", &env_value);
             let result_with_env = validation::validate_channel_id(&channel_id);
-            
+
             // Clean up
             std::env::remove_var("CHANNEL_ID");
-            
+
             // Property: Both should accept valid channel IDs
             prop_assert!(
                 result_no_env.is_ok(),
@@ -236,7 +236,7 @@ mod valid_channel_id_acceptance_tests {
                 result_with_env.is_ok(),
                 "Valid channel_id should be accepted with env var set"
             );
-            
+
             // Property: Results should be identical
             prop_assert_eq!(
                 result_no_env.as_ref().ok(),
@@ -253,14 +253,14 @@ mod valid_channel_id_acceptance_tests {
         ) {
             for channel_id in &channel_ids {
                 let result = validation::validate_channel_id(channel_id);
-                
+
                 // Property: Each valid channel_id should be accepted
                 prop_assert!(
                     result.is_ok(),
                     "Valid channel_id '{}' should be accepted",
                     channel_id
                 );
-                
+
                 // Property: Validated value should match input
                 if let Ok(validated) = result {
                     prop_assert_eq!(
@@ -279,13 +279,13 @@ mod valid_channel_id_acceptance_tests {
             channel_id in valid_channel_id_strategy()
         ) {
             let result = validation::validate_channel_id(&channel_id);
-            
+
             // Property: Validation should succeed
             prop_assert!(
                 result.is_ok(),
                 "Valid channel_id should be accepted"
             );
-            
+
             // Property: Validated value should have identical bytes
             if let Ok(validated) = result {
                 prop_assert_eq!(
@@ -304,10 +304,10 @@ mod valid_channel_id_acceptance_tests {
         ) {
             use std::sync::Arc;
             use std::thread;
-            
+
             let channel_id = Arc::new(channel_id);
             let mut handles = vec![];
-            
+
             // Spawn multiple threads to validate the same channel_id
             for _ in 0..5 {
                 let channel_id_clone = Arc::clone(&channel_id);
@@ -316,12 +316,12 @@ mod valid_channel_id_acceptance_tests {
                 });
                 handles.push(handle);
             }
-            
+
             // Collect results
             let results: Vec<_> = handles.into_iter()
                 .map(|h| h.join().unwrap())
                 .collect();
-            
+
             // Property: All threads should accept the valid channel_id
             for (i, result) in results.iter().enumerate() {
                 prop_assert!(
@@ -330,7 +330,7 @@ mod valid_channel_id_acceptance_tests {
                     i
                 );
             }
-            
+
             // Property: All results should be identical
             let first_result = results[0].as_ref().ok();
             for result in &results[1..] {
@@ -350,14 +350,14 @@ mod valid_channel_id_acceptance_tests {
         ) {
             let channel_id = format!("@{}", numbers);
             let result = validation::validate_channel_id(&channel_id);
-            
+
             // Property: Channel IDs with numbers should be accepted
             prop_assert!(
                 result.is_ok(),
                 "Valid channel_id with numbers '{}' should be accepted",
                 channel_id
             );
-            
+
             // Property: Validated value should match input
             if let Ok(validated) = result {
                 prop_assert_eq!(
@@ -374,13 +374,13 @@ mod valid_channel_id_acceptance_tests {
         fn prop_minimal_valid_channel_id_accepted(_unit in 0u8..1u8) {
             let channel_id = "@";
             let result = validation::validate_channel_id(channel_id);
-            
+
             // Property: Minimal valid channel_id '@' should be accepted
             prop_assert!(
                 result.is_ok(),
                 "Minimal valid channel_id '@' should be accepted"
             );
-            
+
             // Property: Validated value should match input
             if let Ok(validated) = result {
                 prop_assert_eq!(
@@ -401,7 +401,7 @@ mod valid_channel_id_acceptance_tests {
             let results: Vec<_> = (0..10)
                 .map(|_| validation::validate_channel_id(&channel_id))
                 .collect();
-            
+
             // Property: All results should be Ok
             for (i, result) in results.iter().enumerate() {
                 prop_assert!(
@@ -411,7 +411,7 @@ mod valid_channel_id_acceptance_tests {
                     channel_id
                 );
             }
-            
+
             // Property: All results should be identical
             let first_result = &results[0];
             for result in &results[1..] {
@@ -432,7 +432,7 @@ mod valid_channel_id_acceptance_tests {
         ) {
             let channel_id = format!("@{}{}", name, trailing);
             let result = validation::validate_channel_id(&channel_id);
-            
+
             // Property: Valid channel IDs should be accepted
             prop_assert!(
                 result.is_ok(),
@@ -450,7 +450,7 @@ mod valid_channel_id_acceptance_tests {
         ) {
             let channel_id = format!("@{}{}{}", base, special, base);
             let result = validation::validate_channel_id(&channel_id);
-            
+
             // Property: Valid channel IDs with special characters should be accepted
             prop_assert!(
                 result.is_ok(),

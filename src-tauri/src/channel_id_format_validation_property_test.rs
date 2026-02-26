@@ -1,10 +1,10 @@
 /// Property-Based Tests for Channel ID Format Validation
-/// 
+///
 /// **Feature: pass-channel-id-from-frontend, Property 3: Channel ID format validation**
-/// 
+///
 /// For any channel_id string, the validation should pass if and only if the string
 /// starts with '@' and is non-empty.
-/// 
+///
 /// **Validates: Requirements 1.5, 4.1**
 
 #[cfg(test)]
@@ -53,7 +53,7 @@ mod channel_id_format_validation_tests {
         ) {
             let result = validation::validate_channel_id(&channel_id);
             let expected_valid = should_be_valid(&channel_id);
-            
+
             // Property: Validation result should match expected validity
             prop_assert_eq!(
                 result.is_ok(),
@@ -73,14 +73,14 @@ mod channel_id_format_validation_tests {
         ) {
             let channel_id = format!("@{}", suffix);
             let result = validation::validate_channel_id(&channel_id);
-            
+
             // Property: All strings starting with '@' and non-empty should pass
             prop_assert!(
                 result.is_ok(),
                 "Channel_id '{}' starts with '@' and is non-empty, should pass validation",
                 channel_id
             );
-            
+
             // Property: Validated value should match input
             if let Ok(validated) = result {
                 prop_assert_eq!(
@@ -99,12 +99,12 @@ mod channel_id_format_validation_tests {
             rest in "[a-zA-Z0-9:_-]{0,20}"
         ) {
             let channel_id = format!("{}{}", first_char, rest);
-            
+
             // Skip if it accidentally starts with '@' (shouldn't happen with our regex)
             prop_assume!(!channel_id.starts_with('@'));
-            
+
             let result = validation::validate_channel_id(&channel_id);
-            
+
             // Property: Strings not starting with '@' should fail validation
             prop_assert!(
                 result.is_err(),
@@ -120,7 +120,7 @@ mod channel_id_format_validation_tests {
             whitespace in "[ \t\n\r]{0,10}"
         ) {
             let result = validation::validate_channel_id(&whitespace);
-            
+
             // Property: Empty or whitespace-only strings should fail validation
             prop_assert!(
                 result.is_err(),
@@ -139,7 +139,7 @@ mod channel_id_format_validation_tests {
             let results: Vec<_> = (0..iterations)
                 .map(|_| validation::validate_channel_id(&channel_id).is_ok())
                 .collect();
-            
+
             // Property: All results should be identical
             let first_result = results[0];
             for (i, result) in results.iter().enumerate().skip(1) {
@@ -159,7 +159,7 @@ mod channel_id_format_validation_tests {
         fn prop_at_symbol_only_is_valid(_unit in 0u8..1u8) {
             let channel_id = "@";
             let result = validation::validate_channel_id(channel_id);
-            
+
             // Property: '@' alone should be valid (non-empty and starts with '@')
             prop_assert!(
                 result.is_ok(),
@@ -175,7 +175,7 @@ mod channel_id_format_validation_tests {
         ) {
             let channel_id = format!("@{}", c);
             let result = validation::validate_channel_id(&channel_id);
-            
+
             // Property: '@' followed by any character (except null) should be valid
             prop_assert!(
                 result.is_ok(),
@@ -193,7 +193,7 @@ mod channel_id_format_validation_tests {
         ) {
             let channel_id = format!("{}\0{}", prefix, suffix);
             let result = validation::validate_channel_id(&channel_id);
-            
+
             // Property: Strings with null bytes should always fail
             prop_assert!(
                 result.is_err(),
@@ -208,13 +208,13 @@ mod channel_id_format_validation_tests {
             channel_id in arbitrary_string_strategy()
         ) {
             let result = validation::validate_channel_id(&channel_id);
-            
+
             // Manual check according to specification
             let is_non_empty = !channel_id.trim().is_empty();
             let starts_with_at = channel_id.starts_with('@');
             let no_null_bytes = !channel_id.contains('\0');
             let should_pass = is_non_empty && starts_with_at && no_null_bytes;
-            
+
             // Property: Validation result should match manual specification check
             prop_assert_eq!(
                 result.is_ok(),
@@ -238,11 +238,11 @@ mod channel_id_format_validation_tests {
         ) {
             let result = validation::validate_channel_id(&channel_id);
             let is_valid = result.is_ok();
-            
+
             let is_non_empty = !channel_id.trim().is_empty();
             let starts_with_at = channel_id.starts_with('@');
             let no_null_bytes = !channel_id.contains('\0');
-            
+
             if is_valid {
                 // Forward direction: valid => starts with '@' AND non-empty AND no null bytes
                 prop_assert!(
@@ -283,7 +283,7 @@ mod channel_id_format_validation_tests {
             // Generate valid channel ID of given length
             let channel_id = format!("@{}", "a".repeat(length - 1));
             let result = validation::validate_channel_id(&channel_id);
-            
+
             // Property: Valid format should pass regardless of length
             prop_assert!(
                 result.is_ok(),
@@ -301,11 +301,11 @@ mod channel_id_format_validation_tests {
             let lowercase_id = format!("@{}", name.to_lowercase());
             let uppercase_id = format!("@{}", name.to_uppercase());
             let mixed_id = format!("@{}", name);
-            
+
             let result_lower = validation::validate_channel_id(&lowercase_id);
             let result_upper = validation::validate_channel_id(&uppercase_id);
             let result_mixed = validation::validate_channel_id(&mixed_id);
-            
+
             // Property: All case variations should be valid
             prop_assert!(
                 result_lower.is_ok(),

@@ -1,8 +1,8 @@
 /// Comprehensive test suite for encryption key management
-/// 
+///
 /// This test verifies that encryption keys are ONLY stored in the OS keystore
 /// and NEVER in code or database, as per security requirement 11.2.3
-/// 
+///
 /// Test Coverage:
 /// 1. Keys are stored only in OS keystore
 /// 2. Keys are never stored in database tables
@@ -37,12 +37,18 @@ mod encryption_key_management_tests {
 
         // Create a second manager and load from keystore
         let mut manager2 = EncryptionManager::new().unwrap();
-        assert!(!manager2.is_encryption_enabled(), "New manager should start disabled");
+        assert!(
+            !manager2.is_encryption_enabled(),
+            "New manager should start disabled"
+        );
 
         let load_result = manager2.load_encryption_from_keystore();
         assert!(load_result.is_ok(), "Should load from keystore");
         assert!(load_result.unwrap(), "Should find key in keystore");
-        assert!(manager2.is_encryption_enabled(), "Should be enabled after loading");
+        assert!(
+            manager2.is_encryption_enabled(),
+            "Should be enabled after loading"
+        );
 
         // Both managers should be able to encrypt/decrypt
         let temp_dir = TempDir::new().unwrap();
@@ -56,22 +62,40 @@ mod encryption_key_management_tests {
         write(&input_path, test_content).await.unwrap();
 
         // Manager 1 encrypts
-        manager1.encrypt_file(&input_path, &encrypted1_path).await.unwrap();
+        manager1
+            .encrypt_file(&input_path, &encrypted1_path)
+            .await
+            .unwrap();
 
         // Manager 2 decrypts (using same key from keystore)
-        manager2.decrypt_file(&encrypted1_path, &decrypted1_path).await.unwrap();
+        manager2
+            .decrypt_file(&encrypted1_path, &decrypted1_path)
+            .await
+            .unwrap();
 
         let decrypted = tokio::fs::read(&decrypted1_path).await.unwrap();
-        assert_eq!(decrypted, test_content, "Should decrypt correctly with keystore key");
+        assert_eq!(
+            decrypted, test_content,
+            "Should decrypt correctly with keystore key"
+        );
 
         // Manager 2 encrypts
-        manager2.encrypt_file(&input_path, &encrypted2_path).await.unwrap();
+        manager2
+            .encrypt_file(&input_path, &encrypted2_path)
+            .await
+            .unwrap();
 
         // Manager 1 decrypts
-        manager1.decrypt_file(&encrypted2_path, &decrypted2_path).await.unwrap();
+        manager1
+            .decrypt_file(&encrypted2_path, &decrypted2_path)
+            .await
+            .unwrap();
 
         let decrypted2 = tokio::fs::read(&decrypted2_path).await.unwrap();
-        assert_eq!(decrypted2, test_content, "Should decrypt correctly with keystore key");
+        assert_eq!(
+            decrypted2, test_content,
+            "Should decrypt correctly with keystore key"
+        );
 
         // Clean up
         let _ = manager1.disable_encryption();
@@ -163,7 +187,8 @@ mod encryption_key_management_tests {
         // Only allowed key-related settings are configuration keys, not encryption keys
         for setting_key in key_settings {
             assert!(
-                setting_key == "last_used_quality" || setting_key.ends_with("_key") && !setting_key.contains("encryption"),
+                setting_key == "last_used_quality"
+                    || setting_key.ends_with("_key") && !setting_key.contains("encryption"),
                 "Found suspicious setting key: {}",
                 setting_key
             );
@@ -200,7 +225,9 @@ mod encryption_key_management_tests {
             // Hex encoded keys would be 64 characters
             if value.len() >= 32 {
                 // Check if it looks like base64 or hex
-                let is_base64_like = value.chars().all(|c| c.is_alphanumeric() || c == '+' || c == '/' || c == '=');
+                let is_base64_like = value
+                    .chars()
+                    .all(|c| c.is_alphanumeric() || c == '+' || c == '/' || c == '=');
                 let is_hex_like = value.chars().all(|c| c.is_ascii_hexdigit());
 
                 if is_base64_like || is_hex_like {
@@ -248,7 +275,10 @@ mod encryption_key_management_tests {
         let mut verifier2 = EncryptionManager::new().unwrap();
         let load_result2 = verifier2.load_encryption_from_keystore();
         assert!(load_result2.is_ok());
-        assert!(!load_result2.unwrap(), "Key should be removed from keystore");
+        assert!(
+            !load_result2.unwrap(),
+            "Key should be removed from keystore"
+        );
     }
 
     /// Test 5: Verify no hard-coded keys in encryption manager
@@ -256,7 +286,10 @@ mod encryption_key_management_tests {
     async fn test_no_hardcoded_keys() {
         // A new manager should have no encryption enabled
         let manager = EncryptionManager::new().unwrap();
-        assert!(!manager.is_encryption_enabled(), "Should not have encryption without passphrase");
+        assert!(
+            !manager.is_encryption_enabled(),
+            "Should not have encryption without passphrase"
+        );
 
         // Encryption requires explicit passphrase
         let mut manager2 = EncryptionManager::new().unwrap();
@@ -291,7 +324,10 @@ mod encryption_key_management_tests {
         manager.enable_encryption(passphrase).unwrap();
 
         // Encrypt file
-        manager.encrypt_file(&input_path, &encrypted_path).await.unwrap();
+        manager
+            .encrypt_file(&input_path, &encrypted_path)
+            .await
+            .unwrap();
 
         // Read encrypted file
         let encrypted_content = tokio::fs::read(&encrypted_path).await.unwrap();
@@ -306,7 +342,11 @@ mod encryption_key_management_tests {
         // Verify encrypted file doesn't contain obvious key patterns
         // (This is a heuristic check - encrypted data should look random)
         let has_repeated_patterns = encrypted_content.windows(16).any(|window| {
-            encrypted_content.windows(16).filter(|w| w == &window).count() > 3
+            encrypted_content
+                .windows(16)
+                .filter(|w| w == &window)
+                .count()
+                > 3
         });
 
         assert!(
@@ -337,23 +377,28 @@ mod encryption_key_management_tests {
         // Manager 1 with passphrase 1
         let mut manager1 = EncryptionManager::new().unwrap();
         manager1.enable_encryption("passphrase_one").unwrap();
-        manager1.encrypt_file(&input_path, &encrypted1_path).await.unwrap();
+        manager1
+            .encrypt_file(&input_path, &encrypted1_path)
+            .await
+            .unwrap();
 
         // The keystore only stores one key at a time for the app
         // So enabling with a different passphrase should replace it
         let mut manager2 = EncryptionManager::new().unwrap();
         manager2.enable_encryption("passphrase_two").unwrap();
-        manager2.encrypt_file(&input_path, &encrypted2_path).await.unwrap();
+        manager2
+            .encrypt_file(&input_path, &encrypted2_path)
+            .await
+            .unwrap();
 
         // Now manager1 should not be able to decrypt encrypted2 (different key)
         let decrypted_path = temp_dir.path().join("decrypted.txt");
-        let result = manager1.decrypt_file(&encrypted2_path, &decrypted_path).await;
+        let result = manager1
+            .decrypt_file(&encrypted2_path, &decrypted_path)
+            .await;
 
         // This should fail because manager1 has the old key, but encrypted2 used the new key
-        assert!(
-            result.is_err(),
-            "Should not decrypt with wrong key"
-        );
+        assert!(result.is_err(), "Should not decrypt with wrong key");
 
         // Clean up
         let _ = manager2.disable_encryption();
@@ -392,9 +437,7 @@ mod encryption_key_management_tests {
         assert_eq!(encrypted_value, true, "Should store boolean flag");
 
         // Verify the table schema doesn't have key-related columns
-        let mut schema_stmt = conn
-            .prepare("PRAGMA table_info(offline_meta)")
-            .unwrap();
+        let mut schema_stmt = conn.prepare("PRAGMA table_info(offline_meta)").unwrap();
 
         let columns: Vec<String> = schema_stmt
             .query_map([], |row| row.get::<_, String>(1))
@@ -406,7 +449,9 @@ mod encryption_key_management_tests {
         for column in &columns {
             let lower = column.to_lowercase();
             assert!(
-                !lower.contains("passphrase") && !lower.contains("secret") && !lower.contains("cipher"),
+                !lower.contains("passphrase")
+                    && !lower.contains("secret")
+                    && !lower.contains("cipher"),
                 "Column name suggests key storage: {}",
                 column
             );
@@ -418,7 +463,7 @@ mod encryption_key_management_tests {
             .unwrap();
 
         let filename: String = data_stmt.query_row([], |row| row.get(0)).unwrap();
-        
+
         // Filename should be a normal filename, not a key
         assert_eq!(filename, "test.mp4", "Filename should be normal, not a key");
     }

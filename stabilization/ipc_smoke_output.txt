@@ -1,0 +1,38 @@
+=== IPC Smoke Test Output ===
+Timestamp: 2026-02-23T00:31:41.010Z
+Platform: win32
+Node Version: v24.13.0
+
+=== IPC Smoke Test Started ===
+Platform: win32
+Architecture: x64
+Node Version: v24.13.0
+=== Building Backend ===
+✅ Backend build successful
+
+=== Attempt 1/3 ===
+
+=== Starting Backend ===
+Binary path: src-tauri\target\debug\kiyya-desktop.exe
+Waiting for backend to initialize...
+[BACKEND STDOUT] === MAIN FUNCTION STARTED ===
+=== INITIALIZING LOGGING ===
+[BACKEND STDOUT] [2m2026-02-23T00:31:43.966110Z[0m [32m INFO[0m ThreadId(01) [2mkiyya_desktop::logging[0m[2m:[0m [2msrc\logging.rs[0m[2m:[0m[2m117:[0m Logging system initialized with file rotation [3mlog_dir[0m[2m=[0mC:\Users\hp\AppData\Roaming\Kiyya\logs
+[BACKEND STDOUT] === LOGGING INITIALIZED ===
+=== INITIALIZING CRASH REPORTING ===
+[BACKEND STDERR] Crash reporting initialized: "C:\[BACKEND STDERR] \Users\\hp\\AppData\\Roaming\\Kiyya\\logs\\crash.log"
+[BACKEND STDOUT] === CRASH REPORTING INITIALIZED ===
+=== STARTING EMERGENCY DISABLE CHECK ===
+[BACKEND STDOUT] === SKIPPING EMERGENCY DISABLE CHECK (DEBUG) ===
+=== EMERGENCY DISABLE CHECK COMPLETE ===
+=== INITIALIZING APP STATE ===
+[BACKEND STDOUT] === APP STATE INITIALIZED ===
+=== BUILDING TAURI APP ===
+[BACKEND STDOUT] === TAURI SETUP HOOK STARTED ===
+[BACKEND STDOUT] === SKIPPING MIGRATIONS (DEBUG) ===
+=== TAURI SETUP HOOK COMPLETE ===
+[BACKEND STDERR] Asset `index.html` not found; fallback to index.html.html
+[BACKEND STDERR] Asset `index.html` not found; fallback to index.html/index.html
+Asset `index.html` not found; fallback to index.html
+AssetNotFound("index.html")
+✅ Backend process started

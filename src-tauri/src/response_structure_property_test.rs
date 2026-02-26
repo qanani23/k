@@ -1,7 +1,7 @@
 /// Property-Based Tests for Backend Response Structure
-/// 
+///
 /// **Feature: odysee-cdn-playback-standardization, Property 4: Backend Response Contains Required Fields**
-/// 
+///
 /// For any successfully processed claim with valid claim_id and stream type, the resulting
 /// ContentItem should contain:
 /// - claim_id (non-empty string)
@@ -10,14 +10,14 @@
 /// - playback_url accessible via video_urls.get("master")
 /// - tags (may be empty array)
 /// - thumbnail_url (may be None)
-/// 
+///
 /// **Validates: Requirements 11.7**
 
 #[cfg(test)]
 mod response_structure_property_tests {
     use crate::commands::parse_claim_item;
-    use serde_json::json;
     use proptest::prelude::*;
+    use serde_json::json;
 
     /// Strategy for generating valid claim IDs (alphanumeric, 20-40 chars)
     fn claim_id_strategy() -> impl Strategy<Value = String> {
@@ -37,7 +37,7 @@ mod response_structure_property_tests {
     /// Strategy for generating valid titles
     fn title_strategy() -> impl Strategy<Value = String> {
         prop_oneof![
-            "[A-Za-z0-9 ]{5,100}",  // Normal titles
+            "[A-Za-z0-9 ]{5,100}", // Normal titles
             Just("Test Movie".to_string()),
             Just("Series Episode 1".to_string()),
             Just("Documentary Film".to_string()),
@@ -54,7 +54,7 @@ mod response_structure_property_tests {
                 Just("hero_trailer".to_string()),
                 "[a-z_]{3,20}",
             ],
-            0..10
+            0..10,
         )
     }
 
@@ -62,17 +62,16 @@ mod response_structure_property_tests {
     fn thumbnail_url_strategy() -> impl Strategy<Value = Option<String>> {
         prop_oneof![
             Just(None),
-            Just(Some("https://thumbnails.odysee.com/thumb123.jpg".to_string())),
+            Just(Some(
+                "https://thumbnails.odysee.com/thumb123.jpg".to_string()
+            )),
             Just(Some("https://cdn.example.com/image.png".to_string())),
         ]
     }
 
     /// Strategy for generating optional duration
     fn duration_strategy() -> impl Strategy<Value = Option<u32>> {
-        prop_oneof![
-            Just(None),
-            (60u32..7200u32).prop_map(Some),
-        ]
+        prop_oneof![Just(None), (60u32..7200u32).prop_map(Some),]
     }
 
     /// Strategy for generating optional description
@@ -258,7 +257,7 @@ mod response_structure_property_tests {
             if let Ok(content) = result {
                 // Property: tags field must exist (even if empty)
                 // This is implicit since tags is Vec<String>, not Option<Vec<String>>
-                
+
                 // Property: tags are deduplicated and normalized (lowercase, trimmed)
                 // The extract_tags function removes duplicates and normalizes tags
                 // So we need to deduplicate and normalize input tags for comparison
@@ -267,10 +266,10 @@ mod response_structure_property_tests {
                     .collect();
                 expected_tags.sort();
                 expected_tags.dedup();
-                
+
                 let mut actual_tags = content.tags.clone();
                 actual_tags.sort();
-                
+
                 prop_assert_eq!(
                     actual_tags.len(),
                     expected_tags.len(),
@@ -317,7 +316,7 @@ mod response_structure_property_tests {
             if let Ok(content) = result {
                 // Property: thumbnail_url field must exist (as Option)
                 // This is implicit since thumbnail_url is Option<String>
-                
+
                 // Property: thumbnail_url must match input
                 match (&content.thumbnail_url, &thumbnail_url) {
                     (Some(content_thumb), Some(input_thumb)) => {
@@ -470,7 +469,7 @@ mod response_structure_property_tests {
         ) {
             // Process multiple claims
             let mut results = Vec::new();
-            
+
             for claim_id in &claim_ids {
                 let item = json!({
                     "claim_id": claim_id,

@@ -1,10 +1,10 @@
 /// Property-Based Tests for CDN Builder Determinism
-/// 
+///
 /// **Feature: odysee-cdn-playback-standardization, Property 7: CDN URL Construction Is Idempotent**
-/// 
+///
 /// For any claim_id and gateway configuration, calling the CDN builder multiple times should
 /// produce identical URLs (no randomness, no state dependency).
-/// 
+///
 /// **Validates: Requirements 1.4**
 
 #[cfg(test)]
@@ -65,7 +65,7 @@ mod cdn_builder_determinism_tests {
             let urls: Vec<String> = (0..iterations)
                 .map(|_| build_cdn_playback_url(&claim_id, default_gateway))
                 .collect();
-            
+
             // Property: All URLs should be identical
             let first_url = &urls[0];
             for (i, url) in urls.iter().enumerate().skip(1) {
@@ -77,7 +77,7 @@ mod cdn_builder_determinism_tests {
                     claim_id
                 );
             }
-            
+
             // Property: URL should be non-empty
             prop_assert!(
                 !first_url.is_empty(),
@@ -98,7 +98,7 @@ mod cdn_builder_determinism_tests {
             let urls: Vec<String> = (0..iterations)
                 .map(|_| build_cdn_playback_url(&claim_id, &gateway))
                 .collect();
-            
+
             // Property: All URLs should be identical
             let first_url = &urls[0];
             for (i, url) in urls.iter().enumerate().skip(1) {
@@ -111,7 +111,7 @@ mod cdn_builder_determinism_tests {
                     gateway
                 );
             }
-            
+
             // Property: URL should be non-empty
             prop_assert!(
                 !first_url.is_empty(),
@@ -129,7 +129,7 @@ mod cdn_builder_determinism_tests {
             // Generate URL twice with same inputs
             let url1 = build_cdn_playback_url(&claim_id, &gateway);
             let url2 = build_cdn_playback_url(&claim_id, &gateway);
-            
+
             // Property: Both URLs should be identical
             prop_assert_eq!(
                 url1,
@@ -148,7 +148,7 @@ mod cdn_builder_determinism_tests {
             gateway in gateway_strategy()
         ) {
             let url = build_cdn_playback_url(&claim_id, &gateway);
-            
+
             // Property: URL should start with gateway
             prop_assert!(
                 url.starts_with(&gateway),
@@ -156,7 +156,7 @@ mod cdn_builder_determinism_tests {
                 gateway,
                 url
             );
-            
+
             // Property: URL should contain the claim_id
             prop_assert!(
                 url.contains(&claim_id),
@@ -164,14 +164,14 @@ mod cdn_builder_determinism_tests {
                 claim_id,
                 url
             );
-            
+
             // Property: URL should end with master.m3u8
             prop_assert!(
                 url.ends_with("master.m3u8"),
                 "URL should end with master.m3u8. Got: {}",
                 url
             );
-            
+
             // Property: URL should contain /content/ path
             prop_assert!(
                 url.contains("/content/"),
@@ -191,18 +191,18 @@ mod cdn_builder_determinism_tests {
             let urls_forward: Vec<String> = claim_ids.iter()
                 .map(|id| build_cdn_playback_url(id, &gateway))
                 .collect();
-            
+
             // Generate URLs in reverse order
             let urls_backward: Vec<String> = claim_ids.iter().rev()
                 .map(|id| build_cdn_playback_url(id, &gateway))
                 .collect();
-            
+
             // Property: Each claim_id should produce the same URL regardless of call order
             for (i, claim_id) in claim_ids.iter().enumerate() {
                 let forward_url = &urls_forward[i];
                 let backward_idx = claim_ids.len() - 1 - i;
                 let backward_url = &urls_backward[backward_idx];
-                
+
                 prop_assert_eq!(
                     forward_url,
                     backward_url,
@@ -223,7 +223,7 @@ mod cdn_builder_determinism_tests {
             let url1 = build_cdn_playback_url(&claim_id, &gateway);
             let url2 = build_cdn_playback_url(&claim_id, &gateway);
             let url3 = build_cdn_playback_url(&claim_id, &gateway);
-            
+
             // Property: All URLs should be identical (no state changes)
             prop_assert_eq!(&url1, &url2, "First and second calls should produce identical URLs");
             prop_assert_eq!(&url2, &url3, "Second and third calls should produce identical URLs");
@@ -239,11 +239,11 @@ mod cdn_builder_determinism_tests {
         ) {
             use std::sync::Arc;
             use std::thread;
-            
+
             let claim_id = Arc::new(claim_id);
             let gateway = Arc::new(gateway);
             let mut handles = vec![];
-            
+
             // Spawn multiple threads to generate URLs
             for _ in 0..5 {
                 let claim_id_clone = Arc::clone(&claim_id);
@@ -253,12 +253,12 @@ mod cdn_builder_determinism_tests {
                 });
                 handles.push(handle);
             }
-            
+
             // Collect results
             let urls: Vec<String> = handles.into_iter()
                 .map(|h| h.join().unwrap())
                 .collect();
-            
+
             // Property: All threads should produce identical URLs
             let first_url = &urls[0];
             for (i, url) in urls.iter().enumerate().skip(1) {
@@ -279,7 +279,7 @@ mod cdn_builder_determinism_tests {
             gateway in gateway_strategy()
         ) {
             let url = build_cdn_playback_url(&claim_id, &gateway);
-            
+
             // Property: URL should contain the exact claim_id
             prop_assert!(
                 url.contains(&claim_id),
@@ -287,7 +287,7 @@ mod cdn_builder_determinism_tests {
                 claim_id,
                 url
             );
-            
+
             // Property: claim_id should appear between /content/ and /master.m3u8
             let expected_pattern = format!("/content/{}/master.m3u8", claim_id);
             prop_assert!(
@@ -306,7 +306,7 @@ mod cdn_builder_determinism_tests {
         ) {
             let default_gateway = "https://cloud.odysee.live";
             let url = build_cdn_playback_url(&claim_id, default_gateway);
-            
+
             // Property: URL should start with default gateway
             prop_assert!(
                 url.starts_with(default_gateway),
@@ -325,7 +325,7 @@ mod cdn_builder_determinism_tests {
             let urls: Vec<String> = claim_ids.iter()
                 .map(|id| build_cdn_playback_url(id, &gateway))
                 .collect();
-            
+
             // Property: Each claim_id should produce a consistent URL
             for (i, claim_id) in claim_ids.iter().enumerate() {
                 let url_again = build_cdn_playback_url(claim_id, &gateway);
@@ -336,7 +336,7 @@ mod cdn_builder_determinism_tests {
                     claim_id
                 );
             }
-            
+
             // Property: Different claim_ids should produce different URLs
             for i in 0..claim_ids.len() {
                 for j in (i+1)..claim_ids.len() {
