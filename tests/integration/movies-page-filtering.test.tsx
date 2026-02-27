@@ -151,8 +151,10 @@ describe('Movies Page Filtering Integration Test', () => {
       content: mockMovies,
       loading: false,
       error: null,
+      status: 'success',
       loadMore: mockLoadMore,
       hasMore: false,
+      fromCache: false,
       refetch: mockRefetch
     });
   });

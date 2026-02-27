@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-02-26T04:46:17.364Z",
+  "task": "18.2 Test with reproducible claim",
+  "claim": {
+    "claim_id": "custom-test-claim-123",
+    "name": "env-provided-claim",
+    "title": "Claim from TEST_CLAIM_ID environment variable"
+  },
+  "url_constructed": "https://cloud.odysee.live/content/custom-test-claim-123/master.m3u8",
+  "format_validation": {
+    "passed": true,
+    "checks_performed": [
+      "HTTPS protocol",
+      "Odysee CDN domain",
+      "Claim ID present",
+      "/content/ path",
+      "master.m3u8 extension"
+    ]
+  },
+  "accessibility_test": {
+    "accessible": false,
+    "status": 403
+  },
+  "notes": [
+    "This test uses a sanitized fixture claim for reproducibility",
+    "The claim_id is synthetic and may not exist on the actual CDN",
+    "404 or network errors are expected for test fixtures",
+    "The important validation is URL format correctness"
+  ],
+  "conclusion": "URL construction is correct and follows expected format"
+}

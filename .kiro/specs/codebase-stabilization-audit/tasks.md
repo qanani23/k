@@ -825,7 +825,7 @@ This implementation plan defines a comprehensive four-phase approach (with Phase
 
 ### PHASE 4: Odysee Debug Preparation (GATE: Reproducible claim test passes)
 
-- [x] 18. Prepare reproducible test case
+- [ ] 18. Prepare reproducible test case
   - [x] 18.1 Verify test claim exists
     - Check `tests/fixtures/claim_working.json` exists
     - Verify claim is sanitized (no sensitive data)
@@ -847,7 +847,7 @@ This implementation plan defines a comprehensive four-phase approach (with Phase
     - Document usage in `stabilization/STEPS_TO_REPRODUCE.md`
     - _Requirements: 10.1_
 
-- [x] 19. Create Odysee debug playbook
+- [ ] 19. Create Odysee debug playbook
   - [x] 19.1 Create ODYSEE_DEBUG_PLAYBOOK.md
     - Document prerequisites (clean build, test claim)
     - Document step-by-step debugging process

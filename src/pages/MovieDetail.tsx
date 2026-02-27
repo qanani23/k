@@ -5,6 +5,7 @@ import { ContentItem } from '../types';
 import { resolveClaim, fetchRelatedContent, saveFavorite, removeFavorite, isFavorite } from '../lib/api';
 import { useDownloadManager } from '../hooks/useDownloadManager';
 import RowCarousel from '../components/RowCarousel';
+import PlayerModal from '../components/PlayerModal';
 import { getPrimaryCategory } from '../types';
 import { useRenderCount } from '../hooks/useRenderCount';
 
@@ -18,6 +19,7 @@ const MovieDetail = () => {
   const [relatedLoading, setRelatedLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFav, setIsFav] = useState(false);
+  const [isPlayerOpen, setIsPlayerOpen] = useState(false);
   const { downloadContent } = useDownloadManager();
 
   useEffect(() => {
@@ -108,6 +110,20 @@ const MovieDetail = () => {
     }
   };
 
+  const handlePlay = () => {
+    console.log("🎬 [DEBUG] handlePlay clicked");
+    console.log("🎬 [DEBUG] movie object:", movie);
+    console.log("🎬 [DEBUG] movie exists:", !!movie);
+    
+    setIsPlayerOpen(true);
+    
+    console.log("🎬 [DEBUG] isPlayerOpen set to true");
+  };
+
+  const handleClosePlayer = () => {
+    setIsPlayerOpen(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
@@ -133,6 +149,12 @@ const MovieDetail = () => {
       </div>
     );
   }
+
+  // DEBUG: Log render state
+  console.log("🎥 [DEBUG] MovieDetail render state:", {
+    hasMovie: !!movie,
+    isPlayerOpen,
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
@@ -164,7 +186,10 @@ const MovieDetail = () => {
               </div>
               
               <div className="flex items-center space-x-2">
-                <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium text-white transition-colors flex items-center space-x-2">
+                <button 
+                  onClick={handlePlay}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium text-white transition-colors flex items-center space-x-2"
+                >
                   <Play className="w-5 h-5" />
                   <span>Play</span>
                 </button>
@@ -245,6 +270,15 @@ const MovieDetail = () => {
           </div>
         )}
       </div>
+
+      {/* Player Modal */}
+      {movie && (
+        <PlayerModal
+          content={movie}
+          isOpen={isPlayerOpen}
+          onClose={handleClosePlayer}
+        />
+      )}
     </div>
   );
 };

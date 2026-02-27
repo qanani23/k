@@ -5,6 +5,7 @@ import { SeriesInfo, Episode, ContentItem } from '../types';
 import { resolveClaim, fetchRelatedContent, saveFavorite, removeFavorite, isFavorite } from '../lib/api';
 import { useDownloadManager } from '../hooks/useDownloadManager';
 import RowCarousel from '../components/RowCarousel';
+import PlayerModal from '../components/PlayerModal';
 import { getPrimaryCategory } from '../types';
 import { useRenderCount } from '../hooks/useRenderCount';
 
@@ -19,6 +20,8 @@ const SeriesDetail = () => {
   const [error, setError] = useState<string | null>(null);
   const [expandedSeasons, setExpandedSeasons] = useState<Set<number>>(new Set([1]));
   const [isFav, setIsFav] = useState(false);
+  const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+  const [selectedEpisode, setSelectedEpisode] = useState<ContentItem | null>(null);
   const { downloadContent } = useDownloadManager();
 
   useEffect(() => {
@@ -105,8 +108,7 @@ const SeriesDetail = () => {
       e.preventDefault();
       switch (action) {
         case 'play':
-          // Play episode
-          console.log('Play episode:', episode.claim_id);
+          handlePlayEpisode(episode);
           break;
         case 'download':
           handleDownload(episode, '720p');
@@ -117,6 +119,22 @@ const SeriesDetail = () => {
           break;
       }
     }
+  };
+
+  const handlePlayEpisode = async (episode: Episode) => {
+    try {
+      // Resolve the episode claim to get full ContentItem with video URLs
+      const episodeContent = await resolveClaim(episode.claim_id);
+      setSelectedEpisode(episodeContent);
+      setIsPlayerOpen(true);
+    } catch (err) {
+      console.error('Failed to load episode:', err);
+    }
+  };
+
+  const handleClosePlayer = () => {
+    setIsPlayerOpen(false);
+    setSelectedEpisode(null);
   };
 
   const handleDownload = async (episode: Episode, quality: string) => {
@@ -264,6 +282,7 @@ const SeriesDetail = () => {
 
                         <div className="flex items-center space-x-2">
                           <button 
+                            onClick={() => handlePlayEpisode(episode)}
                             className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
                             onKeyDown={(e) => handleEpisodeKeyDown(e, episode, 'play')}
                             aria-label={`Play ${episode.title}`}
@@ -319,6 +338,15 @@ const SeriesDetail = () => {
           </div>
         )}
       </div>
+
+      {/* Player Modal */}
+      {selectedEpisode && (
+        <PlayerModal
+          content={selectedEpisode}
+          isOpen={isPlayerOpen}
+          onClose={handleClosePlayer}
+        />
+      )}
     </div>
   );
 };

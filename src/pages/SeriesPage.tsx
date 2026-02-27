@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Play, Download, Heart, Grid, List } from 'lucide-react';
-import { ContentItem } from '../types';
+import { ContentItem, Episode } from '../types';
 import { useSeriesGrouped } from '../hooks/useContent';
 import { useDownloadManager } from '../hooks/useDownloadManager';
 import { useOffline } from '../hooks/useOffline';
-import { saveFavorite, removeFavorite, getFavorites } from '../lib/api';
+import { saveFavorite, removeFavorite, getFavorites, resolveClaim } from '../lib/api';
 import SkeletonCard from '../components/SkeletonCard';
 import OfflineEmptyState from '../components/OfflineEmptyState';
+import PlayerModal from '../components/PlayerModal';
+import EpisodeSelector from '../components/EpisodeSelector';
 import { useRenderCount } from '../hooks/useRenderCount';
 
 type ViewMode = 'grid' | 'list';
@@ -21,9 +23,13 @@ const SeriesPage = () => {
   
   const [favorites, setFavorites] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+  const [isEpisodeSelectorOpen, setIsEpisodeSelectorOpen] = useState(false);
+  const [selectedSeries, setSelectedSeries] = useState<string | null>(null);
+  const [selectedEpisode, setSelectedEpisode] = useState<ContentItem | null>(null);
   const { isOffline } = useOffline();
   
-  const { content: series, seriesMap, loading, error, loadMore, hasMore, refetch } = useSeriesGrouped(filterTag || undefined);
+  const { content: series, seriesMap, contentMap, loading, error, loadMore, hasMore, refetch } = useSeriesGrouped(filterTag || undefined);
   const { downloadContent, isDownloading, isOfflineAvailable } = useDownloadManager();
 
   // Load favorites on mount
@@ -39,8 +45,46 @@ const SeriesPage = () => {
     loadFavorites();
   }, []);
 
-  const handlePlay = (seriesKey: string) => {
-    navigate(`/series/${seriesKey}`);
+  const handlePlay = async (seriesKey: string) => {
+    console.log("📺 [DEBUG] SeriesPage handlePlay called", seriesKey);
+    // Open episode selector instead of playing first episode directly
+    setSelectedSeries(seriesKey);
+    setIsEpisodeSelectorOpen(true);
+  };
+
+  const handleSelectEpisode = async (episode: Episode) => {
+    console.log("🎬 [DEBUG] Episode selected", episode.title, episode.claim_id);
+    setIsEpisodeSelectorOpen(false);
+    
+    // Look up the episode in our content map instead of resolving
+    const episodeContent = contentMap.get(episode.claim_id);
+    
+    if (episodeContent) {
+      console.log("✅ [DEBUG] Found episode in content map", episodeContent.title);
+      setSelectedEpisode(episodeContent);
+      setIsPlayerOpen(true);
+    } else {
+      console.error('❌ [DEBUG] Episode not found in content map:', episode.claim_id);
+      // Fallback: try to resolve if not in map
+      try {
+        console.log("🔄 [DEBUG] Attempting to resolve episode...");
+        const resolvedContent = await resolveClaim(episode.claim_id);
+        setSelectedEpisode(resolvedContent);
+        setIsPlayerOpen(true);
+      } catch (err) {
+        console.error('Failed to load episode:', err);
+      }
+    }
+  };
+
+  const handleClosePlayer = () => {
+    setIsPlayerOpen(false);
+    setSelectedEpisode(null);
+  };
+
+  const handleCloseEpisodeSelector = () => {
+    setIsEpisodeSelectorOpen(false);
+    setSelectedSeries(null);
   };
 
   const handleDownload = async (content: ContentItem) => {
@@ -313,6 +357,25 @@ const SeriesPage = () => {
             </div>
           )}
         </>
+      )}
+
+      {/* Player Modal */}
+      {selectedEpisode && (
+        <PlayerModal
+          content={selectedEpisode}
+          isOpen={isPlayerOpen}
+          onClose={handleClosePlayer}
+        />
+      )}
+
+      {/* Episode Selector */}
+      {selectedSeries && seriesMap.get(selectedSeries) && (
+        <EpisodeSelector
+          seriesInfo={seriesMap.get(selectedSeries)!}
+          isOpen={isEpisodeSelectorOpen}
+          onClose={handleCloseEpisodeSelector}
+          onSelectEpisode={handleSelectEpisode}
+        />
       )}
     </div>
   );

@@ -27,6 +27,13 @@ export default function PlayerModal({
   initialQuality,
   isOffline = false
 }: PlayerModalProps) {
+  // DEBUG: Log component invocation
+  console.log("🚀 [DEBUG] PlayerModal component invoked", {
+    isOpen,
+    hasContent: !!content,
+    contentTitle: content?.title,
+  });
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<Plyr | null>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -47,6 +54,14 @@ export default function PlayerModal({
   const [compatibilityWarning, setCompatibilityWarning] = useState<string | null>(null);
   
   const currentQualityRef = useRef<string>(currentQuality);
+
+  // DEBUG: Log mount/unmount
+  useEffect(() => {
+    console.log("🟢 [DEBUG] PlayerModal mounted");
+    return () => {
+      console.log("🔴 [DEBUG] PlayerModal unmounted");
+    };
+  }, []);
 
   // Update ref when currentQuality changes
   useEffect(() => {
@@ -147,6 +162,18 @@ export default function PlayerModal({
         setIsLoading(true);
         setError(null);
 
+        // TRACING: Stage 7 - player mount
+        console.log('[TRACE] Stage 7: Player mounting with content', {
+          component: 'content_pipeline',
+          stage: 'player_mount',
+          claim_id: content.claim_id,
+          title: content.title,
+          has_video_urls: !!content.video_urls && Object.keys(content.video_urls).length > 0,
+          video_url_keys: content.video_urls ? Object.keys(content.video_urls) : [],
+          current_quality: currentQuality,
+          is_offline: isOffline
+        });
+
         // Get video URL
         let videoUrl: string;
         
@@ -168,6 +195,17 @@ export default function PlayerModal({
 
         // Check if HLS stream
         const isHls = videoUrl.includes('.m3u8') || content.video_urls[currentQuality]?.type === 'hls';
+        
+        // TRACING: Log selected video URL and HLS detection
+        console.log('[TRACE] Stage 7: Video URL selected', {
+          component: 'content_pipeline',
+          stage: 'player_mount_url',
+          claim_id: content.claim_id,
+          selected_url: videoUrl,
+          is_hls: isHls,
+          hls_supported: Hls.isSupported(),
+          native_hls_supported: videoRef.current?.canPlayType('application/vnd.apple.mpegurl')
+        });
 
         if (isHls && Hls.isSupported()) {
           // Use hls.js for HLS streams

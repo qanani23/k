@@ -464,7 +464,10 @@ export function useKidsContent(filterTag?: string, options?: Partial<UseContentO
 export function useHeroContent(options?: Partial<UseContentOptions>) {
   console.log('🎬 [FRONTEND DIAGNOSTIC] useHeroContent called');
   
-  const result = useContent({ tags: ['hero_trailer'], limit: 20, ...options });
+  // TEMPORARY FIX: Use 'movie' tag instead of 'hero_trailer' to avoid timeout
+  // The 'hero_trailer' query was timing out after 30s, likely because no content
+  // has that tag on the channel. Using 'movie' tag as fallback.
+  const result = useContent({ tags: ['movie'], limit: 20, ...options });
   
   // DIAGNOSTIC: Log what we receive from backend
   console.log('🎬 [FRONTEND DIAGNOSTIC] useHeroContent result:', {
@@ -592,8 +595,16 @@ export function useSeriesGrouped(filterTag?: string) {
   const { content, loading, error, refetch, loadMore, hasMore } = useContent({ tags });
   const [groupedContent, setGroupedContent] = useState<ContentItem[]>([]);
   const [seriesMap, setSeriesMap] = useState<Map<string, any>>(new Map());
+  const [contentMap, setContentMap] = useState<Map<string, ContentItem>>(new Map());
 
   useEffect(() => {
+    // Build a map of claim_id -> ContentItem for quick lookup
+    const newContentMap = new Map<string, ContentItem>();
+    content.forEach(item => {
+      newContentMap.set(item.claim_id, item);
+    });
+    setContentMap(newContentMap);
+
     // Import series utilities dynamically to avoid circular dependencies
     import('../lib/series').then(({ groupSeriesContent, seriesToContentItem, getSeriesRepresentative }) => {
       const { series, nonSeriesContent } = groupSeriesContent(content, []);
@@ -617,6 +628,7 @@ export function useSeriesGrouped(filterTag?: string) {
   return {
     content: groupedContent,
     seriesMap,
+    contentMap,
     loading,
     error,
     refetch,

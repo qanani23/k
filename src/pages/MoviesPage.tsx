@@ -4,6 +4,7 @@ import { Filter, Grid, List } from 'lucide-react';
 import MovieCard from '../components/MovieCard';
 import SkeletonCard from '../components/SkeletonCard';
 import OfflineEmptyState from '../components/OfflineEmptyState';
+import PlayerModal from '../components/PlayerModal';
 import { ContentItem } from '../types';
 import { useMovies } from '../hooks/useContent';
 import { useDownloadManager } from '../hooks/useDownloadManager';
@@ -22,6 +23,8 @@ export default function MoviesPage() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [showFilters, setShowFilters] = useState(false);
+  const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+  const [selectedMovie, setSelectedMovie] = useState<ContentItem | null>(null);
   const { isOffline } = useOffline();
 
   const filterTag = searchParams.get('filter');
@@ -46,7 +49,14 @@ export default function MoviesPage() {
 
   // Handle content playback
   const handlePlayContent = (content: ContentItem) => {
-    navigate(`/movie/${content.claim_id}`);
+    console.log("🎬 [DEBUG] MoviesPage handlePlayContent called", content.title);
+    setSelectedMovie(content);
+    setIsPlayerOpen(true);
+  };
+
+  const handleClosePlayer = () => {
+    setIsPlayerOpen(false);
+    setSelectedMovie(null);
   };
 
   // Handle content download
@@ -299,6 +309,15 @@ export default function MoviesPage() {
             </button>
           )}
         </div>
+      )}
+
+      {/* Player Modal */}
+      {selectedMovie && (
+        <PlayerModal
+          content={selectedMovie}
+          isOpen={isPlayerOpen}
+          onClose={handleClosePlayer}
+        />
       )}
     </div>
   );

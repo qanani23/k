@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import Hero from '../components/Hero';
 import RowCarousel from '../components/RowCarousel';
 import OfflineEmptyState from '../components/OfflineEmptyState';
-import { ContentItem } from '../types';
+import PlayerModal from '../components/PlayerModal';
+import EpisodeSelector from '../components/EpisodeSelector';
+import { ContentItem, Episode } from '../types';
 import { useMovies, useSeriesGrouped, useSitcoms, useKidsContent } from '../hooks/useContent';
 import { useDownloadManager } from '../hooks/useDownloadManager';
 import { useOffline } from '../hooks/useOffline';
@@ -15,11 +17,15 @@ export default function Home() {
   
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+  const [isEpisodeSelectorOpen, setIsEpisodeSelectorOpen] = useState(false);
+  const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
+  const [selectedSeriesKey, setSelectedSeriesKey] = useState<string | null>(null);
   const { isOffline } = useOffline();
   
   // Content hooks for different categories - each with independent state and retry
   const { content: movies, loading: moviesLoading, error: moviesError, refetch: refetchMovies } = useMovies();
-  const { content: series, seriesMap, loading: seriesLoading, error: seriesError, refetch: refetchSeries } = useSeriesGrouped();
+  const { content: series, seriesMap, contentMap: seriesContentMap, loading: seriesLoading, error: seriesError, refetch: refetchSeries } = useSeriesGrouped();
   const { content: sitcoms, loading: sitcomsLoading, error: sitcomsError, refetch: refetchSitcoms } = useSitcoms();
   const { content: kidsContent, loading: kidsLoading, error: kidsError, refetch: refetchKids } = useKidsContent();
   
@@ -46,33 +52,56 @@ export default function Home() {
   }, []);
 
   // Handle content playback
-  const handlePlayContent = (content: ContentItem) => {
-    // Check if this is a series container (grouped series)
-    if (content.tags.includes('__series_container__')) {
-      // Extract series key from the series map
-      const seriesKey = Array.from(seriesMap.keys()).find(key => {
-        const seriesInfo = seriesMap.get(key);
-        return seriesInfo?.title === content.title;
-      });
-      
-      if (seriesKey) {
-        navigate(`/series/${seriesKey}`);
-        return;
-      }
-    }
+  const handlePlayContent = async (content: ContentItem) => {
+    console.log("🎬 [DEBUG] Home handlePlayContent called", content.title);
     
-    // Navigate to appropriate detail page based on content type
-    if (content.tags.includes('series')) {
-      // For series, we need to extract the series key
+    // Check if this is a series - open episode selector
+    if (content.tags.includes('series') || content.tags.includes('sitcom')) {
+      console.log("📺 [DEBUG] Series content detected, opening episode selector");
+      
+      // Extract series key from content
       const seriesKey = extractSeriesKey(content);
-      if (seriesKey) {
-        navigate(`/series/${seriesKey}`);
+      
+      if (seriesKey && seriesMap.has(seriesKey)) {
+        setSelectedSeriesKey(seriesKey);
+        setIsEpisodeSelectorOpen(true);
       } else {
-        navigate(`/movie/${content.claim_id}`);
+        // Fallback: play directly if we can't find series info
+        console.log("⚠️ [DEBUG] Series key not found, playing directly");
+        setSelectedContent(content);
+        setIsPlayerOpen(true);
       }
     } else {
-      navigate(`/movie/${content.claim_id}`);
+      // For movies and other content, play directly
+      setSelectedContent(content);
+      setIsPlayerOpen(true);
     }
+  };
+
+  const handleSelectEpisode = (episode: Episode) => {
+    console.log("🎬 [DEBUG] Home episode selected", episode.title, episode.claim_id);
+    setIsEpisodeSelectorOpen(false);
+    
+    // Look up the episode in our content map
+    const episodeContent = seriesContentMap.get(episode.claim_id);
+    
+    if (episodeContent) {
+      console.log("✅ [DEBUG] Found episode in content map", episodeContent.title);
+      setSelectedContent(episodeContent);
+      setIsPlayerOpen(true);
+    } else {
+      console.error('❌ [DEBUG] Episode not found in content map:', episode.claim_id);
+    }
+  };
+
+  const handleClosePlayer = () => {
+    setIsPlayerOpen(false);
+    setSelectedContent(null);
+  };
+
+  const handleCloseEpisodeSelector = () => {
+    setIsEpisodeSelectorOpen(false);
+    setSelectedSeriesKey(null);
   };
 
   // Handle content download
@@ -232,22 +261,42 @@ export default function Home() {
           />
         </div>
       )}
+
+      {/* Player Modal */}
+      {selectedContent && (
+        <PlayerModal
+          content={selectedContent}
+          isOpen={isPlayerOpen}
+          onClose={handleClosePlayer}
+        />
+      )}
+
+      {/* Episode Selector */}
+      {selectedSeriesKey && seriesMap.get(selectedSeriesKey) && (
+        <EpisodeSelector
+          seriesInfo={seriesMap.get(selectedSeriesKey)!}
+          isOpen={isEpisodeSelectorOpen}
+          onClose={handleCloseEpisodeSelector}
+          onSelectEpisode={handleSelectEpisode}
+        />
+      )}
     </div>
   );
 }
 
 // Helper function to extract series key from content
 function extractSeriesKey(content: ContentItem): string | null {
-  // Try to extract series key from tags
-  const seriesTag = content.tags.find(tag => tag.endsWith('_series'));
-  if (seriesTag) {
-    return seriesTag.replace('_series', '');
-  }
-
-  // Try to extract from title (e.g., "SeriesName S01E01 - Episode Title")
+  // Try to parse series name from title (e.g., "SeriesName S01E01 - Episode Title")
   const titleMatch = content.title.match(/^(.+?)\s+S\d+E\d+/i);
   if (titleMatch) {
-    return titleMatch[1].toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const seriesName = titleMatch[1].trim();
+    // Generate key using same logic as series utilities
+    return seriesName
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .trim()
+      .split(/\s+/)
+      .join('-');
   }
 
   return null;

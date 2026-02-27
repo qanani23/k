@@ -236,15 +236,22 @@ impl GatewayClient {
             gateway_attempt += 1;
         }
 
-        // All gateways failed - return comprehensive error
+        // All gateways failed - return comprehensive error with last error details
+        let last_error_msg = last_error
+            .as_ref()
+            .map(|e| format!("{:?}", e))
+            .unwrap_or_else(|| "No error details available".to_string());
+        
         let final_error = KiyyaError::AllGatewaysFailed {
             attempts: total_attempts as u32,
+            last_error: last_error_msg.clone(),
         };
         error!(
-            "All {} gateways failed after {} total attempts ({} gateway attempts)",
+            "All {} gateways failed after {} total attempts ({} gateway attempts). Last error: {}",
             self.gateways.len(),
             total_attempts,
-            gateway_attempt
+            gateway_attempt,
+            last_error_msg
         );
 
         // Log the final failure to dedicated gateway log
@@ -258,16 +265,32 @@ impl GatewayClient {
         gateway_url: &str,
         request: &OdyseeRequest,
     ) -> Result<OdyseeResponse> {
+        // Build URL with method query parameter: /api/v1/proxy?m=claim_search
+        let url_with_method = format!("{}?m={}", gateway_url, request.method);
+        
+        // Build JSON-RPC 2.0 request body
+        let jsonrpc_request = serde_json::json!({
+            "jsonrpc": "2.0",
+            "method": request.method,
+            "params": request.params,
+            "id": 1
+        });
+        
+        info!(
+            "Making JSON-RPC 2.0 request to {} with method={}",
+            url_with_method, request.method
+        );
+        
         let response = self
             .client
-            .post(gateway_url)
-            .json(request)
+            .post(&url_with_method)
+            .json(&jsonrpc_request)
             .send()
             .await
             .map_err(|e| {
                 // Check if the error is a timeout
                 if e.is_timeout() {
-                    warn!("Request to {} timed out after 10 seconds", gateway_url);
+                    warn!("Request to {} timed out after 10 seconds", url_with_method);
                     KiyyaError::ApiTimeout {
                         timeout_seconds: 10,
                     }
@@ -305,6 +328,15 @@ impl GatewayClient {
         }
 
         if !status.is_success() {
+            // Try to get response body for better error messages
+            let body = response.text().await.unwrap_or_default();
+            error!(
+                "HTTP error {} from {}: {}",
+                status,
+                url_with_method,
+                if body.is_empty() { "No response body" } else { &body }
+            );
+            
             return Err(KiyyaError::Gateway {
                 message: format!(
                     "HTTP {}: {}",
@@ -314,7 +346,41 @@ impl GatewayClient {
             });
         }
 
-        let odysee_response: OdyseeResponse = response.json().await?;
+        // Parse JSON-RPC 2.0 response
+        let jsonrpc_response: serde_json::Value = response.json().await?;
+        
+        // Log the raw response for debugging
+        info!(
+            "Received JSON-RPC response: {}",
+            serde_json::to_string(&jsonrpc_response).unwrap_or_else(|_| "Unable to serialize".to_string())
+        );
+        
+        // Convert JSON-RPC 2.0 response to OdyseeResponse format
+        let odysee_response = if let Some(error) = jsonrpc_response.get("error") {
+            // JSON-RPC error response
+            let error_message = error.get("message")
+                .and_then(|m| m.as_str())
+                .unwrap_or("Unknown JSON-RPC error")
+                .to_string();
+            
+            OdyseeResponse {
+                success: false,
+                error: Some(error_message),
+                data: None,
+            }
+        } else if let Some(result) = jsonrpc_response.get("result") {
+            // JSON-RPC success response
+            OdyseeResponse {
+                success: true,
+                error: None,
+                data: Some(result.clone()),
+            }
+        } else {
+            // Invalid JSON-RPC response
+            return Err(KiyyaError::Gateway {
+                message: "Invalid JSON-RPC response: missing both 'result' and 'error' fields".to_string(),
+            });
+        };
 
         if !odysee_response.success {
             return Err(KiyyaError::Gateway {

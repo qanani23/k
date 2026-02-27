@@ -34,20 +34,31 @@ Override the default test claim ID for reproducible testing.
 ```bash
 # Windows PowerShell
 $env:TEST_CLAIM_ID="your-real-claim-id-here"
+node scripts/test_reproducible_claim.js
 
 # Windows CMD
 set TEST_CLAIM_ID=your-real-claim-id-here
+node scripts/test_reproducible_claim.js
 
 # macOS/Linux
 export TEST_CLAIM_ID=your-real-claim-id-here
+node scripts/test_reproducible_claim.js
 ```
 
 **Example:**
 ```bash
 # Test with a specific Odysee claim
 export TEST_CLAIM_ID=abc123realclaimid
-npm test
+node scripts/test_reproducible_claim.js
+
+# Or inline (one-time use)
+TEST_CLAIM_ID=abc123realclaimid node scripts/test_reproducible_claim.js
 ```
+
+**Default Behavior:**
+- If `TEST_CLAIM_ID` is not set, the script uses `tests/fixtures/claim_working.json`
+- If `TEST_CLAIM_ID` is set, the script uses the provided claim ID directly
+- This allows testing with real Odysee claims without modifying fixture files
 
 #### LOG_LEVEL
 
@@ -112,11 +123,25 @@ All checks completed successfully:
 
 **Using a Custom Claim:**
 
+You can test with a real Odysee claim ID without modifying the fixture file:
+
 ```bash
-# Test with a real Odysee claim (not committed to repo)
+# Windows PowerShell
+$env:TEST_CLAIM_ID="abc123realclaimid"
+node scripts/test_reproducible_claim.js
+
+# macOS/Linux (persistent)
 export TEST_CLAIM_ID=abc123realclaimid
 node scripts/test_reproducible_claim.js
+
+# macOS/Linux (one-time)
+TEST_CLAIM_ID=abc123realclaimid node scripts/test_reproducible_claim.js
 ```
+
+**How it works:**
+1. If `TEST_CLAIM_ID` is set, the script uses that claim ID directly
+2. If `TEST_CLAIM_ID` is not set, the script loads `tests/fixtures/claim_working.json`
+3. This allows testing with real claims without committing sensitive data to the repository
 
 ### Backend Command Test
 

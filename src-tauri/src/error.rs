@@ -42,8 +42,11 @@ pub enum KiyyaError {
     #[error("Gateway error: {message}")]
     Gateway { message: String },
 
-    #[error("All gateways failed after {attempts} attempts")]
-    AllGatewaysFailed { attempts: u32 },
+    #[error("All gateways failed after {attempts} attempts. Last error: {last_error}")]
+    AllGatewaysFailed { 
+        attempts: u32,
+        last_error: String,
+    },
 
     #[error("API rate limit exceeded: retry after {retry_after_seconds} seconds")]
     RateLimitExceeded { retry_after_seconds: u64 },

@@ -9,7 +9,7 @@ use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tauri::{command, AppHandle, Manager, State};
-use tracing::{error, info, warn};
+use tracing::{debug, error, info, warn};
 
 // ============================================================================
 // ERROR HANDLING AND LOGGING STRATEGY
@@ -326,6 +326,20 @@ pub async fn fetch_channel_claims(
         };
 
         info!("🌐 DIAGNOSTIC: Sending API request: {:?}", request);
+        
+        // TRACING: Stage 1 - claim_search call
+        info!(
+            component = "content_pipeline",
+            stage = "claim_search_call",
+            channel_id = %validated_channel_id,
+            tags = ?validated_tags,
+            text = ?validated_text,
+            limit = ?validated_limit,
+            page = ?validated_page,
+            force_refresh = should_force_refresh,
+            "Stage 1: Sending claim_search API request"
+        );
+        
         info!("🔍 DIAGNOSTIC: Calling gateway.fetch_with_failover");
         let response = gateway.fetch_with_failover(request).await?;
         info!(
@@ -353,6 +367,29 @@ pub async fn fetch_channel_claims(
             "🎯 DIAGNOSTIC: About to return {} items to frontend",
             items.len()
         );
+        
+        // TRACING: Stage 5 - backend return
+        info!(
+            component = "content_pipeline",
+            stage = "backend_return",
+            item_count = items.len(),
+            cached = false,
+            "Stage 5: Returning content items to frontend via IPC"
+        );
+        
+        // Per-item details at debug level
+        for item in &items {
+            debug!(
+                component = "content_pipeline",
+                stage = "backend_return_item",
+                claim_id = %item.claim_id,
+                title = %item.title,
+                has_video_urls = !item.video_urls.is_empty(),
+                video_url_keys = ?item.video_urls.keys().collect::<Vec<_>>(),
+                "Returning item to frontend"
+            );
+        }
+        
         Ok(items)
     }
     .await;
@@ -939,6 +976,21 @@ pub async fn open_external(url: String) -> Result<()> {
 // Helper functions for parsing Odysee responses
 
 pub fn parse_claim_search_response(response: OdyseeResponse) -> Result<Vec<ContentItem>> {
+    // TRACING: Stage 2 - claim parsing
+    let items_count = response.data.as_ref()
+        .and_then(|d| d.get("items"))
+        .and_then(|i| i.as_array())
+        .map(|a| a.len())
+        .unwrap_or(0);
+    
+    info!(
+        component = "content_pipeline",
+        stage = "claim_parsing",
+        total_items = items_count,
+        success = response.success,
+        "Stage 2: Parsing claim_search response"
+    );
+    
     // 🔍 STEP 1: Verify response has data
     let data = response.data.ok_or_else(|| {
         error!("❌ DIAGNOSTIC: No data in response");
@@ -995,6 +1047,17 @@ pub fn parse_claim_search_response(response: OdyseeResponse) -> Result<Vec<Conte
     for (idx, item) in items.iter().enumerate() {
         match parse_claim_item(item) {
             Ok(content_item) => {
+                // TRACING: Per-item parsing success
+                debug!(
+                    component = "content_pipeline",
+                    stage = "claim_parsing_item",
+                    claim_id = %content_item.claim_id,
+                    title = %content_item.title,
+                    has_video_urls = !content_item.video_urls.is_empty(),
+                    video_url_count = content_item.video_urls.len(),
+                    "Parsed individual claim item"
+                );
+                
                 info!(
                     "  ✅ DIAGNOSTIC: Claim[{}] parsed successfully: id={}",
                     idx, content_item.claim_id
@@ -1070,6 +1133,42 @@ pub fn parse_claim_item(item: &Value) -> Result<ContentItem> {
         );
         e
     })?;
+
+    // DEBUG: Log claim metadata for URL construction verification
+    if let Some(claim_name) = item.get("name").and_then(|v| v.as_str()) {
+        if let Some(value) = item.get("value") {
+            if let Some(source) = value.get("source") {
+                if let Some(sd_hash) = source.get("sd_hash").and_then(|v| v.as_str()) {
+                    let file_stub = if sd_hash.len() >= 6 { &sd_hash[..6] } else { "N/A" };
+                    println!("\n🎬 VIDEO URL CONSTRUCTION:");
+                    println!("   Claim Name: {}", claim_name);
+                    println!("   Claim ID: {}", claim_id);
+                    println!("   SD Hash: {}", sd_hash);
+                    println!("   File Stub (first 6 of sd_hash): {}", file_stub);
+                    println!("   Expected URL: https://player.odycdn.com/api/v3/streams/free/{}/{}/{}.mp4\n", 
+                        claim_name, claim_id, file_stub);
+                }
+            }
+        }
+    }
+
+    // TRACING: Stage 3 - stream validation
+    let value_type = item.get("value_type").and_then(|v| v.as_str()).unwrap_or("unknown");
+    let has_stream = item.get("value").and_then(|v| v.get("stream")).is_some();
+    let has_sd_hash = item.get("value")
+        .and_then(|v| v.get("source"))
+        .and_then(|s| s.get("sd_hash"))
+        .is_some();
+    
+    info!(
+        component = "content_pipeline",
+        stage = "stream_validation",
+        claim_id = %claim_id,
+        value_type = value_type,
+        has_stream = has_stream,
+        has_sd_hash = has_sd_hash,
+        "Stage 3: Validating stream data"
+    );
 
     let title = extract_title(item)?;
     let description = extract_description(item);
@@ -1323,8 +1422,6 @@ fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
         .unwrap_or("unknown");
 
     // 🔍 STEP 1: Validate claim type
-    // Task 3.1: Add claim type validation (CRITICAL)
-    // Primary check: Validate claim.value_type == "stream"
     if let Some(value_type) = item.get("value_type").and_then(|v| v.as_str()) {
         info!(
             "    🔍 DIAGNOSTIC: Claim {} has value_type={}",
@@ -1370,9 +1467,7 @@ fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
         }
     }
 
-    // 🔍 STEP 2: Extract and validate claim_id
-    // Task 3.3: Implement CDN-only URL construction
-    // Extract claim_id from item
+    // 🔍 STEP 2: Extract claim_id
     let claim_id = item
         .get("claim_id")
         .and_then(|v| v.as_str())
@@ -1386,19 +1481,72 @@ fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
         })?;
     info!("    ✅ DIAGNOSTIC: Extracted claim_id={}", claim_id);
 
-    // 🔍 STEP 3: Construct CDN URL
-    // Call build_cdn_playback_url with claim_id and gateway from immutable state
-    let gateway = get_cdn_gateway();
-    let cdn_url = build_cdn_playback_url(claim_id, gateway);
+    // 🔍 STEP 3: Extract claim_name (video name)
+    let claim_name = item
+        .get("name")
+        .and_then(|v| v.as_str())
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .ok_or_else(|| {
+            warn!("    ❌ DIAGNOSTIC: Missing or empty claim name in item");
+            KiyyaError::ContentParsing {
+                message: "Missing or empty claim name".to_string(),
+            }
+        })?;
+    info!("    ✅ DIAGNOSTIC: Extracted claim_name={}", claim_name);
 
-    // Log constructed URL at INFO level for diagnostics
-    info!("    🎬 DIAGNOSTIC: Constructed CDN URL: {}", cdn_url);
+    // 🔍 STEP 4: Extract sd_hash from value.source
+    let sd_hash = item
+        .get("value")
+        .and_then(|v| v.get("source"))
+        .and_then(|s| s.get("sd_hash"))
+        .and_then(|h| h.as_str())
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .ok_or_else(|| {
+            warn!("    ❌ DIAGNOSTIC: Missing or empty sd_hash in value.source");
+            KiyyaError::ContentParsing {
+                message: "Missing or empty sd_hash".to_string(),
+            }
+        })?;
+    info!("    ✅ DIAGNOSTIC: Extracted sd_hash={}", sd_hash);
 
-    // Create VideoUrl struct with url_type="hls", quality="master"
+    // 🔍 STEP 5: Validate sd_hash length (must be at least 6 characters)
+    if sd_hash.len() < 6 {
+        warn!("    ❌ DIAGNOSTIC: sd_hash too short: {} characters", sd_hash.len());
+        return Err(KiyyaError::ContentParsing {
+            message: format!("sd_hash too short: {} characters (need at least 6)", sd_hash.len()),
+        });
+    }
+
+    // 🔍 STEP 6: Construct Odysee streaming URL
+    // Pattern discovered: https://player.odycdn.com/api/v3/streams/free/{claim_name}/{claim_id}/{first_6_of_sd_hash}.mp4
+    let file_stub = &sd_hash[..6];
+    let stream_url = format!(
+        "https://player.odycdn.com/api/v3/streams/free/{}/{}/{}.mp4",
+        claim_name,
+        claim_id,
+        file_stub
+    );
+
+    // TRACING: Stage 4 - CDN URL construction
+    info!(
+        component = "content_pipeline",
+        stage = "cdn_url_construction",
+        claim_id = %claim_id,
+        claim_name = claim_name,
+        sd_hash_prefix = file_stub,
+        constructed_url = %stream_url,
+        "Stage 4: Constructed Odysee streaming URL"
+    );
+
+    info!("    🎬 DIAGNOSTIC: Constructed stream URL: {}", stream_url);
+
+    // Create VideoUrl struct with url_type="mp4", quality="master"
     let video_url = VideoUrl {
-        url: cdn_url.clone(),
+        url: stream_url.clone(),
         quality: "master".to_string(),
-        url_type: "hls".to_string(),
+        url_type: "mp4".to_string(),
         codec: None,
     };
 

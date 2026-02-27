@@ -151,29 +151,44 @@ describe('Home Page Rendering Integration Test', () => {
       content: mockMovies,
       loading: false,
       error: null,
-      refetch: vi.fn()
+      status: 'success',
+      refetch: vi.fn(),
+      loadMore: vi.fn(),
+      hasMore: false,
+      fromCache: false,
     });
 
     vi.spyOn(useContentHooks, 'useSeriesGrouped').mockReturnValue({
       content: mockSeries,
       seriesMap: new Map([['test-series', { title: 'Test Series', seasons: [], totalEpisodes: 1 }]]),
+      contentMap: new Map(),
       loading: false,
       error: null,
-      refetch: vi.fn()
+      refetch: vi.fn(),
+      loadMore: vi.fn(),
+      hasMore: false,
     });
 
     vi.spyOn(useContentHooks, 'useSitcoms').mockReturnValue({
       content: mockSitcoms,
       loading: false,
       error: null,
-      refetch: vi.fn()
+      status: 'success',
+      refetch: vi.fn(),
+      loadMore: vi.fn(),
+      hasMore: false,
+      fromCache: false,
     });
 
     vi.spyOn(useContentHooks, 'useKidsContent').mockReturnValue({
       content: mockKidsContent,
       loading: false,
       error: null,
-      refetch: vi.fn()
+      status: 'success',
+      refetch: vi.fn(),
+      loadMore: vi.fn(),
+      hasMore: false,
+      fromCache: false,
     });
 
     // Mock useDownloadManager
@@ -489,8 +504,12 @@ describe('Home Page Rendering Integration Test', () => {
       vi.spyOn(useContentHooks, 'useMovies').mockReturnValue({
         content: [],
         loading: false,
-        error: new Error('Failed to load movies'),
-        refetch: vi.fn()
+        error: { message: 'Failed to load movies', retryable: true, category: 'network' },
+        status: 'error',
+        refetch: vi.fn(),
+        loadMore: vi.fn(),
+        hasMore: false,
+        fromCache: false,
       });
 
       render(
@@ -512,7 +531,11 @@ describe('Home Page Rendering Integration Test', () => {
         content: [],
         loading: false,
         error: null,
-        refetch: vi.fn()
+        status: 'success',
+        refetch: vi.fn(),
+        loadMore: vi.fn(),
+        hasMore: false,
+        fromCache: false,
       });
 
       render(

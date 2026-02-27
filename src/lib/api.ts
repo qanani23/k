@@ -227,6 +227,26 @@ export const fetchChannelClaims = async (params: {
       
       const response = await Promise.race([invokePromise, timeoutPromise]);
       
+      // TRACING: Stage 6 - frontend receive
+      if (isDev) {
+        console.log('[TRACE] Stage 6: Frontend received content items', {
+          component: 'content_pipeline',
+          stage: 'frontend_receive',
+          item_count: Array.isArray(response) ? response.length : 0,
+          items: Array.isArray(response) ? response.map((item: any) => ({
+            claim_id: item.claim_id,
+            title: item.title,
+            has_video_urls: !!item.video_urls && Object.keys(item.video_urls).length > 0,
+            video_url_keys: item.video_urls ? Object.keys(item.video_urls) : [],
+            video_urls_detail: item.video_urls ? Object.entries(item.video_urls).map(([key, val]: [string, any]) => ({
+              quality: key,
+              url: val.url,
+              type: val.url_type
+            })) : []
+          })) : []
+        });
+      }
+      
       if (isDev) {
         console.log('✅ [API] invoke returned, response type:', typeof response, 'is array:', Array.isArray(response));
         console.log('[API] fetchChannelClaims response:', {
