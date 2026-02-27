@@ -321,11 +321,7 @@ fn parse_range_header(range: &str, file_size: u64) -> Result<(u64, u64)> {
     // Handle suffix range: -500 means last 500 bytes
     if parts[0].is_empty() {
         if let Ok(suffix) = parts[1].parse::<u64>() {
-            let start = if suffix >= file_size {
-                0
-            } else {
-                file_size - suffix
-            };
+            let start = file_size.saturating_sub(suffix);
             let end = file_size - 1;
             return Ok((start, end));
         } else {
@@ -664,8 +660,6 @@ mod tests {
 
     #[tokio::test]
     async fn test_concurrent_streaming_connections() {
-        use tokio::time::{sleep, Duration};
-
         // Create test file
         let temp_dir = TempDir::new().unwrap();
         let file_path = temp_dir.path().join("test_video.mp4");
@@ -937,7 +931,7 @@ mod tests {
             .unwrap();
 
         // Get encrypted file size for registration
-        let encrypted_file_size = tokio::fs::metadata(&encrypted_file).await.unwrap().len();
+        let _encrypted_file_size = tokio::fs::metadata(&encrypted_file).await.unwrap().len();
 
         // Start local server and enable encryption on its manager
         let mut server = LocalServer::new().await.unwrap();

@@ -410,23 +410,12 @@ pub struct MemoryStats {
     pub database_file_size: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct DownloadStats {
     pub total_downloads: u32,
     pub total_bytes_downloaded: u64,
     pub average_throughput_bytes_per_sec: u64,
     pub last_download_timestamp: Option<i64>,
-}
-
-impl Default for DownloadStats {
-    fn default() -> Self {
-        Self {
-            total_downloads: 0,
-            total_bytes_downloaded: 0,
-            average_throughput_bytes_per_sec: 0,
-            last_download_timestamp: None,
-        }
-    }
 }
 
 // Odysee API models
@@ -918,15 +907,6 @@ pub mod version {
             })
         }
 
-        /// Converts version to string
-        pub fn to_string(&self) -> String {
-            if self.patch == 0 {
-                format!("{}.{}", self.major, self.minor)
-            } else {
-                format!("{}.{}.{}", self.major, self.minor, self.patch)
-            }
-        }
-
         /// Compares two versions
         pub fn compare(v1: &str, v2: &str) -> Result<std::cmp::Ordering> {
             let version1 = Self::parse(v1)?;
@@ -942,6 +922,16 @@ pub mod version {
         /// Checks if version1 is less than version2
         pub fn is_less(v1: &str, v2: &str) -> Result<bool> {
             Ok(Self::compare(v1, v2)? == std::cmp::Ordering::Less)
+        }
+    }
+
+    impl std::fmt::Display for Version {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            if self.patch == 0 {
+                write!(f, "{}.{}", self.major, self.minor)
+            } else {
+                write!(f, "{}.{}.{}", self.major, self.minor, self.patch)
+            }
         }
     }
 }
@@ -1027,7 +1017,6 @@ mod tests {
         assert_eq!(tags::base_tag_for_filter("action_series"), Some("series"));
     }
 
-    #[test]
     #[test]
     fn test_quality_utilities() {
         assert!(quality::is_valid_quality("master"));

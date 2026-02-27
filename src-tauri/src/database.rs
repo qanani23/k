@@ -488,8 +488,7 @@ impl Database {
             // Sanitize the FTS5 query to prevent injection
             let sanitized_query = sanitization::sanitize_fts5_query(&query)?;
             
-            let sql_query = format!(
-                r#"
+            let sql_query = r#"
                 SELECT c.claimId, c.title, c.description, c.tags, c.thumbnailUrl, c.videoUrls, 
                        c.compatibility, c.releaseTime, c.duration, c.updatedAt, c.etag, c.contentHash, c.raw_json,
                        rank
@@ -499,10 +498,9 @@ impl Database {
                   AND c.updatedAt > ?2
                 ORDER BY rank
                 LIMIT ?3
-                "#
-            );
+                "#;
 
-            let mut stmt = conn.prepare(&sql_query)
+            let mut stmt = conn.prepare(sql_query)
                 .with_context("Failed to prepare FTS5 search query")?;
             
             let search_limit = limit.unwrap_or(50);
@@ -1955,7 +1953,7 @@ impl Database {
             let mut hashes = HashMap::new();
 
             for claim_id in claim_ids {
-                if let Some(hash) = conn
+                if let Some(Some(h)) = conn
                     .query_row(
                         "SELECT contentHash FROM local_cache WHERE claimId = ?1",
                         params![claim_id],
@@ -1963,9 +1961,7 @@ impl Database {
                     )
                     .optional()?
                 {
-                    if let Some(h) = hash {
-                        hashes.insert(claim_id, h);
-                    }
+                    hashes.insert(claim_id, h);
                 }
             }
 
@@ -2094,13 +2090,13 @@ impl Database {
         let claim_ids: Vec<String> = items.iter().map(|i| i.claim_id.clone()).collect();
         let item_hashes: HashMap<String, String> = items
             .iter()
-            .filter_map(|i| {
+            .map(|i| {
                 let hash = if let Some(h) = &i.content_hash {
                     h.clone()
                 } else {
                     i.compute_content_hash()
                 };
-                Some((i.claim_id.clone(), hash))
+                (i.claim_id.clone(), hash)
             })
             .collect();
 
@@ -2695,8 +2691,8 @@ pub(crate) mod tests {
         let (db, _temp_dir) = create_test_database().await.unwrap();
 
         // Test that database version can be retrieved
-        let version = db.get_database_version().await.unwrap();
-        assert!(version >= 0, "Database version should be non-negative");
+        let _version = db.get_database_version().await.unwrap();
+        // Version is u32, always non-negative
     }
 
     #[tokio::test]

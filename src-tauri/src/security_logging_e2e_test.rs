@@ -1,4 +1,4 @@
-//! End-to-end tests for security logging in production scenarios
+﻿//! End-to-end tests for security logging in production scenarios
 //!
 //! This module tests that security logging works correctly in real-world
 //! production scenarios, verifying that security events are properly logged
@@ -14,12 +14,14 @@ mod tests {
     use std::path::PathBuf;
 
     /// Helper to get the security log path
+    #[allow(dead_code)]
     fn get_security_log_path() -> PathBuf {
         let app_data = dirs::data_dir().expect("Failed to get app data directory");
         app_data.join("kiyya").join("logs").join("security.log")
     }
 
     /// Helper to read security log contents
+    #[allow(dead_code)]
     fn read_security_log() -> Result<String, std::io::Error> {
         let log_path = get_security_log_path();
         if log_path.exists() {
@@ -43,7 +45,6 @@ mod tests {
 
         // Verify logging doesn't panic (actual file verification would require
         // reading the log file, which is tested separately)
-        assert!(true, "Security logging completed without panic");
     }
 
     #[test]
@@ -58,7 +59,6 @@ mod tests {
         let result = validation::validate_external_url("https://evil.com/malware");
         assert!(result.is_err(), "Unauthorized domain should be rejected");
 
-        assert!(true, "Network security logging completed without panic");
     }
 
     #[tokio::test]
@@ -74,18 +74,15 @@ mod tests {
         match result {
             Ok(_) => {
                 // Successfully enabled encryption, key generation was logged
-                assert!(true, "Encryption enabled and logged");
             }
             Err(_) => {
                 // Failed to enable encryption, but failure should have been logged
-                assert!(true, "Encryption failure logged");
             }
         }
 
         // Disable encryption (should log key deletion)
         let _ = manager.disable_encryption();
         
-        assert!(true, "Encryption operations logging completed without panic");
     }
 
     #[tokio::test]
@@ -101,7 +98,6 @@ mod tests {
             retry_after_seconds: 60,
         });
 
-        assert!(true, "Rate limiting logging mechanism verified");
     }
 
     #[test]
@@ -128,7 +124,6 @@ mod tests {
             details: Some("Test operation".to_string()),
         });
 
-        assert!(true, "Security event severity routing completed without panic");
     }
 
     #[test]
@@ -153,7 +148,6 @@ mod tests {
             source: "test_e2e".to_string(),
         });
 
-        assert!(true, "Multiple security events logged successfully");
     }
 
     #[test]
@@ -169,7 +163,6 @@ mod tests {
             });
         }
 
-        assert!(true, "Rapid security logging completed without blocking");
     }
 
     #[test]
@@ -208,7 +201,6 @@ mod tests {
             log_security_event(event);
         }
 
-        assert!(true, "Security event details formatting verified");
     }
 
     #[test]
@@ -227,7 +219,6 @@ mod tests {
         let result = validation::validate_channel_id("channelid");
         assert!(result.is_err(), "Channel ID without @ should be rejected");
 
-        assert!(true, "Channel validation security logging verified");
     }
 
     #[test]
@@ -238,7 +229,6 @@ mod tests {
         let result = validation::validate_search_text("search\0term");
         assert!(result.is_err(), "Null bytes in search text should be rejected");
 
-        assert!(true, "Search text validation security logging verified");
     }
 
     #[test]
@@ -305,6 +295,5 @@ mod tests {
             source: "test_e2e".to_string(),
         });
 
-        assert!(true, "All security event variants logged successfully");
     }
 }

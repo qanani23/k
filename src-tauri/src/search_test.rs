@@ -158,7 +158,7 @@ mod tests {
             .expect("Search failed");
 
         assert!(
-            results.len() >= 1,
+            !results.is_empty(),
             "Should find at least 1 result with 'chemistry' in description"
         );
     }
@@ -230,6 +230,6 @@ mod tests {
         println!("FTS5 available: {}", db.fts5_available);
 
         // FTS5 should be either true or false, not uninitialized
-        assert!(db.fts5_available == true || db.fts5_available == false);
+        // FTS5 availability is a boolean value
     }
 }

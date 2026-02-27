@@ -1,4 +1,4 @@
-/// Integration tests for full application startup
+﻿/// Integration tests for full application startup
 ///
 /// These tests verify the complete application initialization flow,
 /// including database setup, migration execution, and FTS5 initialization.
@@ -273,10 +273,8 @@ mod tests {
         // Verify fts5_available flag is set correctly
         // Note: The actual value depends on the SQLite build
         let fts5_available = db.fts5_available;
-        assert!(
-            fts5_available == true || fts5_available == false,
-            "FTS5 availability should be determined"
-        );
+        // FTS5 availability is a boolean value - always true or false
+        // No assertion needed as it's guaranteed by the type system
 
         // If FTS5 is available, verify the virtual table and triggers are created
         if fts5_available {
@@ -405,10 +403,10 @@ mod tests {
             // Create database and run migrations
             let db = Database::new()
                 .await
-                .expect(&format!("Failed to create database on cycle {}", i));
+                .unwrap_or_else(|_| panic!("Failed to create database on cycle {}", i));
             db.run_migrations()
                 .await
-                .expect(&format!("Failed to run migrations on cycle {}", i));
+                .unwrap_or_else(|_| panic!("Failed to run migrations on cycle {}", i));
 
             // Verify migrations are not re-applied
             let migration_count =
@@ -420,11 +418,11 @@ mod tests {
             );
 
             // Verify database operations work
-            let favorites = db
+            let _favorites = db
                 .get_favorites()
                 .await
-                .expect(&format!("Failed to get favorites on cycle {}", i));
-            assert!(favorites.len() >= 0, "Database should be operational");
+                .unwrap_or_else(|_| panic!("Failed to get favorites on cycle {}", i));
+            // favorites.len() is always >= 0 (usize)
 
             // Drop the database to simulate application shutdown
             drop(db);
@@ -465,13 +463,13 @@ mod tests {
                 db_clone
                     .save_favorite(favorite)
                     .await
-                    .expect(&format!("Failed to save favorite {}", i));
+                    .unwrap_or_else(|_| panic!("Failed to save favorite {}", i));
 
                 // Read back the favorite
                 let is_fav = db_clone
                     .is_favorite(&format!("concurrent_test_{}", i))
                     .await
-                    .expect(&format!("Failed to check favorite {}", i));
+                    .unwrap_or_else(|_| panic!("Failed to check favorite {}", i));
 
                 assert!(is_fav, "Favorite {} should exist", i);
             });
@@ -535,7 +533,7 @@ mod tests {
 
         for table in expected_tables {
             assert!(
-                table_exists(&db_path, table).expect(&format!("Failed to check table {}", table)),
+                table_exists(&db_path, table).unwrap_or_else(|_| panic!("Failed to check table {}", table)),
                 "Table {} should exist after migrations",
                 table
             );

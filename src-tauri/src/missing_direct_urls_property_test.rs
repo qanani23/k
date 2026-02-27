@@ -1,4 +1,4 @@
-/// Property-Based Tests for Missing Direct URLs
+﻿/// Property-Based Tests for Missing Direct URLs
 ///
 /// **Feature: odysee-cdn-playback-standardization, Property 1: Missing Direct URL Fields Do Not Cause Errors**
 ///
@@ -7,7 +7,6 @@
 /// and return a valid ContentItem with CDN-constructed playback URL.
 ///
 /// **Validates: Requirements 4.6, 4.7**
-
 #[cfg(test)]
 mod missing_direct_urls_property_tests {
     use crate::commands::parse_claim_item;

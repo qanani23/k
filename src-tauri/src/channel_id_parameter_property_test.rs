@@ -1,4 +1,4 @@
-/// Property-Based Tests for Channel ID Parameter Usage
+﻿/// Property-Based Tests for Channel ID Parameter Usage
 ///
 /// **Feature: pass-channel-id-from-frontend, Property 1: Channel ID parameter usage**
 ///
@@ -7,7 +7,6 @@
 /// (not read from environment variables).
 ///
 /// **Validates: Requirements 1.3, 5.2**
-
 #[cfg(test)]
 mod channel_id_parameter_tests {
     use crate::validation;
@@ -296,7 +295,6 @@ mod channel_id_parameter_tests {
 /// to backend commands, the backend should return a validation error.
 ///
 /// **Validates: Requirements 1.4, 4.2**
-
 #[cfg(test)]
 mod invalid_channel_id_rejection_tests {
     use crate::validation;

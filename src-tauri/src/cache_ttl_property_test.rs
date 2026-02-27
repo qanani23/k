@@ -7,7 +7,6 @@
 /// has expired, a fresh API call should be made and the cache updated.
 ///
 /// Validates: Requirements 1.3, 7.6, 13.1
-
 #[cfg(test)]
 mod cache_ttl_property_tests {
     use crate::database::tests::create_test_database_with_ttl;

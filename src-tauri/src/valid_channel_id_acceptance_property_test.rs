@@ -1,4 +1,4 @@
-/// Property-Based Tests for Valid Channel ID Acceptance
+﻿/// Property-Based Tests for Valid Channel ID Acceptance
 ///
 /// **Feature: pass-channel-id-from-frontend, Property 4: Valid channel ID acceptance**
 ///
@@ -6,7 +6,6 @@
 /// commands, the backend should proceed with the API request using the validated channel_id.
 ///
 /// **Validates: Requirements 4.4**
-
 #[cfg(test)]
 mod valid_channel_id_acceptance_tests {
     use crate::validation;

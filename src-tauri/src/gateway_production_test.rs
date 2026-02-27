@@ -1,4 +1,4 @@
-/// Production Gateway Failover Tests
+﻿/// Production Gateway Failover Tests
 ///
 /// This module contains tests that make real network calls to production Odysee gateways
 /// to verify the failover mechanism works correctly in production scenarios.
@@ -11,7 +11,6 @@
 /// - Gateway availability and performance
 /// - Rate limiting from Odysee APIs
 /// - Geographic location and routing
-
 #[cfg(test)]
 mod tests {
     use crate::gateway::GatewayClient;
@@ -59,7 +58,7 @@ mod tests {
                 Ok(response) => {
                     let status = response.status();
                     println!(
-                        "  ✓ {} responded with HTTP {} in {}ms",
+                        "  âœ“ {} responded with HTTP {} in {}ms",
                         label,
                         status,
                         elapsed.as_millis()
@@ -69,24 +68,24 @@ mod tests {
                         match response.json::<crate::models::OdyseeResponse>().await {
                             Ok(odysee_response) => {
                                 if odysee_response.success {
-                                    println!("  ✓ {} returned successful Odysee response", label);
+                                    println!("  âœ“ {} returned successful Odysee response", label);
                                 } else {
                                     println!(
-                                        "  ✗ {} returned error: {:?}",
+                                        "  âœ— {} returned error: {:?}",
                                         label, odysee_response.error
                                     );
                                 }
                             }
                             Err(e) => {
-                                println!("  ✗ {} failed to parse response: {}", label, e);
+                                println!("  âœ— {} failed to parse response: {}", label, e);
                             }
                         }
                     } else {
-                        println!("  ✗ {} returned non-success status: {}", label, status);
+                        println!("  âœ— {} returned non-success status: {}", label, status);
                     }
                 }
                 Err(e) => {
-                    println!("  ✗ {} failed: {}", label, e);
+                    println!("  âœ— {} failed: {}", label, e);
                 }
             }
             println!();
@@ -123,7 +122,7 @@ mod tests {
 
         match result {
             Ok(response) => {
-                println!("\n✓ Request succeeded after {}ms", elapsed.as_millis());
+                println!("\nâœ“ Request succeeded after {}ms", elapsed.as_millis());
                 println!("  Response success: {}", response.success);
 
                 if let Some(data) = response.data {
@@ -158,7 +157,7 @@ mod tests {
                 assert!(response.success, "Response should be successful");
             }
             Err(e) => {
-                println!("\n✗ Request failed after {}ms: {}", elapsed.as_millis(), e);
+                println!("\nâœ— Request failed after {}ms: {}", elapsed.as_millis(), e);
 
                 // Print gateway health stats even on failure
                 println!("\nGateway Health Stats:");
@@ -216,11 +215,11 @@ mod tests {
 
             match result {
                 Ok(response) => {
-                    println!("  ✓ Request #{} succeeded in {}ms", i, elapsed.as_millis());
+                    println!("  âœ“ Request #{} succeeded in {}ms", i, elapsed.as_millis());
                     assert!(response.success, "Response should be successful");
                 }
                 Err(e) => {
-                    println!("  ✗ Request #{} failed: {}", i, e);
+                    println!("  âœ— Request #{} failed: {}", i, e);
                     panic!("Request #{} should succeed: {}", i, e);
                 }
             }
@@ -250,7 +249,7 @@ mod tests {
         assert_eq!(priority_order[1], "https://api.lbry.tv/api/v1/proxy");
         assert_eq!(priority_order[2], "https://api.odysee.com/api/v1/proxy");
 
-        println!("\n✓ Gateway priority order is immutable and correct");
+        println!("\nâœ“ Gateway priority order is immutable and correct");
     }
 
     /// Test gateway failover with different request types
@@ -276,7 +275,7 @@ mod tests {
 
         let result1 = gateway_client.fetch_with_failover(request1).await;
         assert!(result1.is_ok(), "ClaimSearch with tags should succeed");
-        println!("  ✓ ClaimSearch with tags succeeded\n");
+        println!("  âœ“ ClaimSearch with tags succeeded\n");
 
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
 
@@ -294,7 +293,7 @@ mod tests {
 
         let result2 = gateway_client.fetch_with_failover(request2).await;
         assert!(result2.is_ok(), "ClaimSearch with text should succeed");
-        println!("  ✓ ClaimSearch with text search succeeded\n");
+        println!("  âœ“ ClaimSearch with text search succeeded\n");
 
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
 
@@ -302,7 +301,7 @@ mod tests {
         // Note: This would require a valid claim ID from the previous searches
         // For now, we'll skip this test as it requires dynamic data
 
-        println!("✓ All request types handled correctly with failover");
+        println!("âœ“ All request types handled correctly with failover");
     }
 
     /// Test gateway performance and response times
@@ -414,8 +413,8 @@ mod tests {
         let result = gateway_client.fetch_with_failover(request).await;
 
         match result {
-            Ok(_) => println!("✓ Request succeeded"),
-            Err(e) => println!("✗ Request failed: {}", e),
+            Ok(_) => println!("âœ“ Request succeeded"),
+            Err(e) => println!("âœ— Request failed: {}", e),
         }
 
         // Check if gateway log file exists
@@ -425,7 +424,7 @@ mod tests {
             .join("gateway.log");
 
         if log_path.exists() {
-            println!("\n✓ Gateway log file exists at: {:?}", log_path);
+            println!("\nâœ“ Gateway log file exists at: {:?}", log_path);
 
             // Try to read the last few lines of the log
             if let Ok(contents) = std::fs::read_to_string(&log_path) {
@@ -438,7 +437,7 @@ mod tests {
                 }
             }
         } else {
-            println!("\n✗ Gateway log file not found at: {:?}", log_path);
+            println!("\nâœ— Gateway log file not found at: {:?}", log_path);
             println!("  This may be expected if logging is not yet configured");
         }
 

@@ -412,17 +412,16 @@ impl GatewayClient {
             // Gateway errors with specific HTTP status codes
             KiyyaError::Gateway { message } => {
                 // Parse HTTP status codes from gateway error messages
-                if message.contains("HTTP 5") {
-                    true // 5xx server errors are retryable
-                } else if message.contains("HTTP 429") {
-                    true // Rate limiting is retryable (with backoff)
-                } else if message.contains("HTTP 408") {
-                    true // Request timeout is retryable
-                } else if message.contains("HTTP 502")
+                // 5xx server errors, rate limiting (429), request timeout (408),
+                // bad gateway (502), service unavailable (503), gateway timeout (504) are all retryable
+                if message.contains("HTTP 5")
+                    || message.contains("HTTP 429")
+                    || message.contains("HTTP 408")
+                    || message.contains("HTTP 502")
                     || message.contains("HTTP 503")
                     || message.contains("HTTP 504")
                 {
-                    true // Bad gateway, service unavailable, gateway timeout are retryable
+                    true
                 } else if message.contains("HTTP 4") {
                     false // 4xx client errors are generally not retryable
                 } else {
@@ -610,7 +609,7 @@ impl GatewayClient {
     /// Gets gateway configuration information for diagnostics
     pub fn get_gateway_config(&self) -> GatewayConfig {
         GatewayConfig {
-            primary: self.gateways.get(0).cloned().unwrap_or_default(),
+            primary: self.gateways.first().cloned().unwrap_or_default(),
             secondary: self.gateways.get(1).cloned().unwrap_or_default(),
             fallback: self.gateways.get(2).cloned().unwrap_or_default(),
             max_attempts: self.max_attempts as u32,
@@ -806,17 +805,17 @@ mod tests {
             let delay_2_with_jitter = 2000 + jitter; // 2000-2099ms
 
             assert!(
-                delay_0_with_jitter >= 300 && delay_0_with_jitter < 400,
+                (300..400).contains(&delay_0_with_jitter),
                 "First retry delay with jitter should be 300-399ms, got {}",
                 delay_0_with_jitter
             );
             assert!(
-                delay_1_with_jitter >= 1000 && delay_1_with_jitter < 1100,
+                (1000..1100).contains(&delay_1_with_jitter),
                 "Second retry delay with jitter should be 1000-1099ms, got {}",
                 delay_1_with_jitter
             );
             assert!(
-                delay_2_with_jitter >= 2000 && delay_2_with_jitter < 2100,
+                (2000..2100).contains(&delay_2_with_jitter),
                 "Subsequent retry delay with jitter should be 2000-2099ms, got {}",
                 delay_2_with_jitter
             );
@@ -967,7 +966,7 @@ mod tests {
     /// Test that verifies gateway priority order is NEVER reordered
     #[test]
     fn test_gateway_priority_immutability_enforcement() {
-        let mut client = GatewayClient::new();
+        let client = GatewayClient::new();
 
         // Record the initial gateway order
         let initial_order = client.get_gateway_priority_order().to_vec();
@@ -1186,17 +1185,17 @@ mod tests {
             let retry_delay_2_with_jitter = 1000 + retry_jitter; // 1000-1049ms
 
             assert!(
-                retry_delay_0_with_jitter >= 200 && retry_delay_0_with_jitter < 250,
+                (200..250).contains(&retry_delay_0_with_jitter),
                 "First retry delay with jitter should be 200-249ms, got {}",
                 retry_delay_0_with_jitter
             );
             assert!(
-                retry_delay_1_with_jitter >= 500 && retry_delay_1_with_jitter < 550,
+                (500..550).contains(&retry_delay_1_with_jitter),
                 "Second retry delay with jitter should be 500-549ms, got {}",
                 retry_delay_1_with_jitter
             );
             assert!(
-                retry_delay_2_with_jitter >= 1000 && retry_delay_2_with_jitter < 1050,
+                (1000..1050).contains(&retry_delay_2_with_jitter),
                 "Subsequent retry delay with jitter should be 1000-1049ms, got {}",
                 retry_delay_2_with_jitter
             );

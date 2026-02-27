@@ -1,4 +1,4 @@
-/// Property-Based Tests for Valid claim_id CDN Playback URL Generation
+﻿/// Property-Based Tests for Valid claim_id CDN Playback URL Generation
 ///
 /// **Feature: odysee-cdn-playback-standardization, Property 2: Valid claim_id Always Produces CDN Playback URL**
 ///
@@ -11,10 +11,9 @@
 /// - Produces the same URL when called multiple times with the same inputs (deterministic)
 ///
 /// **Validates: Requirements 1.1, 1.2, 1.4**
-
 #[cfg(test)]
 mod valid_claim_id_property_tests {
-    use crate::commands::{build_cdn_playback_url, get_cdn_gateway, parse_claim_item};
+    use crate::commands::{get_cdn_gateway, parse_claim_item};
     use proptest::prelude::*;
     use serde_json::json;
 

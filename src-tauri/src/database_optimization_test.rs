@@ -43,7 +43,7 @@ mod database_optimization_tests {
 
     #[tokio::test]
     async fn test_indices_exist() {
-        let (db, _temp_dir, db_path) = create_test_database_with_ttl(30 * 60);
+        let (_db, _temp_dir, db_path) = create_test_database_with_ttl(30 * 60);
 
         let indices = tokio::task::spawn_blocking(move || {
             let conn = Connection::open(&db_path).unwrap();

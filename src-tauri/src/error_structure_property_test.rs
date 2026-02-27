@@ -1,4 +1,4 @@
-/// Property-Based Tests for Error Structure
+﻿/// Property-Based Tests for Error Structure
 ///
 /// **Feature: odysee-cdn-playback-standardization, Property 6: Error Details Are Structured**
 ///
@@ -8,7 +8,6 @@
 /// - Human-readable message
 ///
 /// **Validates: Requirements 4.6**
-
 #[cfg(test)]
 mod error_structure_property_tests {
     use crate::commands::parse_claim_item;

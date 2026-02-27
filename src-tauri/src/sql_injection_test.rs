@@ -54,7 +54,7 @@ proptest! {
 
         // Verify the output is properly formatted
         let sanitized = result.unwrap();
-        prop_assert!(sanitized.contains(&column));
+        prop_assert!(sanitized.contains(column));
         prop_assert!(sanitized.contains("ASC") || sanitized.contains("DESC"));
     }
 

@@ -99,10 +99,10 @@ mod tests {
 
             // Verify total delays with jitter are within expected ranges
             let retry_delay_0_with_jitter = 200 + retry_jitter;
-            prop_assert!(retry_delay_0_with_jitter >= 200 && retry_delay_0_with_jitter < 250);
+            prop_assert!((200..250).contains(&retry_delay_0_with_jitter));
 
             let failover_delay_0_with_jitter = 300 + failover_jitter;
-            prop_assert!(failover_delay_0_with_jitter >= 300 && failover_delay_0_with_jitter < 400);
+            prop_assert!((300..400).contains(&failover_delay_0_with_jitter));
         });
     }
 

@@ -268,9 +268,7 @@ impl EncryptionManager {
         // Decrypt only the required chunks
         let mut result = Vec::new();
 
-        for chunk_idx in start_chunk..=end_chunk {
-            let chunk_info = &chunk_index[chunk_idx];
-
+        for (chunk_idx, chunk_info) in chunk_index.iter().enumerate().take(end_chunk + 1).skip(start_chunk) {
             // Seek to chunk position
             input_file
                 .seek(SeekFrom::Start(chunk_info.file_offset))

@@ -1,5 +1,6 @@
-// Prevents additional console window on Windows in release, DO NOT REMOVE!!
+﻿// Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![deny(warnings)]
 
 mod commands;
 mod crash_reporting;
@@ -187,10 +188,10 @@ async fn main() {
 
     // CRITICAL: Emergency disable check runs before all other startup logic
     println!("=== STARTING EMERGENCY DISABLE CHECK ===");
-    tracing::info!("🔍 Starting emergency disable check...");
+    tracing::info!("ðŸ” Starting emergency disable check...");
 
     // TEMPORARY: Skip emergency disable check to isolate the hang
-    tracing::info!("⚠️ TEMPORARY: Skipping emergency disable check for debugging");
+    tracing::info!("âš ï¸ TEMPORARY: Skipping emergency disable check for debugging");
     println!("=== SKIPPING EMERGENCY DISABLE CHECK (DEBUG) ===");
 
     /*
@@ -201,16 +202,16 @@ async fn main() {
     }
     */
 
-    tracing::info!("✅ Emergency disable check complete");
+    tracing::info!("âœ… Emergency disable check complete");
     println!("=== EMERGENCY DISABLE CHECK COMPLETE ===");
 
     // Initialize application state
     println!("=== INITIALIZING APP STATE ===");
-    tracing::info!("🔍 About to initialize app state...");
+    tracing::info!("ðŸ” About to initialize app state...");
     let app_state = initialize_app_state()
         .await
         .expect("Failed to initialize application state");
-    tracing::info!("✅ App state initialized");
+    tracing::info!("âœ… App state initialized");
     println!("=== APP STATE INITIALIZED ===");
 
     println!("=== BUILDING TAURI APP ===");
@@ -248,10 +249,10 @@ async fn main() {
         ])
         .setup(|_app| {
             println!("=== TAURI SETUP HOOK STARTED ===");
-            tracing::info!("🔍 Tauri setup hook started");
+            tracing::info!("ðŸ” Tauri setup hook started");
 
             // TEMPORARY: Skip migrations to isolate the hang
-            tracing::info!("⚠️ TEMPORARY: Skipping migrations for debugging");
+            tracing::info!("âš ï¸ TEMPORARY: Skipping migrations for debugging");
             println!("=== SKIPPING MIGRATIONS (DEBUG) ===");
 
             /*
@@ -281,7 +282,7 @@ async fn main() {
             */
 
             println!("=== TAURI SETUP HOOK COMPLETE ===");
-            tracing::info!("✅ Tauri setup hook complete");
+            tracing::info!("âœ… Tauri setup hook complete");
             Ok(())
         })
         .run(tauri::generate_context!())
@@ -291,29 +292,29 @@ async fn main() {
 }
 
 async fn initialize_app_state() -> Result<AppState, Box<dyn std::error::Error>> {
-    tracing::info!("🚀 Starting app state initialization...");
+    tracing::info!("ðŸš€ Starting app state initialization...");
 
     // Initialize database
-    tracing::info!("🔍 Initializing database...");
+    tracing::info!("ðŸ” Initializing database...");
     let db = Database::new().await?;
-    tracing::info!("✅ Database initialized");
+    tracing::info!("âœ… Database initialized");
 
     // Initialize gateway client
-    tracing::info!("🔍 Initializing gateway client...");
+    tracing::info!("ðŸ” Initializing gateway client...");
     let gateway = GatewayClient::new();
-    tracing::info!("✅ Gateway client initialized");
+    tracing::info!("âœ… Gateway client initialized");
 
     // Initialize download manager
-    tracing::info!("🔍 Initializing download manager...");
+    tracing::info!("ðŸ” Initializing download manager...");
     let download_manager = DownloadManager::new().await?;
-    tracing::info!("✅ Download manager initialized");
+    tracing::info!("âœ… Download manager initialized");
 
     // Initialize local server
-    tracing::info!("🔍 Initializing local server...");
+    tracing::info!("ðŸ” Initializing local server...");
     let local_server = LocalServer::new().await?;
-    tracing::info!("✅ Local server initialized");
+    tracing::info!("âœ… Local server initialized");
 
-    tracing::info!("🎉 App state initialization complete!");
+    tracing::info!("ðŸŽ‰ App state initialization complete!");
 
     Ok(AppState {
         db: Arc::new(Mutex::new(db)),
@@ -359,7 +360,7 @@ async fn run_startup_migrations(
 /// the application can be remotely disabled if necessary
 #[allow(dead_code)]
 async fn check_emergency_disable() -> Result<(), Box<dyn std::error::Error>> {
-    tracing::info!("🔍 check_emergency_disable: Reading environment variable...");
+    tracing::info!("ðŸ” check_emergency_disable: Reading environment variable...");
 
     // Get the update manifest URL from environment variable
     let manifest_url = std::env::var("VITE_UPDATE_MANIFEST_URL").unwrap_or_else(|_| {
@@ -374,18 +375,18 @@ async fn check_emergency_disable() -> Result<(), Box<dyn std::error::Error>> {
 
     tracing::info!("Checking emergency disable status from: {}", manifest_url);
 
-    tracing::info!("🔍 check_emergency_disable: Creating HTTP client...");
+    tracing::info!("ðŸ” check_emergency_disable: Creating HTTP client...");
     // Create HTTP client with timeout
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(10))
         .build()?;
 
-    tracing::info!("🔍 check_emergency_disable: Sending HTTP request...");
+    tracing::info!("ðŸ” check_emergency_disable: Sending HTTP request...");
     // Fetch the version manifest
     match client.get(&manifest_url).send().await {
         Ok(response) => {
             tracing::info!(
-                "🔍 check_emergency_disable: Received response, status: {}",
+                "ðŸ” check_emergency_disable: Received response, status: {}",
                 response.status()
             );
             if response.status().is_success() {
@@ -428,7 +429,7 @@ async fn check_emergency_disable() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    tracing::info!("🔍 check_emergency_disable: Function complete");
+    tracing::info!("ðŸ” check_emergency_disable: Function complete");
     Ok(())
 }
 

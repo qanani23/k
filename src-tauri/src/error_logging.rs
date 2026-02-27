@@ -529,7 +529,10 @@ mod tests {
     #[tokio::test]
     async fn test_error_codes() {
         assert_eq!(
-            get_error_code(&KiyyaError::AllGatewaysFailed { attempts: 3 }),
+            get_error_code(&KiyyaError::AllGatewaysFailed { 
+                attempts: 3,
+                last_error: "Test error".to_string()
+            }),
             Some("E_GATEWAY_001".to_string())
         );
         assert_eq!(

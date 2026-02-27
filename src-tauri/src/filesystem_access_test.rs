@@ -1,4 +1,4 @@
-/// Filesystem Access Limitations Integration Tests
+﻿/// Filesystem Access Limitations Integration Tests
 ///
 /// This test module verifies that filesystem access is properly restricted to
 /// the application data folder only, both at the path validation level and
@@ -12,13 +12,11 @@
 /// 5. Actual file operations respect the restrictions
 ///
 /// Validates: Requirements 12.2, Phase 11.2 Task "Test filesystem access limitations"
-
 #[cfg(test)]
 mod tests {
     use crate::error::KiyyaError;
     use crate::path_security;
     use std::fs;
-    use std::path::PathBuf;
 
     // ========== Path Validation Tests ==========
 
@@ -162,9 +160,8 @@ mod tests {
             // These should either be blocked or sanitized
             let result = path_security::validate_path(path);
 
-            if result.is_ok() {
+            if let Ok(validated_path) = result {
                 // If accepted, ensure it's still within app data
-                let validated_path = result.unwrap();
                 assert!(
                     validated_path.to_string_lossy().contains("kiyya_test")
                         || validated_path.to_string_lossy().contains("Kiyya"),
@@ -377,8 +374,7 @@ mod tests {
         for path in empty_component_paths {
             let result = path_security::validate_path(path);
             // These should either be accepted (normalized) or rejected
-            if result.is_ok() {
-                let validated_path = result.unwrap();
+            if let Ok(validated_path) = result {
                 assert!(
                     validated_path.to_string_lossy().contains("kiyya_test")
                         || validated_path.to_string_lossy().contains("Kiyya"),
@@ -419,8 +415,7 @@ mod tests {
 
             // On Unix, they should still be within app data if accepted
             #[cfg(not(target_os = "windows"))]
-            if result.is_ok() {
-                let validated_path = result.unwrap();
+            if let Ok(validated_path) = result {
                 assert!(
                     validated_path.to_string_lossy().contains("kiyya_test")
                         || validated_path.to_string_lossy().contains("Kiyya"),
@@ -434,10 +429,10 @@ mod tests {
     fn test_unicode_in_paths() {
         // Test paths with Unicode characters
         let unicode_paths = vec![
-            "vault/电影.mp4",
-            "vault/фильм.mp4",
-            "vault/映画.mp4",
-            "vault/película.mp4",
+            "vault/ç”µå½±.mp4",
+            "vault/Ñ„Ð¸Ð»ÑŒÐ¼.mp4",
+            "vault/æ˜ç”».mp4",
+            "vault/pelicula.mp4",
         ];
 
         for path in unicode_paths {

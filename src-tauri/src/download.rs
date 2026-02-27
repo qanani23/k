@@ -30,7 +30,7 @@ impl DownloadManager {
         let client = Client::builder()
             .timeout(std::time::Duration::from_secs(30))
             .build()
-            .map_err(|e| KiyyaError::Network(e))?;
+            .map_err(KiyyaError::Network)?;
 
         let encryption_manager = EncryptionManager::new()?;
 
@@ -772,7 +772,7 @@ mod tests {
     use super::*;
     use std::path::PathBuf;
     use tempfile::TempDir;
-    use tokio::fs::{create_dir_all, write};
+    use tokio::fs::write;
 
     // Helper function to create a test DownloadManager
     fn create_test_manager(vault_path: PathBuf) -> DownloadManager {
@@ -962,7 +962,7 @@ mod tests {
         // This test might fail if there's no internet connection
         // In that case, we just verify the function signature works
         match result {
-            Ok((content_length, etag, supports_range)) => {
+            Ok((content_length, etag, _supports_range)) => {
                 // Verify we got some metadata
                 assert!(content_length.is_some() || etag.is_some());
                 // supports_range can be true or false depending on the server

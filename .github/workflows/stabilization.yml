@@ -121,13 +121,8 @@ jobs:
         run: cd src-tauri && cargo test
         continue-on-error: true
       
-      - name: Run clippy (allow warnings pre-Phase 5)
-        run: cd src-tauri && cargo clippy --all-targets --all-features -- -A warnings 2>&1 | tee ../stabilization/audit_clippy.txt
-        if: "!contains(github.ref, 'phase5')"
-      
-      - name: Run clippy (deny warnings Phase 5+)
+      - name: Run clippy (enforce zero warnings)
         run: cd src-tauri && cargo clippy --all-targets --all-features -- -D warnings 2>&1 | tee ../stabilization/audit_clippy.txt
-        if: contains(github.ref, 'phase5')
       
       - name: Generate audit report
         run: bash scripts/generate_audit_report.sh

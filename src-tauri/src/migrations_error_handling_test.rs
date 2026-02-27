@@ -1,8 +1,8 @@
 // Unit tests for migration error handling
 // Tests verify that error contexts are properly preserved and migrations work correctly
 
-use crate::error::{ErrorContext, KiyyaError};
-use crate::migrations::{Migration, MigrationInfo, MigrationRunner};
+use crate::error::ErrorContext;
+use crate::migrations::{Migration, MigrationRunner};
 use rusqlite::Connection;
 use tempfile::TempDir;
 
@@ -469,7 +469,6 @@ mod tests {
 /// original error message from the rusqlite error.
 ///
 /// **Validates: Requirements 2.3**
-
 #[cfg(test)]
 mod property_tests {
     use super::*;
@@ -680,7 +679,7 @@ mod property_tests {
         ) {
             // Create a rusqlite error
             let error = create_rusqlite_error(error_type);
-            let original_error_msg = error.to_string();
+            let _original_error_msg = error.to_string();
 
             // Convert rusqlite::Error to Result
             let result: Result<(), rusqlite::Error> = Err(error);
@@ -775,7 +774,7 @@ mod property_tests {
             for (version, description, applied_at, checksum) in &inserted_migrations {
                 let migration_info = history.iter()
                     .find(|m| m.version == *version)
-                    .expect(&format!("Migration version {} not found in history", version));
+                    .unwrap_or_else(|| panic!("Migration version {} not found in history", version));
 
                 // Verify description matches
                 prop_assert_eq!(

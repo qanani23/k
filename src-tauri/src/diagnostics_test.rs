@@ -2,7 +2,6 @@
 
 use crate::database::Database;
 use crate::diagnostics::collect_debug_package;
-use std::path::Path;
 use tempfile::TempDir;
 
 async fn create_test_db() -> (Database, TempDir) {
@@ -213,7 +212,7 @@ fn test_debug_package_components_documented() {
     // - Sanitized configuration
 
     // This is a documentation test to ensure all components are accounted for
-    let required_components = vec![
+    let required_components = [
         "system_info.txt",
         "database_metadata.txt",
         "logs/recent_1.log",

@@ -1,10 +1,9 @@
-/**
+﻿/**
  * Tag System Immutability Verification Tests (Rust Backend)
  *
  * This test module verifies that the tag system in the Rust backend
  * is immutable and matches the frontend definitions exactly.
  */
-
 #[cfg(test)]
 mod tests {
     use crate::models::tags;

@@ -34,7 +34,7 @@ pub fn get_app_data_dir() -> Result<PathBuf> {
     {
         let test_dir = std::env::temp_dir().join("kiyya_test");
         std::fs::create_dir_all(&test_dir).ok();
-        return Ok(test_dir);
+        Ok(test_dir)
     }
 
     #[cfg(not(test))]
@@ -143,8 +143,8 @@ pub fn validate_path<P: AsRef<Path>>(path: P) -> Result<PathBuf> {
 /// Normalize a path by removing Windows UNC prefix if present
 fn normalize_path(path: &Path) -> PathBuf {
     let path_str = path.to_string_lossy();
-    if path_str.starts_with(r"\\?\") {
-        PathBuf::from(&path_str[4..])
+    if let Some(stripped) = path_str.strip_prefix(r"\\?\") {
+        PathBuf::from(stripped)
     } else {
         path.to_path_buf()
     }

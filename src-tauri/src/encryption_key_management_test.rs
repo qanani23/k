@@ -10,7 +10,6 @@
 /// 4. Keys are properly removed from keystore on disable
 /// 5. Multiple encryption managers can access the same keystore key
 /// 6. Database schema contains no encryption key columns
-
 #[cfg(test)]
 mod encryption_key_management_tests {
     use crate::database::Database;
@@ -108,7 +107,7 @@ mod encryption_key_management_tests {
         let db_path = temp_dir.path().join("test.db");
 
         // Create database
-        let db = Database::new_with_path(&db_path).await.unwrap();
+        let _db = Database::new_with_path(&db_path).await.unwrap();
 
         // Get all table schemas
         let conn = Connection::open(&db_path).unwrap();
@@ -434,7 +433,7 @@ mod encryption_key_management_tests {
         let encrypted_value: bool = stmt.query_row([], |row| row.get(0)).unwrap();
 
         // Verify it's just a boolean flag, not a key
-        assert_eq!(encrypted_value, true, "Should store boolean flag");
+        assert!(encrypted_value, "Should store boolean flag");
 
         // Verify the table schema doesn't have key-related columns
         let mut schema_stmt = conn.prepare("PRAGMA table_info(offline_meta)").unwrap();

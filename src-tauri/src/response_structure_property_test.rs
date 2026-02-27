@@ -12,7 +12,6 @@
 /// - thumbnail_url (may be None)
 ///
 /// **Validates: Requirements 11.7**
-
 #[cfg(test)]
 mod response_structure_property_tests {
     use crate::commands::parse_claim_item;
@@ -184,7 +183,7 @@ mod response_structure_property_tests {
 
                 // Property: video_urls must have at least one entry
                 prop_assert!(
-                    content.video_urls.len() >= 1,
+                    !content.video_urls.is_empty(),
                     "Response video_urls must have at least one entry"
                 );
             }

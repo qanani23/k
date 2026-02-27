@@ -4,7 +4,6 @@
 /// - HTTP 429 rate limiting responses with retry-after headers
 /// - Request timeouts (10 second timeout)
 /// - Proper error categorization and retry logic
-
 #[cfg(test)]
 mod tests {
     use crate::error::KiyyaError;
@@ -68,7 +67,7 @@ mod tests {
         // Second retry: 500ms
         // Third retry: 1000ms
 
-        let retry_delays = vec![200, 500, 1000];
+        let retry_delays = [200, 500, 1000];
 
         for (i, expected_delay) in retry_delays.iter().enumerate() {
             let actual_delay = match i {
@@ -88,7 +87,7 @@ mod tests {
         // Before fallback: 1000ms
         // Subsequent: 2000ms
 
-        let failover_delays = vec![300, 1000, 2000];
+        let failover_delays = [300, 1000, 2000];
 
         for (i, expected_delay) in failover_delays.iter().enumerate() {
             let actual_delay = match i {

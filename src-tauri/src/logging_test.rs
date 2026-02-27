@@ -1,5 +1,4 @@
 use crate::logging::{init_logging, LoggingConfig};
-use std::fs;
 use tempfile::TempDir;
 
 #[tokio::test]
@@ -27,7 +26,7 @@ fn test_logging_config_creation() {
     let config = LoggingConfig::default();
 
     assert_eq!(config.level, tracing::Level::INFO);
-    assert_eq!(config.enable_file, true);
+    assert!(config.enable_file);
     assert!(config.log_dir.is_none());
 }
 
@@ -44,7 +43,7 @@ fn test_custom_logging_config() {
     };
 
     assert_eq!(config.level, tracing::Level::DEBUG);
-    assert_eq!(config.enable_console, false);
-    assert_eq!(config.enable_file, true);
+    assert!(!config.enable_console);
+    assert!(config.enable_file);
     assert_eq!(config.log_dir, Some(custom_log_dir));
 }

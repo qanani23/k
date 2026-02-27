@@ -148,12 +148,12 @@ async fn add_system_info(zip: &mut ZipWriter<fs::File>, options: FileOptions) ->
     system.refresh_all();
 
     let mut info = String::new();
-    info.push_str(&format!("Kiyya Debug Package\n"));
+    info.push_str("Kiyya Debug Package\n");
     info.push_str(&format!(
         "Generated: {}\n\n",
         chrono::Utc::now().to_rfc3339()
     ));
-    info.push_str(&format!("=== System Information ===\n"));
+    info.push_str("=== System Information ===\n");
     info.push_str(&format!(
         "OS: {}\n",
         system.name().unwrap_or_else(|| "Unknown".to_string())
@@ -183,7 +183,7 @@ async fn add_system_info(zip: &mut ZipWriter<fs::File>, options: FileOptions) ->
     info.push_str(&format!("CPU Count: {}\n", system.cpus().len()));
     info.push_str(&format!("App Version: {}\n\n", env!("CARGO_PKG_VERSION")));
 
-    info.push_str(&format!("=== Disk Information ===\n"));
+    info.push_str("=== Disk Information ===\n");
     for disk in system.disks() {
         info.push_str(&format!("Mount: {:?}\n", disk.mount_point()));
         info.push_str(&format!(
@@ -217,7 +217,7 @@ async fn add_database_metadata(
 
     // Get cache stats
     let cache_stats = db.get_cache_stats().await?;
-    metadata.push_str(&format!("\n=== Cache Statistics ===\n"));
+    metadata.push_str("\n=== Cache Statistics ===\n");
     metadata.push_str(&format!("Total Items: {}\n", cache_stats.total_items));
     metadata.push_str(&format!(
         "Cache Size: {} MB\n",
@@ -235,7 +235,7 @@ async fn add_database_metadata(
 
     // Get memory stats
     let memory_stats = db.get_memory_stats().await?;
-    metadata.push_str(&format!("\n=== Memory Statistics ===\n"));
+    metadata.push_str("\n=== Memory Statistics ===\n");
     metadata.push_str(&format!("Cache Items: {}\n", memory_stats.cache_items));
     metadata.push_str(&format!(
         "Playlist Count: {}\n",
@@ -255,7 +255,7 @@ async fn add_database_metadata(
     ));
 
     // Get settings (sanitized - no encryption keys)
-    metadata.push_str(&format!("\n=== Settings (Sanitized) ===\n"));
+    metadata.push_str("\n=== Settings (Sanitized) ===\n");
     if let Ok(Some(theme)) = db.get_setting("theme").await {
         metadata.push_str(&format!("Theme: {}\n", theme));
     }
@@ -352,7 +352,7 @@ async fn add_error_logs(
         for (category, count) in &error_stats.errors_by_category {
             error_info.push_str(&format!("{}: {}\n", category, count));
         }
-        error_info.push_str("\n");
+        error_info.push('\n');
 
         if let Some(most_common) = &error_stats.most_common_error {
             error_info.push_str(&format!("Most Common Error: {}\n\n", most_common));
@@ -375,7 +375,7 @@ async fn add_error_logs(
                 if let Some(user_action) = error.user_action {
                     error_info.push_str(&format!("  User Action: {}\n", user_action));
                 }
-                error_info.push_str("\n");
+                error_info.push('\n');
             }
         }
 
@@ -464,7 +464,7 @@ async fn add_sanitized_config(
         }
     }
 
-    config.push_str(&format!("\n=== Gateway Configuration ===\n"));
+    config.push_str("\n=== Gateway Configuration ===\n");
     config.push_str("Primary: https://api.na-backend.odysee.com/api/v1/proxy\n");
     config.push_str("Secondary: https://api.lbry.tv/api/v1/proxy\n");
     config.push_str("Fallback: https://api.odysee.com/api/v1/proxy\n");

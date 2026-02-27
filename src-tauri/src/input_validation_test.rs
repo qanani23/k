@@ -2,7 +2,6 @@
 ///
 /// This test module verifies that all user inputs are properly validated
 /// before being processed by the application.
-
 #[cfg(test)]
 mod tests {
     use crate::sanitization;
@@ -127,20 +126,20 @@ mod tests {
     fn test_tags_validation_prevents_injection() {
         // Valid tags should pass
         assert!(
-            validation::validate_tags(&vec!["movie".to_string(), "action".to_string()]).is_ok()
+            validation::validate_tags(&["movie".to_string(), "action".to_string()]).is_ok()
         );
-        assert!(validation::validate_tags(&vec!["series".to_string()]).is_ok());
+        assert!(validation::validate_tags(&["series".to_string()]).is_ok());
 
         // Empty array is now valid (represents "no tag filter")
-        assert!(validation::validate_tags(&vec![]).is_ok());
+        assert!(validation::validate_tags(&[]).is_ok());
 
         // Too many tags should fail
         assert!(validation::validate_tags(&vec!["tag".to_string(); 51]).is_err());
 
         // Invalid tag formats should fail
-        assert!(validation::validate_tags(&vec!["tag; DROP TABLE".to_string()]).is_err());
-        assert!(validation::validate_tags(&vec!["tag%".to_string()]).is_err());
-        assert!(validation::validate_tags(&vec!["tag\0".to_string()]).is_err());
+        assert!(validation::validate_tags(&["tag; DROP TABLE".to_string()]).is_err());
+        assert!(validation::validate_tags(&["tag%".to_string()]).is_err());
+        assert!(validation::validate_tags(&["tag\0".to_string()]).is_err());
     }
 
     #[test]
@@ -400,7 +399,7 @@ mod tests {
         assert!(validation::validate_external_url("https://github.com/user/repo").is_ok());
 
         // Array inputs
-        assert!(validation::validate_tags(&vec!["movie".to_string()]).is_ok());
+        assert!(validation::validate_tags(&["movie".to_string()]).is_ok());
 
         // Numeric inputs
         assert!(validation::validate_position_seconds(100).is_ok());

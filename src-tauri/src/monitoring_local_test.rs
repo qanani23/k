@@ -12,7 +12,6 @@
 ///
 /// All of this data must remain on the local machine and never be sent
 /// to external monitoring services, analytics platforms, or telemetry endpoints.
-
 #[cfg(test)]
 mod tests {
     use std::fs;

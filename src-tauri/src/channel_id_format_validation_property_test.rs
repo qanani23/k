@@ -1,4 +1,4 @@
-/// Property-Based Tests for Channel ID Format Validation
+﻿/// Property-Based Tests for Channel ID Format Validation
 ///
 /// **Feature: pass-channel-id-from-frontend, Property 3: Channel ID format validation**
 ///
@@ -6,7 +6,6 @@
 /// starts with '@' and is non-empty.
 ///
 /// **Validates: Requirements 1.5, 4.1**
-
 #[cfg(test)]
 mod channel_id_format_validation_tests {
     use crate::validation;

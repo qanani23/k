@@ -1,4 +1,4 @@
-/// Property-Based Tests for CDN Builder Determinism
+﻿/// Property-Based Tests for CDN Builder Determinism
 ///
 /// **Feature: odysee-cdn-playback-standardization, Property 7: CDN URL Construction Is Idempotent**
 ///
@@ -6,7 +6,6 @@
 /// produce identical URLs (no randomness, no state dependency).
 ///
 /// **Validates: Requirements 1.4**
-
 #[cfg(test)]
 mod cdn_builder_determinism_tests {
     use crate::commands::build_cdn_playback_url;

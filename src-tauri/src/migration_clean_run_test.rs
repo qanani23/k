@@ -6,7 +6,6 @@
 /// 3. All migrations are idempotent (can be run multiple times safely)
 /// 4. Migration history is properly tracked
 /// 5. Database schema is correct after all migrations
-
 #[cfg(test)]
 mod migration_clean_run_tests {
     use crate::database::Database;
@@ -112,7 +111,7 @@ mod migration_clean_run_tests {
 
         for table in expected_tables {
             assert!(
-                table_exists(&db_path, table).expect(&format!("Failed to check {} table", table)),
+                table_exists(&db_path, table).unwrap_or_else(|_| panic!("Failed to check {} table", table)),
                 "Table '{}' should exist after migrations",
                 table
             );
@@ -576,13 +575,13 @@ mod migration_clean_run_tests {
 
             let mut stmt = conn
                 .prepare(&format!("PRAGMA table_info({})", table))
-                .expect(&format!("Failed to get table info for {}", table));
+                .unwrap_or_else(|_| panic!("Failed to get table info for {}", table));
 
             let columns: Vec<String> = stmt
                 .query_map([], |row| row.get(1))
-                .expect(&format!("Failed to query columns for {}", table))
+                .unwrap_or_else(|_| panic!("Failed to query columns for {}", table))
                 .collect::<Result<Vec<String>, _>>()
-                .expect(&format!("Failed to collect columns for {}", table));
+                .unwrap_or_else(|_| panic!("Failed to collect columns for {}", table));
 
             assert!(
                 !columns.is_empty(),

@@ -1,4 +1,4 @@
-/// Property-Based Tests for Resumable and Atomic Download Operations
+﻿/// Property-Based Tests for Resumable and Atomic Download Operations
 ///
 /// **Feature: kiyya-desktop-streaming, Property 9: Resumable Download Consistency**
 ///
@@ -15,7 +15,6 @@
 /// ensuring no partial files exist in the vault directory.
 ///
 /// Validates: Requirements 21.6, 21.8
-
 #[cfg(test)]
 mod download_resumable_atomic_property_tests {
     use crate::download::DownloadManager;

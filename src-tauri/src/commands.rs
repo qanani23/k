@@ -1,4 +1,4 @@
-use crate::diagnostics;
+﻿use crate::diagnostics;
 use crate::error::{KiyyaError, Result};
 use crate::models::*;
 use crate::sanitization;
@@ -204,32 +204,47 @@ pub(crate) fn build_cdn_playback_url(claim_id: &str, gateway: &str) -> String {
 
 #[tauri::command]
 pub async fn test_connection() -> Result<String> {
-    info!("🧪 TEST: test_connection called");
+    info!("ðŸ§ª TEST: test_connection called");
     Ok("tauri-backend-alive".to_string())
 }
 
 #[tauri::command]
 pub fn build_cdn_playback_url_test(claim_id: String) -> String {
     info!(
-        "🧪 TEST: build_cdn_playback_url_test called with claim_id: {}",
+        "ðŸ§ª TEST: build_cdn_playback_url_test called with claim_id: {}",
         claim_id
     );
     let gateway = get_cdn_gateway();
     build_cdn_playback_url(&claim_id, gateway)
 }
 
+/// Parameters for fetching channel claims
+#[derive(serde::Deserialize)]
+pub struct FetchChannelClaimsParams {
+    pub channel_id: String,
+    pub any_tags: Option<Vec<String>>,
+    pub text: Option<String>,
+    pub limit: Option<u32>,
+    pub page: Option<u32>,
+    pub force_refresh: Option<bool>,
+    pub stream_types: Option<Vec<String>>,
+}
+
 #[tauri::command]
 pub async fn fetch_channel_claims(
-    channel_id: String,
-    any_tags: Option<Vec<String>>,
-    text: Option<String>,
-    limit: Option<u32>,
-    page: Option<u32>,
-    force_refresh: Option<bool>,
-    stream_types: Option<Vec<String>>,
+    params: FetchChannelClaimsParams,
     state: State<'_, AppState>,
 ) -> Result<Vec<ContentItem>> {
-    info!("🚀 DIAGNOSTIC: fetch_channel_claims called");
+    let FetchChannelClaimsParams {
+        channel_id,
+        any_tags,
+        text,
+        limit,
+        page,
+        force_refresh,
+        stream_types,
+    } = params;
+    info!("ðŸš€ DIAGNOSTIC: fetch_channel_claims called");
     info!(
         "   channel_id={}, tags={:?}, text={:?}, limit={:?}, stream_types={:?}, force_refresh={:?}",
         channel_id, any_tags, text, limit, stream_types, force_refresh
@@ -238,15 +253,15 @@ pub async fn fetch_channel_claims(
     // Wrap entire function in error logging
     let result = async {
         // Validate channel_id
-        info!("🔍 DIAGNOSTIC: Validating channel_id");
+        info!("ðŸ” DIAGNOSTIC: Validating channel_id");
         let validated_channel_id = validation::validate_channel_id(&channel_id)?;
         info!(
-            "✅ DIAGNOSTIC: Channel ID validated: {}",
+            "âœ… DIAGNOSTIC: Channel ID validated: {}",
             validated_channel_id
         );
 
         // Validate inputs
-        info!("🔍 DIAGNOSTIC: Validating inputs");
+        info!("ðŸ” DIAGNOSTIC: Validating inputs");
         let validated_tags = if let Some(tags) = any_tags.as_ref() {
             Some(validation::validate_tags(tags)?)
         } else {
@@ -272,11 +287,11 @@ pub async fn fetch_channel_claims(
         };
 
         let should_force_refresh = force_refresh.unwrap_or(false);
-        info!("✅ DIAGNOSTIC: All inputs validated");
+        info!("âœ… DIAGNOSTIC: All inputs validated");
 
         // Skip cache if force_refresh is true
         if !should_force_refresh {
-            info!("🔍 DIAGNOSTIC: Checking cache");
+            info!("ðŸ” DIAGNOSTIC: Checking cache");
             // First, try to get from local cache
             let db = state.db.lock().await;
             let query = CacheQuery {
@@ -286,31 +301,31 @@ pub async fn fetch_channel_claims(
                 offset: validated_page.map(|p| p * validated_limit.unwrap_or(50)),
                 order_by: Some("releaseTime DESC".to_string()),
             };
-            info!("🔍 DIAGNOSTIC: Calling db.get_cached_content");
+            info!("ðŸ” DIAGNOSTIC: Calling db.get_cached_content");
             let cached_items = db.get_cached_content(query).await?;
-            info!("🔍 DIAGNOSTIC: Cache returned {} items", cached_items.len());
+            info!("ðŸ” DIAGNOSTIC: Cache returned {} items", cached_items.len());
 
             // CRITICAL FIX: Return cache if we have ANY valid results, not just >= 6
             // This fixes the hero_trailer issue where only 1 video exists
             // The >= 6 threshold was arbitrary and broke single-item queries
             if !cached_items.is_empty() && validated_text.is_none() {
                 info!(
-                    "✅ DIAGNOSTIC: Returning {} items from cache",
+                    "âœ… DIAGNOSTIC: Returning {} items from cache",
                     cached_items.len()
                 );
                 drop(db);
                 return Ok(cached_items);
             }
-            info!("🔍 DIAGNOSTIC: Cache miss or text search, fetching from remote");
+            info!("ðŸ” DIAGNOSTIC: Cache miss or text search, fetching from remote");
             drop(db);
         } else {
-            info!("🔍 DIAGNOSTIC: Force refresh enabled, skipping cache");
+            info!("ðŸ” DIAGNOSTIC: Force refresh enabled, skipping cache");
         }
 
         // Otherwise, fetch from remote
-        info!("🔍 DIAGNOSTIC: Acquiring gateway lock");
+        info!("ðŸ” DIAGNOSTIC: Acquiring gateway lock");
         let mut gateway = state.gateway.lock().await;
-        info!("✅ DIAGNOSTIC: Gateway lock acquired");
+        info!("âœ… DIAGNOSTIC: Gateway lock acquired");
 
         let request = OdyseeRequest {
             method: "claim_search".to_string(),
@@ -325,7 +340,7 @@ pub async fn fetch_channel_claims(
             }),
         };
 
-        info!("🌐 DIAGNOSTIC: Sending API request: {:?}", request);
+        info!("ðŸŒ DIAGNOSTIC: Sending API request: {:?}", request);
         
         // TRACING: Stage 1 - claim_search call
         info!(
@@ -340,31 +355,31 @@ pub async fn fetch_channel_claims(
             "Stage 1: Sending claim_search API request"
         );
         
-        info!("🔍 DIAGNOSTIC: Calling gateway.fetch_with_failover");
+        info!("ðŸ” DIAGNOSTIC: Calling gateway.fetch_with_failover");
         let response = gateway.fetch_with_failover(request).await?;
         info!(
-            "📥 DIAGNOSTIC: Received API response: success={}, has_data={}",
+            "ðŸ“¥ DIAGNOSTIC: Received API response: success={}, has_data={}",
             response.success,
             response.data.is_some()
         );
-        info!("🔍 DIAGNOSTIC: Dropping gateway lock");
+        info!("ðŸ” DIAGNOSTIC: Dropping gateway lock");
         drop(gateway);
 
         // Parse response and extract content items
-        info!("🔍 DIAGNOSTIC: Calling parse_claim_search_response");
+        info!("ðŸ” DIAGNOSTIC: Calling parse_claim_search_response");
         let items = parse_claim_search_response(response)?;
-        info!("✅ DIAGNOSTIC: Parsed {} items", items.len());
+        info!("âœ… DIAGNOSTIC: Parsed {} items", items.len());
 
         // Store in cache
-        info!("🔍 DIAGNOSTIC: Acquiring database lock for caching");
+        info!("ðŸ” DIAGNOSTIC: Acquiring database lock for caching");
         let db = state.db.lock().await;
-        info!("🔍 DIAGNOSTIC: Storing items in cache");
+        info!("ðŸ” DIAGNOSTIC: Storing items in cache");
         db.store_content_items(items.clone()).await?;
-        info!("💾 DIAGNOSTIC: Stored {} items in cache", items.len());
+        info!("ðŸ’¾ DIAGNOSTIC: Stored {} items in cache", items.len());
         drop(db);
 
         info!(
-            "🎯 DIAGNOSTIC: About to return {} items to frontend",
+            "ðŸŽ¯ DIAGNOSTIC: About to return {} items to frontend",
             items.len()
         );
         
@@ -397,12 +412,12 @@ pub async fn fetch_channel_claims(
     match &result {
         Ok(items) => {
             info!(
-                "✅ DIAGNOSTIC: fetch_channel_claims returning SUCCESS with {} items",
+                "âœ… DIAGNOSTIC: fetch_channel_claims returning SUCCESS with {} items",
                 items.len()
             );
         }
         Err(e) => {
-            error!("❌ DIAGNOSTIC: fetch_channel_claims returning ERROR: {}", e);
+            error!("âŒ DIAGNOSTIC: fetch_channel_claims returning ERROR: {}", e);
         }
     }
 
@@ -828,7 +843,7 @@ pub async fn get_diagnostics(state: State<'_, AppState>) -> Result<DiagnosticsDa
 
     let vault_path = download_manager.get_vault_path();
     let diagnostics =
-        diagnostics::collect_diagnostics(&*gateway, &*server, &*db, vault_path, &*download_manager)
+        diagnostics::collect_diagnostics(&gateway, &server, &db, vault_path, &download_manager)
             .await?;
 
     Ok(diagnostics)
@@ -854,7 +869,7 @@ pub async fn collect_debug_package(
     })?;
 
     let debug_package_path =
-        diagnostics::collect_debug_package(&*db, vault_path, &app_data_path).await?;
+        diagnostics::collect_debug_package(&db, vault_path, &app_data_path).await?;
 
     info!("Debug package created at: {:?}", debug_package_path);
     Ok(debug_package_path.to_string_lossy().to_string())
@@ -867,7 +882,7 @@ pub async fn get_recent_crashes(limit: usize) -> Result<Vec<crate::crash_reporti
     info!("Getting recent crashes (limit: {})", limit);
 
     let crashes =
-        crate::crash_reporting::get_recent_crashes(limit).map_err(|e| KiyyaError::Io(e))?;
+        crate::crash_reporting::get_recent_crashes(limit).map_err(KiyyaError::Io)?;
 
     Ok(crashes)
 }
@@ -876,7 +891,7 @@ pub async fn get_recent_crashes(limit: usize) -> Result<Vec<crate::crash_reporti
 pub async fn clear_crash_log() -> Result<()> {
     info!("Clearing crash log");
 
-    crate::crash_reporting::clear_crash_log().map_err(|e| KiyyaError::Io(e))?;
+    crate::crash_reporting::clear_crash_log().map_err(KiyyaError::Io)?;
 
     Ok(())
 }
@@ -967,9 +982,9 @@ pub async fn open_external(url: String) -> Result<()> {
 
     // Use tauri shell API to open URL in default browser
     std::process::Command::new("cmd")
-        .args(&["/c", "start", &validated_url])
+        .args(["/c", "start", &validated_url])
         .spawn()
-        .map_err(|e| KiyyaError::Io(e))?;
+        .map_err(KiyyaError::Io)?;
     Ok(())
 }
 
@@ -991,22 +1006,22 @@ pub fn parse_claim_search_response(response: OdyseeResponse) -> Result<Vec<Conte
         "Stage 2: Parsing claim_search response"
     );
     
-    // 🔍 STEP 1: Verify response has data
+    // ðŸ” STEP 1: Verify response has data
     let data = response.data.ok_or_else(|| {
-        error!("❌ DIAGNOSTIC: No data in response");
+        error!("âŒ DIAGNOSTIC: No data in response");
         KiyyaError::ContentParsing {
             message: "No data in response".to_string(),
         }
     })?;
-    info!("✅ DIAGNOSTIC: Response has data field");
+    info!("âœ… DIAGNOSTIC: Response has data field");
 
-    // 🔍 STEP 2: Verify items array exists
+    // ðŸ” STEP 2: Verify items array exists
     let items = data
         .get("items")
         .and_then(|v| v.as_array())
         .ok_or_else(|| {
             error!(
-                "❌ DIAGNOSTIC: No items array in response. Data keys: {:?}",
+                "âŒ DIAGNOSTIC: No items array in response. Data keys: {:?}",
                 data.as_object().map(|o| o.keys().collect::<Vec<_>>())
             );
             KiyyaError::ContentParsing {
@@ -1014,11 +1029,11 @@ pub fn parse_claim_search_response(response: OdyseeResponse) -> Result<Vec<Conte
             }
         })?;
     info!(
-        "✅ DIAGNOSTIC: Found items array with {} claims",
+        "âœ… DIAGNOSTIC: Found items array with {} claims",
         items.len()
     );
 
-    // 🔍 STEP 3: Log raw claims for inspection
+    // ðŸ” STEP 3: Log raw claims for inspection
     for (idx, item) in items.iter().enumerate() {
         let claim_id = item
             .get("claim_id")
@@ -1035,7 +1050,7 @@ pub fn parse_claim_search_response(response: OdyseeResponse) -> Result<Vec<Conte
             .map(|arr| arr.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>())
             .unwrap_or_default();
         info!(
-            "  📦 DIAGNOSTIC: Claim[{}]: id={}, type={}, tags={:?}",
+            "  ðŸ“¦ DIAGNOSTIC: Claim[{}]: id={}, type={}, tags={:?}",
             idx, claim_id, value_type, tags
         );
     }
@@ -1043,7 +1058,7 @@ pub fn parse_claim_search_response(response: OdyseeResponse) -> Result<Vec<Conte
     let mut content_items = Vec::new();
     let mut skipped_count = 0;
 
-    // 🔍 STEP 4: Parse each claim and track results
+    // ðŸ” STEP 4: Parse each claim and track results
     for (idx, item) in items.iter().enumerate() {
         match parse_claim_item(item) {
             Ok(content_item) => {
@@ -1059,7 +1074,7 @@ pub fn parse_claim_search_response(response: OdyseeResponse) -> Result<Vec<Conte
                 );
                 
                 info!(
-                    "  ✅ DIAGNOSTIC: Claim[{}] parsed successfully: id={}",
+                    "  âœ… DIAGNOSTIC: Claim[{}] parsed successfully: id={}",
                     idx, content_item.claim_id
                 );
                 content_items.push(content_item);
@@ -1071,7 +1086,7 @@ pub fn parse_claim_search_response(response: OdyseeResponse) -> Result<Vec<Conte
                     .and_then(|v| v.as_str())
                     .unwrap_or("unknown");
                 warn!(
-                    "  ⚠️ DIAGNOSTIC: Claim[{}] SKIPPED: id={}, reason={}",
+                    "  âš ï¸ DIAGNOSTIC: Claim[{}] SKIPPED: id={}, reason={}",
                     idx, claim_id, e
                 );
                 // Continue processing other items (partial success)
@@ -1080,7 +1095,7 @@ pub fn parse_claim_search_response(response: OdyseeResponse) -> Result<Vec<Conte
     }
 
     info!(
-        "📊 DIAGNOSTIC: Parsing complete - Valid: {}, Skipped: {}, Total: {}",
+        "ðŸ“Š DIAGNOSTIC: Parsing complete - Valid: {}, Skipped: {}, Total: {}",
         content_items.len(),
         skipped_count,
         items.len()
@@ -1140,7 +1155,7 @@ pub fn parse_claim_item(item: &Value) -> Result<ContentItem> {
             if let Some(source) = value.get("source") {
                 if let Some(sd_hash) = source.get("sd_hash").and_then(|v| v.as_str()) {
                     let file_stub = if sd_hash.len() >= 6 { &sd_hash[..6] } else { "N/A" };
-                    println!("\n🎬 VIDEO URL CONSTRUCTION:");
+                    println!("\nðŸŽ¬ VIDEO URL CONSTRUCTION:");
                     println!("   Claim Name: {}", claim_name);
                     println!("   Claim ID: {}", claim_id);
                     println!("   SD Hash: {}", sd_hash);
@@ -1421,15 +1436,15 @@ fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
         .and_then(|v| v.as_str())
         .unwrap_or("unknown");
 
-    // 🔍 STEP 1: Validate claim type
+    // ðŸ” STEP 1: Validate claim type
     if let Some(value_type) = item.get("value_type").and_then(|v| v.as_str()) {
         info!(
-            "    🔍 DIAGNOSTIC: Claim {} has value_type={}",
+            "    ðŸ” DIAGNOSTIC: Claim {} has value_type={}",
             claim_id_for_logging, value_type
         );
         if value_type != "stream" {
             warn!(
-                "    ❌ DIAGNOSTIC: Rejecting non-stream claim {}: type={}",
+                "    âŒ DIAGNOSTIC: Rejecting non-stream claim {}: type={}",
                 claim_id_for_logging, value_type
             );
             return Err(KiyyaError::ContentParsing {
@@ -1440,7 +1455,7 @@ fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
             });
         }
         info!(
-            "    ✅ DIAGNOSTIC: Claim {} is stream type",
+            "    âœ… DIAGNOSTIC: Claim {} is stream type",
             claim_id_for_logging
         );
     } else {
@@ -1452,10 +1467,10 @@ fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
             .is_some();
 
         if has_source {
-            warn!("    ⚠️ DIAGNOSTIC: Claim {} missing value_type but has source.sd_hash, inferring stream", claim_id_for_logging);
+            warn!("    âš ï¸ DIAGNOSTIC: Claim {} missing value_type but has source.sd_hash, inferring stream", claim_id_for_logging);
         } else {
             warn!(
-                "    ❌ DIAGNOSTIC: Claim {} missing value_type and no source.sd_hash",
+                "    âŒ DIAGNOSTIC: Claim {} missing value_type and no source.sd_hash",
                 claim_id_for_logging
             );
             return Err(KiyyaError::ContentParsing {
@@ -1467,35 +1482,35 @@ fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
         }
     }
 
-    // 🔍 STEP 2: Extract claim_id
+    // ðŸ” STEP 2: Extract claim_id
     let claim_id = item
         .get("claim_id")
         .and_then(|v| v.as_str())
         .map(|s| s.trim())
         .filter(|s| !s.is_empty())
         .ok_or_else(|| {
-            warn!("    ❌ DIAGNOSTIC: Missing or empty claim_id in item");
+            warn!("    âŒ DIAGNOSTIC: Missing or empty claim_id in item");
             KiyyaError::ContentParsing {
                 message: "Missing or empty claim_id".to_string(),
             }
         })?;
-    info!("    ✅ DIAGNOSTIC: Extracted claim_id={}", claim_id);
+    info!("    âœ… DIAGNOSTIC: Extracted claim_id={}", claim_id);
 
-    // 🔍 STEP 3: Extract claim_name (video name)
+    // ðŸ” STEP 3: Extract claim_name (video name)
     let claim_name = item
         .get("name")
         .and_then(|v| v.as_str())
         .map(|s| s.trim())
         .filter(|s| !s.is_empty())
         .ok_or_else(|| {
-            warn!("    ❌ DIAGNOSTIC: Missing or empty claim name in item");
+            warn!("    âŒ DIAGNOSTIC: Missing or empty claim name in item");
             KiyyaError::ContentParsing {
                 message: "Missing or empty claim name".to_string(),
             }
         })?;
-    info!("    ✅ DIAGNOSTIC: Extracted claim_name={}", claim_name);
+    info!("    âœ… DIAGNOSTIC: Extracted claim_name={}", claim_name);
 
-    // 🔍 STEP 4: Extract sd_hash from value.source
+    // ðŸ” STEP 4: Extract sd_hash from value.source
     let sd_hash = item
         .get("value")
         .and_then(|v| v.get("source"))
@@ -1504,22 +1519,22 @@ fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
         .map(|s| s.trim())
         .filter(|s| !s.is_empty())
         .ok_or_else(|| {
-            warn!("    ❌ DIAGNOSTIC: Missing or empty sd_hash in value.source");
+            warn!("    âŒ DIAGNOSTIC: Missing or empty sd_hash in value.source");
             KiyyaError::ContentParsing {
                 message: "Missing or empty sd_hash".to_string(),
             }
         })?;
-    info!("    ✅ DIAGNOSTIC: Extracted sd_hash={}", sd_hash);
+    info!("    âœ… DIAGNOSTIC: Extracted sd_hash={}", sd_hash);
 
-    // 🔍 STEP 5: Validate sd_hash length (must be at least 6 characters)
+    // ðŸ” STEP 5: Validate sd_hash length (must be at least 6 characters)
     if sd_hash.len() < 6 {
-        warn!("    ❌ DIAGNOSTIC: sd_hash too short: {} characters", sd_hash.len());
+        warn!("    âŒ DIAGNOSTIC: sd_hash too short: {} characters", sd_hash.len());
         return Err(KiyyaError::ContentParsing {
             message: format!("sd_hash too short: {} characters (need at least 6)", sd_hash.len()),
         });
     }
 
-    // 🔍 STEP 6: Construct Odysee streaming URL
+    // ðŸ” STEP 6: Construct Odysee streaming URL
     // Pattern discovered: https://player.odycdn.com/api/v3/streams/free/{claim_name}/{claim_id}/{first_6_of_sd_hash}.mp4
     let file_stub = &sd_hash[..6];
     let stream_url = format!(
@@ -1540,7 +1555,7 @@ fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
         "Stage 4: Constructed Odysee streaming URL"
     );
 
-    info!("    🎬 DIAGNOSTIC: Constructed stream URL: {}", stream_url);
+    info!("    ðŸŽ¬ DIAGNOSTIC: Constructed stream URL: {}", stream_url);
 
     // Create VideoUrl struct with url_type="mp4", quality="master"
     let video_url = VideoUrl {
@@ -1554,7 +1569,7 @@ fn extract_video_urls(item: &Value) -> Result<HashMap<String, VideoUrl>> {
     let mut video_urls = HashMap::new();
     video_urls.insert("master".to_string(), video_url);
 
-    info!("    ✅ DIAGNOSTIC: Created video_urls map with master entry");
+    info!("    âœ… DIAGNOSTIC: Created video_urls map with master entry");
 
     Ok(video_urls)
 }
@@ -1576,8 +1591,8 @@ fn assess_compatibility(video_urls: &HashMap<String, VideoUrl>) -> Compatibility
 }
 
 fn extract_season_number_from_title(title: &str) -> Option<u32> {
-    // Parse season number from playlist title like "SeriesName – Season 1"
-    let re = regex::Regex::new(r"[–-]\s*Season\s+(\d+)").unwrap();
+    // Parse season number from playlist title like "SeriesName â€“ Season 1"
+    let re = regex::Regex::new(r"[â€“-]\s*Season\s+(\d+)").unwrap();
     re.captures(title)
         .and_then(|caps| caps.get(1))
         .and_then(|m| m.as_str().parse().ok())
@@ -1585,7 +1600,7 @@ fn extract_season_number_from_title(title: &str) -> Option<u32> {
 
 fn extract_series_key_from_title(title: &str) -> Option<String> {
     // Extract series key from playlist title
-    let re = regex::Regex::new(r"^([^–-]+)").unwrap();
+    let re = regex::Regex::new(r"^([^â€“-]+)").unwrap();
     re.captures(title)
         .and_then(|caps| caps.get(1))
         .map(|m| m.as_str().trim().to_lowercase().replace(' ', "_"))
@@ -1670,8 +1685,6 @@ mod tests {
 
     #[test]
     #[cfg(debug_assertions)]
-
-    #[test]
     fn test_extract_claim_id() {
         let item = json!({
             "claim_id": "test-claim-123"
@@ -2115,7 +2128,7 @@ mod tests {
     #[test]
     fn test_extract_season_number_from_title() {
         assert_eq!(
-            extract_season_number_from_title("Breaking Bad – Season 1"),
+            extract_season_number_from_title("Breaking Bad â€“ Season 1"),
             Some(1)
         );
         assert_eq!(
@@ -2128,7 +2141,7 @@ mod tests {
     #[test]
     fn test_extract_series_key_from_title() {
         assert_eq!(
-            extract_series_key_from_title("Breaking Bad – Season 1"),
+            extract_series_key_from_title("Breaking Bad â€“ Season 1"),
             Some("breaking_bad".to_string())
         );
         assert_eq!(
@@ -2336,7 +2349,7 @@ mod tests {
         let item = json!({
             "claim_id": "playlist-123",
             "value": {
-                "title": "Breaking Bad – Season 1"
+                "title": "Breaking Bad â€“ Season 1"
             }
         });
 
@@ -2345,7 +2358,7 @@ mod tests {
 
         let playlist = result.unwrap();
         assert_eq!(playlist.id, "playlist-123");
-        assert_eq!(playlist.title, "Breaking Bad – Season 1");
+        assert_eq!(playlist.title, "Breaking Bad â€“ Season 1");
         assert_eq!(playlist.season_number, Some(1));
         assert_eq!(playlist.series_key, Some("breaking_bad".to_string()));
     }
@@ -2379,13 +2392,13 @@ mod tests {
                     {
                         "claim_id": "playlist-1",
                         "value": {
-                            "title": "Breaking Bad – Season 1"
+                            "title": "Breaking Bad â€“ Season 1"
                         }
                     },
                     {
                         "claim_id": "playlist-2",
                         "value": {
-                            "title": "Breaking Bad – Season 2"
+                            "title": "Breaking Bad â€“ Season 2"
                         }
                     }
                 ]
@@ -2442,7 +2455,7 @@ mod tests {
                     {
                         "claim_id": "valid-playlist",
                         "value": {
-                            "title": "Valid Playlist – Season 1"
+                            "title": "Valid Playlist â€“ Season 1"
                         }
                     },
                     {
@@ -2454,7 +2467,7 @@ mod tests {
                     {
                         "claim_id": "another-valid",
                         "value": {
-                            "title": "Another Playlist – Season 2"
+                            "title": "Another Playlist â€“ Season 2"
                         }
                     }
                 ]
@@ -2473,23 +2486,6 @@ mod tests {
         assert_eq!(playlists[1].season_number, Some(2));
     }
 
-    #[test]
-    #[test]
-    #[test]
-    #[test]
-    #[test]
-    #[test]
-    #[test]
-    #[test]
-    #[test]
-    #[test]
-    #[test]
-    #[test]
-    #[test]
-    #[test]
-    #[test]
-    #[test]
-    #[test]
     // Gateway Configuration Tests
     #[test]
     fn test_sanitize_gateway_valid_https() {
@@ -2955,7 +2951,7 @@ mod tests {
         );
 
         // Verify tags array exists (may be empty)
-        assert!(content.tags.len() > 0, "tags should be present");
+        assert!(!content.tags.is_empty(), "tags should be present");
 
         // Verify thumbnail_url is present (may be None)
         assert!(

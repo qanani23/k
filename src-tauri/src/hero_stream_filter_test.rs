@@ -1,4 +1,4 @@
-// Feature: odysee-cdn-playback-standardization
+﻿// Feature: odysee-cdn-playback-standardization
 // Task 11.1: Validate hero_trailer search enforces stream-only filter
 // Requirements: 7.1, 7.2, 7.3
 
@@ -11,16 +11,16 @@ mod hero_stream_filter_tests {
     #[test]
     fn test_hero_query_includes_stream_types_filter() {
         // Simulate the request parameters that should be sent for hero_trailer queries
-        let tags = vec!["hero_trailer".to_string()];
-        let stream_types = Some(vec!["stream".to_string()]);
+        let _tags = ["hero_trailer".to_string()];
+        let stream_types = vec!["stream".to_string()];
 
         // Verify that stream_types is set when hero_trailer tag is present
         assert!(
-            stream_types.is_some(),
+            !stream_types.is_empty(),
             "stream_types should be set for hero_trailer queries"
         );
         assert_eq!(
-            stream_types.unwrap(),
+            stream_types,
             vec!["stream"],
             "stream_types should contain 'stream'"
         );
@@ -44,7 +44,7 @@ mod hero_stream_filter_tests {
     /// Ensures the filter is specific to hero_trailer
     #[test]
     fn test_non_hero_queries_dont_force_stream_filter() {
-        let tags = vec!["movie".to_string()];
+        let _tags = ["movie".to_string()];
 
         // For non-hero queries, stream_types should not be automatically set
         // (though it can be set explicitly if needed)
@@ -61,7 +61,7 @@ mod hero_stream_filter_tests {
     #[test]
     fn test_stream_filter_prevents_non_stream_claims() {
         // Simulate API response with mixed claim types
-        let claims = vec![
+        let claims = [
             json!({
                 "claim_id": "stream1",
                 "value_type": "stream",
@@ -120,8 +120,8 @@ mod hero_stream_filter_tests {
     #[test]
     fn test_hero_query_complete_flow() {
         // 1. Hero query parameters
-        let tags = vec!["hero_trailer".to_string()];
-        let stream_types = Some(vec!["stream".to_string()]);
+        let tags = ["hero_trailer".to_string()];
+        let stream_types = vec!["stream".to_string()];
         let limit = 20;
 
         // 2. Verify all required parameters are present
@@ -130,11 +130,11 @@ mod hero_stream_filter_tests {
             "Query must include hero_trailer tag"
         );
         assert!(
-            stream_types.is_some(),
+            !stream_types.is_empty(),
             "Query must include stream_types filter"
         );
         assert_eq!(
-            stream_types.unwrap(),
+            stream_types,
             vec!["stream"],
             "stream_types must be ['stream']"
         );

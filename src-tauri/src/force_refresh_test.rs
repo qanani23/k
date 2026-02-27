@@ -1,9 +1,8 @@
-/// Force Refresh Capability Tests
+﻿/// Force Refresh Capability Tests
 ///
 /// This module tests the force refresh functionality added to the cache management system.
 /// The force_refresh parameter allows bypassing the local cache and always fetching fresh
 /// data from the remote API.
-
 #[cfg(test)]
 mod tests {
     #[test]
@@ -17,10 +16,7 @@ mod tests {
         // 4. Fresh data is always fetched from the gateway
         // 5. New data is stored in cache for subsequent requests
 
-        assert!(
-            true,
-            "Force refresh parameter is implemented in commands.rs and api.ts"
-        );
+        // Force refresh parameter is implemented in commands.rs and api.ts
     }
 
     #[test]
@@ -41,7 +37,7 @@ mod tests {
         // - fetchByTags(tags, limit, forceRefresh: true)
         // - fetchCategoryContent(baseTag, filterTag, limit, forceRefresh: true)
 
-        assert!(true, "Force refresh behavior is documented and implemented");
+        // Force refresh behavior is documented and implemented
     }
 
     #[test]
@@ -51,11 +47,10 @@ mod tests {
         //
         // Implementation: force_refresh.unwrap_or(false) in commands.rs
 
-        let force_refresh: Option<bool> = None;
-        let should_force_refresh = force_refresh.unwrap_or(false);
+        let should_force_refresh = false;
 
-        assert_eq!(
-            should_force_refresh, false,
+        assert!(
+            !should_force_refresh,
             "Default should be false for backward compatibility"
         );
     }
@@ -64,11 +59,10 @@ mod tests {
     fn test_force_refresh_explicit_true() {
         // When force_refresh is explicitly set to true, cache should be bypassed
 
-        let force_refresh: Option<bool> = Some(true);
-        let should_force_refresh = force_refresh.unwrap_or(false);
+        let should_force_refresh = true;
 
-        assert_eq!(
-            should_force_refresh, true,
+        assert!(
+            should_force_refresh,
             "Explicit true should bypass cache"
         );
     }
@@ -77,11 +71,10 @@ mod tests {
     fn test_force_refresh_explicit_false() {
         // When force_refresh is explicitly set to false, cache should be used
 
-        let force_refresh: Option<bool> = Some(false);
-        let should_force_refresh = force_refresh.unwrap_or(false);
+        let should_force_refresh = false;
 
-        assert_eq!(
-            should_force_refresh, false,
+        assert!(
+            !should_force_refresh,
             "Explicit false should use cache"
         );
     }

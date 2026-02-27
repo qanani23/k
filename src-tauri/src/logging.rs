@@ -377,7 +377,6 @@ pub fn init_logging_with_config(_config: LoggingConfig) -> Result<(), Box<dyn st
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
     use tempfile::TempDir;
 
     #[test]
@@ -392,7 +391,7 @@ mod tests {
     fn test_logging_config_default() {
         let config = LoggingConfig::default();
         assert_eq!(config.level, tracing::Level::INFO);
-        assert_eq!(config.enable_file, true);
+        assert!(config.enable_file);
         assert!(config.log_dir.is_none());
     }
 
@@ -465,7 +464,7 @@ mod tests {
         // In test mode (debug_assertions), should default to debug
         let level = get_default_log_level();
         // Will be "debug" in dev or "info" in release, or from LOG_LEVEL env var
-        assert!(level == "debug" || level == "info" || !std::env::var("LOG_LEVEL").is_err());
+        assert!(level == "debug" || level == "info" || std::env::var("LOG_LEVEL").is_ok());
     }
 
     #[cfg(feature = "logging")]

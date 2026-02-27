@@ -33,11 +33,7 @@ fn parse_range_header(range: &str, file_size: u64) -> Result<(u64, u64), KiyyaEr
     // Handle suffix range: -500 means last 500 bytes
     if parts[0].is_empty() {
         if let Ok(suffix) = parts[1].parse::<u64>() {
-            let start = if suffix >= file_size {
-                0
-            } else {
-                file_size - suffix
-            };
+            let start = file_size.saturating_sub(suffix);
             let end = file_size - 1;
             return Ok((start, end));
         } else {
@@ -134,11 +130,7 @@ proptest! {
         prop_assert!(result.is_ok(), "Suffix range should be accepted: {}", range_header);
         let (parsed_start, parsed_end) = result.unwrap();
 
-        let expected_start = if suffix >= file_size {
-            0
-        } else {
-            file_size - suffix
-        };
+        let expected_start = file_size.saturating_sub(suffix);
 
         prop_assert_eq!(parsed_start, expected_start);
         prop_assert_eq!(parsed_end, file_size - 1);
@@ -183,7 +175,7 @@ proptest! {
         gap in 1u64..=50,
     ) {
         let start = start % (file_size / 2);
-        let end = if start > gap { start - gap } else { 0 };
+        let end = start.saturating_sub(gap);
 
         if start > end {
             let range_header = format!("bytes={}-{}", start, end);

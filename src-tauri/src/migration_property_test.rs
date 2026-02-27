@@ -4,10 +4,8 @@
 /// using property-based testing with proptest.
 ///
 /// **Feature: fix-database-initialization-stack-overflow**
-
 #[cfg(test)]
 mod migration_property_tests {
-    use crate::database::Database;
     use crate::migrations::{Migration, MigrationRunner};
     use chrono::Utc;
     use proptest::prelude::*;
@@ -74,6 +72,7 @@ mod migration_property_tests {
     }
 
     /// Strategy for generating migration version numbers
+    #[allow(dead_code)]
     fn migration_version_strategy() -> impl Strategy<Value = u32> {
         1u32..=20u32
     }
@@ -144,7 +143,7 @@ mod migration_property_tests {
                 let applied_versions = get_applied_versions(&db_path).unwrap();
 
                 // Property: Versions should be in sequential order
-                for i in 0..applied_versions.len() {
+                for (i, _) in applied_versions.iter().enumerate() {
                     let expected_version = start_version + i as u32;
                     prop_assert_eq!(
                         applied_versions[i],

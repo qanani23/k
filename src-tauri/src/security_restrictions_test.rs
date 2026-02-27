@@ -8,7 +8,6 @@
 /// 5. Security boundary enforcement
 ///
 /// Validates: Requirements 12.1, 12.2, 12.3, 12.4, 22.1, 22.3, 22.5
-
 #[cfg(test)]
 mod tests {
     use crate::encryption::EncryptionManager;

@@ -583,13 +583,13 @@ mod tests {
     #[test]
     fn test_validate_tags() {
         // Valid tags
-        assert!(validate_tags(&vec!["movie".to_string(), "action".to_string()]).is_ok());
+        assert!(validate_tags(&["movie".to_string(), "action".to_string()]).is_ok());
         
         // Empty array is now valid (represents "no tag filter")
-        assert!(validate_tags(&vec![]).is_ok());
+        assert!(validate_tags(&[]).is_ok());
         
         // Invalid tags
-        assert!(validate_tags(&vec!["tag; DROP TABLE".to_string()]).is_err());
+        assert!(validate_tags(&["tag; DROP TABLE".to_string()]).is_err());
         assert!(validate_tags(&vec!["tag".to_string(); 51]).is_err());
     }
 

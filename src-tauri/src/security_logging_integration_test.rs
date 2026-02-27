@@ -106,7 +106,6 @@ mod tests {
         });
 
         // If we get here, logging didn't panic
-        assert!(true);
     }
 
     #[test]

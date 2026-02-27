@@ -90,7 +90,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_database_new_does_not_run_migrations() {
-        let (db, db_path) = create_test_db().await;
+        let (_db, db_path) = create_test_db().await;
 
         // Verify the migrations table exists (base schema)
         assert!(
@@ -217,12 +217,9 @@ mod tests {
 
         // Verify that FTS5 availability is determined during initialization
         // The value depends on the SQLite build, so we just check it's set
-        let fts5_available = db.fts5_available;
+        let _fts5_available = db.fts5_available;
 
-        // FTS5 should be either true or false, not uninitialized
-        assert!(
-            fts5_available == true || fts5_available == false,
-            "FTS5 availability should be determined"
-        );
+        // FTS5 availability is a boolean value - always true or false
+        // No assertion needed as it's guaranteed by the type system
     }
 }
